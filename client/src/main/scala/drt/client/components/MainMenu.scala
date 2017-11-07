@@ -10,7 +10,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.TagOf
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 import org.scalajs.dom.html.LI
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.collection.immutable
 
@@ -25,6 +27,11 @@ object MainMenu {
   val staticMenuItems = List(
     MenuItem(0, _ => "Dashboard", Icon.dashboard, TerminalsDashboardLoc(None))
   )
+  val additionalMenuItems = Seq(
+      <.li(<.a("Blog", Icon.fileText, ^.href:= "" )))
+      //MenuItem(staticMenuItems.length +2, _ => "Feedback", Icon.envelope, TerminalsDashboardLoc(None)),
+      //MenuItem(staticMenuItems.length +3, _ => "User Guide", Icon.book, TerminalsDashboardLoc(None))
+  //)
 
   def menuItems(airportConfig: AirportConfig): List[MenuItem] = {
     val terminalDepsMenuItems = airportConfig.terminalNames.zipWithIndex.map {
@@ -43,7 +50,7 @@ object MainMenu {
         <.div(
           airportConfigPotMP().renderReady(airportConfig => {
 
-            val children: immutable.Seq[TagOf[LI]] = for (item <- menuItems(airportConfig)) yield {
+            val children: Seq[TagOf[html.LI]] = for (item <- menuItems(airportConfig)) yield {
               val active = (props.currentLoc, item.location) match {
                 case (TerminalPageTabLoc(tn, _, _, _), TerminalPageTabLoc(tni, _, _, _)) => tn == tni
                 case (current, itemLoc) => current == itemLoc
@@ -52,7 +59,7 @@ object MainMenu {
               <.li(^.key := item.idx, ^.classSet(classes: _*),
                 props.router.link(item.location)(item.icon, " ", item.label(props)))
             }
-            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod)}))
+            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod, <.li(<.a(Icon.fileText," Blog", ^.href:= "" )),<.li(<.a(Icon.envelope," Feedback", ^.href:= "mailto:" )),<.li(<.a(Icon.book," User Guide", ^.href:= "" )))}))
       })
     }
   }

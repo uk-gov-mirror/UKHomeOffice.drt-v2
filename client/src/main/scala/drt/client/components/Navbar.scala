@@ -6,6 +6,7 @@ import drt.client.services.SPACircuit
 import drt.shared.FlightsApi.TerminalName
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom
 import org.scalajs.dom.html
 
 object Navbar {
