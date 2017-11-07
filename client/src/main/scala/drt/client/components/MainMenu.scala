@@ -59,7 +59,7 @@ object MainMenu {
               <.li(^.key := item.idx, ^.classSet(classes: _*),
                 props.router.link(item.location)(item.icon, " ", item.label(props)))
             }
-            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod, <.li(<.a(Icon.fileText," Blog", ^.href:= "" )),<.li(<.a(Icon.envelope," Feedback", ^.href:= "mailto:" )),<.li(<.a(Icon.book," User Guide", ^.href:= "" )))}))
+            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod, <.li(<.a(Icon.fileText," Blog", ^.href:= "")),<.li(<.a(Icon.envelope," Feedback", ^.href:= "mailto:"  )),<.li(<.a(Icon.book," User Guide", ^.href:= "" )))}))
       })
     }
   }
