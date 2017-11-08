@@ -2,7 +2,8 @@ package drt.client.components
 
 import diode.data.Pot
 import diode.react.ReactConnectProxy
-import drt.client.SPAMain._
+import drt.client.SPAMain
+import drt.client.SPAMain.{pathToThisApp, _}
 import drt.client.components.Icon._
 import drt.client.services.SPACircuit
 import drt.shared.AirportConfig
@@ -42,6 +43,9 @@ object MainMenu {
     staticMenuItems ::: terminalDepsMenuItems
   }
 
+  val userguide: String = "drt.userguide"
+  val blogurl=""
+
   private class Backend($: BackendScope[Props, Unit]) {
     def render(props: Props) = {
       val airportConfigPotRCP: ReactConnectProxy[Pot[AirportConfig]] = SPACircuit.connect(_.airportConfig)
@@ -59,7 +63,7 @@ object MainMenu {
               <.li(^.key := item.idx, ^.classSet(classes: _*),
                 props.router.link(item.location)(item.icon, " ", item.label(props)))
             }
-            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod, <.li(<.a(Icon.fileText," Blog", ^.href:= "")),<.li(<.a(Icon.envelope," Feedback", ^.href:= "mailto:"  )),<.li(<.a(Icon.book," User Guide", ^.href:= "" )))}))
+            <.ul(^.classSet(bss.navbarClsSet.map(cn => (cn, true)): _*), ^.className := "mr-auto")(children.toTagMod, <.li(<.a(Icon.fileText," Blog", ^.href:= blogurl)),<.li(<.a(Icon.envelope," Feedback", ^.href:= "mailto:DRTEnquiries?subject=DRT_V2 Feedback"  )),<.li(<.a(Icon.book," User Guide", ^.href:= userguide )))}))
       })
     }
   }
