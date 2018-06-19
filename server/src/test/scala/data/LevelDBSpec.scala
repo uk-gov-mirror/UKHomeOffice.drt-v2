@@ -8,6 +8,7 @@ import akka.persistence.query.PersistenceQuery
 import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
+import com.typesafe.config.ConfigFactory
 import javax.sql.DataSource
 import org.apache.commons.dbcp.BasicDataSource
 import org.specs2.matcher.Scope
@@ -23,8 +24,32 @@ class LevelDBSpec extends Specification {
 
   "LevelDB" should {
 
-    "can read the data" in new Context {
-      implicit val system = ActorSystem()
+    import collection.JavaConverters._
+    "can read the data from the Journal" in new Context {
+      val bindings = Map(
+        """"server.protobuf.messages.CrunchState.CrunchDiffMessage"""" -> "protobuf",
+        """"server.protobuf.messages.FlightsMessage.FlightsDiffMessage"""" -> "protobuf",
+        """"server.protobuf.messages.CrunchState.CrunchStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.ShiftMessage.ShiftStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.FixedPointMessage.FixedPointsStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.StaffMovementMessages.StaffMovementsStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.FlightsMessage.FlightStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.VoyageManifest.VoyageManifestStateSnapshotMessage"""" -> "protobuf",
+        """"server.protobuf.messages.VoyageManifest.VoyageManifestLatestFileNameMessage"""" -> "protobuf",
+        """"server.protobuf.messages.VoyageManifest.VoyageManifestsMessage"""" -> "protobuf",
+        """"server.protobuf.messages.VoyageManifest.VoyageManifestMessage"""" -> "protobuf").asJava
+      implicit val system = ActorSystem("snapshot", ConfigFactory.parseMap(Map(
+        "akka.persistence.journal.plugin"-> "akka.persistence.journal.leveldb",
+        "akka.persistence.journal.leveldb.dir" -> "/Users/ryan/Downloads/ema",
+        "akka.persistence.snapshot-store.plugin" -> "akka.persistence.snapshot-store.local",
+        "akka.persistence.snapshot-store.local.class" -> "akka.persistence.snapshot.local.LocalSnapshotStore",
+        "akka.persistence.snapshot-store.local.dir" -> "/Users/ryan/Downloads/ema/snapshots",
+        "akka.persistence.snapshot-store.loc§al.plugin-dispatcher" -> "akka.persistence.dispatchers.default-plugin-dispatcher",
+        "akka.persistence.snapshot-store.local.stream-dispatcher" -> "akka.persistence.dispatchers.default-stream-dispatcher",
+        "akka.actor.serializers.protobuf" -> "actors.serializers.ProtoBufSerializer",
+        "akka.actor.serialization-bindings" -> bindings
+
+      ).asJava))
       implicit val mat = ActorMaterializer()
 
       val columnNames = List( "persistence_id", "sequence_number", "deleted", "tags", "message")
