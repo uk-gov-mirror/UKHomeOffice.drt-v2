@@ -36,7 +36,7 @@ object Settings {
     val diode = "1.1.3"
     val uTest = "0.4.7"
 
-    val akka = "2.5.13"
+    val akka = "2.5.14"
     val akkaStreamContrib = "0.9"
 
     val specs2 = "3.7"
@@ -111,6 +111,8 @@ object Settings {
     "com.typesafe.akka" %% "akka-persistence" % akka,
     "com.typesafe.akka" %% "akka-stream-contrib" % akkaStreamContrib,
     "com.typesafe.akka" %% "akka-slf4j" % akka,
+    "com.typesafe.akka" %% "akka-cluster" % akka,
+    "com.typesafe.akka" %% "akka-remote" % akka,
 
     "com.typesafe.play" %% "play-json" % playJson,
     "com.typesafe.play" %% "play-iteratees" % playIteratees,

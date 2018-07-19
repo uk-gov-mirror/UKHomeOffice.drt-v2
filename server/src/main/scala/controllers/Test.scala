@@ -3,11 +3,11 @@ package controllers
 import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
 import akka.util.Timeout
-import com.google.inject.Inject
 import drt.chroma.chromafetcher.ChromaFetcher.ChromaLiveFlight
 import drt.chroma.chromafetcher.ChromaParserProtocol._
 import passengersplits.parsing.VoyageManifestParser.FlightPassengerInfoProtocol._
 import drt.shared.{Arrival, SDateLike}
+import javax.inject.{Singleton, Inject}
 import org.slf4j.{Logger, LoggerFactory}
 import passengersplits.parsing.VoyageManifestParser.{VoyageManifest, VoyageManifests}
 import play.api.mvc.{Action, Controller, InjectedController, Session}
@@ -23,6 +23,7 @@ import test.TestActors.ResetActor
 import test.MockRoles._
 import test.MockRoles.MockRolesProtocol._
 
+@Singleton
 class Test @Inject()(implicit val config: Configuration,
                      implicit val mat: Materializer,
                      env: Environment,
@@ -34,9 +35,12 @@ class Test @Inject()(implicit val config: Configuration,
 
   val baseTime: SDateLike = SDate.now()
 
-  val liveArrivalsTestActor: Future[ActorRef] = system.actorSelection("akka://application/user/TestActor-LiveArrivals").resolveOne()
-  val apiManifestsTestActor: Future[ActorRef] = system.actorSelection("akka://application/user/TestActor-APIManifests").resolveOne()
-  val mockRolesTestActor: Future[ActorRef] = system.actorSelection("akka://application/user/TestActor-MockRoles").resolveOne()
+  val actorSystemName : String = config.get[String]("play.akka.actor-system")
+  val host: String = config.get[String]("akka.remote.netty.tcp.hostname")
+  val port: Int = config.get[Int]("akka.remote.netty.tcp.port")
+  val liveArrivalsTestActor: Future[ActorRef] = system.actorSelection(s"akka.tcp://$actorSystemName@$host:$port/user/TestActor-LiveArrivals").resolveOne()
+  val apiManifestsTestActor: Future[ActorRef] = system.actorSelection(s"akka.tcp://$actorSystemName@$host:$port/user/TestActor-APIManifests").resolveOne()
+  val mockRolesTestActor: Future[ActorRef] = system.actorSelection(s"akka.tcp://$actorSystemName@$host:$port/user/TestActor-MockRoles").resolveOne()
 
   def saveArrival(arrival: Arrival) = {
     liveArrivalsTestActor.map(actor => {
@@ -55,7 +59,7 @@ class Test @Inject()(implicit val config: Configuration,
   }
 
   def resetData() = {
-    system.actorSelection("akka://application/user/TestActor-ResetData").resolveOne().map(actor => {
+    system.actorSelection(s"akka.tcp://$actorSystemName@$host:$port/user/TestActor-ResetData").resolveOne().map(actor => {
 
       log.info(s"Sending reset message")
 
