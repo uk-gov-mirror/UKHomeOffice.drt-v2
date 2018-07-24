@@ -150,6 +150,7 @@ trait UserRoleProviderLike {
 }
 
 
+@Singleton
 class Application @Inject()(implicit val config: Configuration,
                             implicit val mat: Materializer,
                             env: Environment,
