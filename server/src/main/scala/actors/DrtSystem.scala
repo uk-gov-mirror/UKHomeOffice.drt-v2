@@ -1,7 +1,8 @@
 package actors
 
 import akka.NotUsed
-import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
+import akka.actor.{ActorRef, ActorSystem, Cancellable, PoisonPill, Props}
+import akka.cluster.singleton.{ClusterSingletonManager, ClusterSingletonManagerSettings, ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.pattern.AskableActorRef
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.Source
@@ -22,6 +23,7 @@ import drt.shared.FlightsApi.{Flights, TerminalName}
 import drt.shared._
 import org.apache.spark.sql.SparkSession
 import org.joda.time.DateTimeZone
+import org.slf4j.LoggerFactory
 import play.api.Configuration
 import play.api.mvc.{Headers, Session}
 import server.feeds.acl.AclFeed
@@ -95,7 +97,24 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
   lazy val voyageManifestsActor: ActorRef = system.actorOf(Props(classOf[VoyageManifestsActor], now, expireAfterMillis, snapshotIntervalVm), name = "voyage-manifests-actor")
   lazy val forecastCrunchStateActor: ActorRef = system.actorOf(forecastCrunchStateProps, name = "crunch-forecast-state-actor")
   val historicalSplitsProvider: SplitProvider = SplitsProvider.csvProvider
-  lazy val shiftsActor: ActorRef = system.actorOf(Props(classOf[ShiftsActor]))
+
+  final val clusterShiftsActor = system.actorOf(
+    ClusterSingletonManager.props(
+      singletonProps = Props(classOf[ShiftsActor]),
+      terminationMessage = PoisonPill,
+      settings = ClusterSingletonManagerSettings(system)
+    ),
+    name = "shiftsActor"
+  )
+
+lazy val shiftsActor: ActorRef =
+  system.actorOf(
+    ClusterSingletonProxy.props(
+      singletonManagerPath = "/user/shiftsActor",
+      settings = ClusterSingletonProxySettings(system)
+    )
+  )
+
   lazy val fixedPointsActor: ActorRef = system.actorOf(Props(classOf[FixedPointsActor]))
   lazy val staffMovementsActor: ActorRef = system.actorOf(Props(classOf[StaffMovementsActor]))
   val useNationalityBasedProcessingTimes: Boolean = config.getOptional[String]("feature-flags.nationality-based-processing-times").isDefined
