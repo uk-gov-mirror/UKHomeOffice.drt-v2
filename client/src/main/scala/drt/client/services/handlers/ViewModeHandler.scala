@@ -37,6 +37,9 @@ class ViewModeHandler[M](viewModeCrunchStateMP: ModelRW[M, (ViewMode, Pot[Crunch
         case (cv, nv, pendingStale@PendingStale(_, _)) if cv == nv && isViewModeAbleToPoll(cv) =>
           log.info("crunch: Setting to PS from PS for live or future")
           updated((newViewMode, pendingStale, latestUpdateMillis))
+        case (cv, nv, Empty) if cv == nv && isViewModeAbleToPoll(cv) =>
+          log.info("crunch: Setting to PS from Empty for live or future")
+          updated((newViewMode, Pending(), latestUpdateMillis))
         case (_, nv, PendingStale(_, _)) if isViewModeAbleToPoll(nv)  =>
           log.info("crunch: Setting to Pending from PS")
           updated((newViewMode, Pending(), latestUpdateMillis))
