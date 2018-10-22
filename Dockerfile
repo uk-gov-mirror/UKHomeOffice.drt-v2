@@ -14,5 +14,4 @@ RUN apk --update add openssh-client \
     && \
     rm -rf /var/cache/apk/*
 USER 1000
-# trick
 ENTRYPOINT ["bin/drt", "-Duser.timezone=UTC"]
