@@ -14,7 +14,7 @@ pipeline:
       event:
         - [push, tag]
       branch:
-        - DRT-5336-owasp-zap
+        - master
         
   sonar-scanner:
     image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
@@ -59,6 +59,7 @@ pipeline:
 
     when:
       event: push
+      branch: [master, DRT-5336-owasp-zap]
 
 
   copy-e2e-result:
