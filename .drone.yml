@@ -18,10 +18,11 @@ pipeline:
   build:
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs
     commands:
-      - sbt -v
-      - sbt test docker:stage
+      - /root/entrypoint.sh
+      - sbt --error test docker:stage &
+      - SBT_PID=$!
+      - jstat -gcutil $SBT_PID 1000
     environment:
-      - JAVA_OPTS=-Xmx4g
       - ARTIFACTORY_USERNAME=drt_ci
     secrets:
       - ARTIFACTORY_PASSWORD
