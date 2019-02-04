@@ -70,6 +70,14 @@ lazy val client: Project = (project in file("client"))
 // Client projects (just one in this case)
 lazy val clients = Seq(client)
 
+lazy val drtSplits = (project in file("drt-splits"))
+  .settings(
+    name := "drt-splits",
+    version := Settings.version,
+    scalaVersion := Settings.versions.scala,
+    scalacOptions ++= Settings.scalacOptions
+  )
+
 // instantiate the JVM project for SBT with some additional settings
 lazy val server = (project in file("server"))
   .enablePlugins(PlayScala)
@@ -122,7 +130,7 @@ lazy val server = (project in file("server"))
   slick <<= slickCodeGenTask // register manual sbt command
 )
   .aggregate(clients.map(projectToRef): _*)
-  .dependsOn(sharedJVM)
+  .dependsOn(sharedJVM, drtSplits)
 
 // Command for building a release
 lazy val ReleaseCmd = Command.command("release") {

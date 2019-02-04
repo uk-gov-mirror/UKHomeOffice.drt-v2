@@ -22,6 +22,7 @@ import drt.shared.FlightsApi.TerminalName
 import drt.shared.KeyCloakApi.{KeyCloakGroup, KeyCloakUser}
 import drt.shared.SplitRatiosNs.SplitRatios
 import drt.shared.{AirportConfig, Api, Arrival, _}
+import drt.splits.DrtSplits
 import drt.staff.ImportStaff
 import drt.users.{KeyCloakClient, KeyCloakGroups}
 import org.joda.time.chrono.ISOChronology
@@ -207,6 +208,7 @@ class Application @Inject()(implicit val config: Configuration,
 
       override implicit val timeout: Timeout = Timeout(5 seconds)
 
+      DrtSplits()
       def actorSystem: ActorSystem = system
 
       def getCrunchStateForDay(day: MillisSinceEpoch): Future[Either[CrunchStateError, Option[CrunchState]]] = loadBestCrunchStateForPointInTime(day)
