@@ -61,22 +61,6 @@ object Router extends autowire.Server[ByteBuffer, Pickler, Pickler] {
 object PaxFlow {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def makeFlightPaxFlowCalculator(splitRatioForFlight: Arrival => Option[SplitRatios],
-                                  bestPax: Arrival => Int): Arrival => IndexedSeq[(MillisSinceEpoch, PaxTypeAndQueueCount)] = {
-    val provider = PaxLoadCalculator.flightPaxFlowProvider(splitRatioForFlight, bestPax)
-    arrival => {
-      val pax = bestPax(arrival)
-      val paxFlow = provider(arrival)
-      val summedPax = paxFlow.map(_._2.paxSum).sum
-      val firstPaxTime = paxFlow.headOption.map(pf => SDate(pf._1).toString)
-      log.debug(s"${Arrival.summaryString(arrival)} pax: $pax, summedFlowPax: $summedPax, deltaPax: ${pax - summedPax}, firstPaxTime: $firstPaxTime")
-      paxFlow
-    }
-  }
-
-  def splitRatioForFlight(splitsProviders: List[SplitProvider])
-                         (flight: Arrival): Option[SplitRatios] = SplitsProvider.splitsForFlight(splitsProviders)(flight)
-
   def pcpArrivalTimeForFlight(timeToChoxMillis: MillisSinceEpoch, firstPaxOffMillis: MillisSinceEpoch)
                              (walkTimeProvider: FlightWalkTime)
                              (flight: Arrival): MilliDate = pcpFrom(timeToChoxMillis, firstPaxOffMillis, walkTimeProvider)(flight)
@@ -102,21 +86,6 @@ trait AirportConfProvider extends AirportConfiguration {
     useStaffingInput = useStaffingInput,
     contactEmail = contactEmail
   )
-}
-
-trait ProdPassengerSplitProviders {
-  self: AirportConfiguration =>
-
-  val csvSplitsProvider: SplitsProvider.SplitProvider = SplitsProvider.csvProvider
-
-  def egatePercentageProvider(apiFlight: Arrival): Double = {
-    CSVPassengerSplitsProvider.egatePercentageFromSplit(csvSplitsProvider(apiFlight.IATA, MilliDate(apiFlight.Scheduled)), 0.6)
-  }
-
-  def fastTrackPercentageProvider(apiFlight: Arrival): Option[FastTrackPercentages] =
-    Option(CSVPassengerSplitsProvider.fastTrackPercentagesFromSplit(csvSplitsProvider(apiFlight.IATA, MilliDate(apiFlight.Scheduled)), 0d, 0d))
-
-  private implicit val timeout: Timeout = Timeout(250 milliseconds)
 }
 
 trait ImplicitTimeoutProvider {
@@ -150,7 +119,6 @@ class Application @Inject()(implicit val config: Configuration,
     with AirportConfProvider
     with ApplicationWithAlerts
     with ApplicationWithImports
-    with ProdPassengerSplitProviders
     with ImplicitTimeoutProvider {
 
   val googleTrackingCode: String = config.get[String]("googleTrackingCode")

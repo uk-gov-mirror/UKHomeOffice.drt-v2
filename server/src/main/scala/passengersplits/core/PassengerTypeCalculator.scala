@@ -3,7 +3,7 @@ package passengersplits.core
 import drt.shared.PaxType
 import drt.shared.PaxTypes._
 import org.slf4j.{Logger, LoggerFactory}
-import passengersplits.parsing.VoyageManifestParser.PassengerInfoJson
+import passengersplits.parsing.VoyageManifestParser.{ManifestPassengerProfile, PassengerInfoJson}
 
 object PassengerTypeCalculator {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -18,9 +18,8 @@ object PassengerTypeCalculator {
 
   def passengerInfoFields(pi: PassengerInfoJson) = PaxTypeInfo(pi.DisembarkationPortCode, pi.InTransitFlag, pi.DocumentIssuingCountryCode, pi.DocumentType, pi.NationalityCountryCode)
 
-  def transitMatters(portCode: String): PartialFunction[PaxTypeInfo, PaxType] = {
-    case PaxTypeInfo(_, "Y", _, _, _) => Transit
-    case PaxTypeInfo(Some(disembarkPortCode), _, _, _, _) if disembarkPortCode.nonEmpty && disembarkPortCode != portCode => Transit
+  def transitMatters(portCode: String): PartialFunction[ManifestPassengerProfile, PaxType] = {
+    case ManifestPassengerProfile(_, _, _, Some(initTransit)) if initTransit => Transit
   }
 
   val countryAndDocumentTypes: PartialFunction[PaxTypeInfo, PaxType] = {
@@ -38,7 +37,7 @@ object PassengerTypeCalculator {
 
   val mostAirports: PartialFunction[PaxTypeInfo, PaxType] = countryAndDocumentTypes orElse defaultToVisaNational
 
-  def whenTransitMatters(portCode: String): PartialFunction[PaxTypeInfo, PaxType] = transitMatters(portCode) orElse mostAirports
+  def whenTransitMatters(portCode: String): PartialFunction[ManifestPassengerProfile, PaxType] = transitMatters(portCode) orElse mostAirports
 
   case class Country(name: String, code3Letter: String, isVisaRequired: Boolean)
 
