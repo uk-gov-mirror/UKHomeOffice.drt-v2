@@ -30,20 +30,24 @@ describe('View Modes', function () {
     });
 
     it("should poll for updates when looking at future days", function () {
-      const endOfTheDayTomorrow = timeOnDay(tomorrowAsScheduledDate, "23:59:59")
-      cy.visit('#terminal/T1/current/arrivals/?date=' + endOfTheDayTomorrow)
-      .addFlightWithFlightCode("TS0123", timeStringTomorrow)
-      .get("#arrivals").contains("TS0123");
+      cy.visit('#terminal/T1/current/arrivals/?timeRangeStart=0&timeRangeEnd=24')
+      .addFlightWithFlightCode("TS0123", timeStringToday)
+      .get("#arrivals").contains("TS0123")
+      .addFlightWithFlightCode("TS0124", timeStringTomorrow)
+      .get('#tomorrow').click()
+      .get("#arrivals").contains("TS0124")
+      .reload()
+      .get("#arrivals").contains("TS0124");
     });
 
     it("should poll for updates when switching from historic to live view", function () {
       cy.visit('#terminal/T1/current/arrivals/?timeRangeStart=0&timeRangeEnd=24')
       .get('#yesterday').click()
-      .get('#terminal-data').contains("Nothing to show for this time period")
-      .wait(2000)
+      .get('#arrivals').contains("No flights to display")
       .get('#tomorrow').click()
       .addFlightWithFlightCode("TS0123", timeStringTomorrow)
       .get("#arrivals").contains("TS0123")
+      .reload()
       .addFlightWithFlightCode("TS0234", timeStringTomorrow)
       .get("#arrivals").contains("TS0234");
     });

@@ -27,9 +27,15 @@ class ViewModeHandler[M](viewModeCrunchStateMP: ModelRW[M, (ViewMode, Pot[Crunch
       val (currentViewMode, _, currentLatestUpdateMillis) = value
 
       val latestUpdateMillis = (newViewMode, currentViewMode) match {
-        case (newVm, oldVm) if newVm != oldVm => 0L
-        case (ViewDay(newTime), ViewDay(oldTime)) if newTime != oldTime => 0L
-        case _ => currentLatestUpdateMillis
+        case (newVm, oldVm) if newVm != oldVm =>
+          log.info(s"Using 0 update millis")
+          0L
+        case (ViewDay(newTime), ViewDay(oldTime)) if newTime != oldTime =>
+          log.info(s"Using 0 update millis")
+          0L
+        case _ =>
+          log.info(s"Using current update millis")
+          currentLatestUpdateMillis
       }
 
       log.info(s"VM: Set client newViewMode from $currentViewMode to $newViewMode. latestUpdateMillis: $latestUpdateMillis, crunchStateMP: ${crunchStateMP.value.getClass.getSimpleName}")
