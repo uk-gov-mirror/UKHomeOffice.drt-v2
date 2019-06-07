@@ -21,6 +21,23 @@ describe('View Modes', function () {
 
   describe('When switching between view modes in the app', function () {
 
+    it("should poll for updates when looking at future days", function () {
+      const endOfTheDayTomorrow = timeOnDay(tomorrowAsScheduledDate, "22:59:59")
+
+      cy
+        .asABorderForceOfficer()
+        .navigateHome()
+        .navigateToMenuItem('T1')
+        .chooseArrivalsTab()
+        .get('#tomorrow').click()
+        .addFlightWithFlightCode("TS0123", timeStringTomorrow)
+        .addFlightWithFlightCode("TS0234", timeOnDay(todayAsScheduledDate, "04:45"))
+        .addFlightWithFlightCode("TS0235", timeOnDay(todayAsScheduledDate, "05:45"))
+        .get("#arrivals").contains("TS0123")
+
+    });
+
+
     it("should poll for updates when looking at the live view", function () {
       cy
         .asABorderForceOfficer()
@@ -39,23 +56,6 @@ describe('View Modes', function () {
         .addFlightWithFlightCode("TS0123", timeStringTomorrow)
         .asABorderForceOfficer()
         .visit('#terminal/T1/current/arrivals/?date=' + endOfTheDayTomorrow)
-        .get("#arrivals").contains("TS0123")
-
-    });
-
-    it("should poll for updates when looking at future days", function () {
-      const endOfTheDayTomorrow = timeOnDay(tomorrowAsScheduledDate, "22:59:59")
-
-      cy
-        .asABorderForceOfficer()
-        .navigateHome()
-        .navigateToMenuItem('T1')
-        .chooseArrivalsTab()
-        .choose24Hours()
-        .get('#tomorrow').click()
-        .addFlightWithFlightCode("TS0123", timeStringTomorrow)
-        .addFlightWithFlightCode("TS0234", timeOnDay(todayAsScheduledDate, "04:45"))
-        .addFlightWithFlightCode("TS0235", timeOnDay(todayAsScheduledDate, "05:45"))
         .get("#arrivals").contains("TS0123")
 
     });
