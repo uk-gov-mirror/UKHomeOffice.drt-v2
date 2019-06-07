@@ -16,6 +16,7 @@ describe('View Modes', function () {
   const timeStringToday = timeOnDay(todayAsScheduledDate, timeString)
   const timeStringTomorrow = timeOnDay(tomorrowAsScheduledDate, timeString)
 
+
   beforeEach(() => cy.deleteData());
 
   describe('When switching between view modes in the app', function () {
@@ -53,6 +54,8 @@ describe('View Modes', function () {
         .choose24Hours()
         .get('#tomorrow').click()
         .addFlightWithFlightCode("TS0123", timeStringTomorrow)
+        .addFlightWithFlightCode("TS0234", timeOnDay(todayAsScheduledDate, "04:45"))
+        .addFlightWithFlightCode("TS0235", timeOnDay(todayAsScheduledDate, "05:45"))
         .get("#arrivals").contains("TS0123")
 
     });
