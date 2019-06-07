@@ -19,7 +19,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 class CrunchStateUpdatesHandler[M](getCurrentViewMode: () => ViewMode,
                                    modelRW: ModelRW[M, (Pot[CrunchState], MillisSinceEpoch)]) extends LoggingActionHandler(modelRW) {
   val liveRequestFrequency: FiniteDuration = 2 seconds
-  val forecastRequestFrequency: FiniteDuration = 15 seconds
+  val forecastRequestFrequency: FiniteDuration = 5 seconds
 
   val thirtySixHoursInMillis: Long = 1000L * 60 * 60 * 36
 
