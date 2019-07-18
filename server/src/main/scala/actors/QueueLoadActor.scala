@@ -1,6 +1,5 @@
 package actors
 
-import actors.FlightMessageConversion._
 import akka.persistence._
 import com.trueaccord.scalapb.GeneratedMessage
 import drt.shared._
@@ -12,9 +11,8 @@ import services.graphstages.Crunch.LoadMinute
 import scala.collection.immutable.SortedMap
 
 
-class QueueLoadActor(now: () => SDateLike,
-                     expireAfterMillis: Long,
-                     name: String) extends RecoveryActorLike with PersistentDrtActor[SortedMap[TQM, LoadMinute]] {
+class QueueLoadActor(now: () => SDateLike, expireAfterMillis: Long)
+  extends RecoveryActorLike with PersistentDrtActor[SortedMap[TQM, LoadMinute]] {
 
   override val log: Logger = LoggerFactory.getLogger(getClass)
   override val snapshotBytesThreshold: Int = 10 * Sizes.oneMegaByte

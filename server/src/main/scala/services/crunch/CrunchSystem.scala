@@ -196,6 +196,7 @@ object CrunchSystem {
       props.voyageManifestsActor, props.voyageManifestsRequestActor,
       props.liveCrunchStateActor, props.forecastCrunchStateActor,
       props.actors("aggregated-arrivals").actorRef,
+      props.actors("queue-load").actorRef,
       crunchStartDateProvider, props.now, props.airportConfig.queues
     )
 

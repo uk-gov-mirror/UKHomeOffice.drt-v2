@@ -178,6 +178,8 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
   lazy val aggregatedArrivalsActor: ActorRef = system.actorOf(Props(classOf[AggregatedArrivalsActor], airportConfig.portCode, ArrivalTable(airportConfig.portCode, PostgresTables)), name = "aggregated-arrivals-actor")
   lazy val registeredArrivalsActor: ActorRef = system.actorOf(Props(classOf[RegisteredArrivalsActor], oneMegaByte, None, airportConfig.portCode, now, expireAfterMillis), name = "registered-arrivals-actor")
 
+  lazy val queueLoadActor: ActorRef = system.actorOf(Props(classOf[QueueLoadActor], now, expireAfterMillis), name = "queue-load-actor")
+
   lazy val liveCrunchStateActor: ActorRef = system.actorOf(liveCrunchStateProps, name = "crunch-live-state-actor")
   lazy val forecastCrunchStateActor: ActorRef = system.actorOf(forecastCrunchStateProps, name = "crunch-forecast-state-actor")
 
@@ -325,7 +327,8 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
         "base-arrivals" -> baseArrivalsActor,
         "forecast-arrivals" -> forecastArrivalsActor,
         "live-arrivals" -> liveArrivalsActor,
-        "aggregated-arrivals" -> aggregatedArrivalsActor
+        "aggregated-arrivals" -> aggregatedArrivalsActor,
+        "queue-load" -> queueLoadActor
       ),
       useNationalityBasedProcessingTimes = params.useNationalityBasedProcessingTimes,
       useLegacyManifests = params.useLegacyManifests,
