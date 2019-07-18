@@ -6,7 +6,7 @@ import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
 import server.protobuf.messages.QueueLoad.{QueueLoadMessage, QueueLoadsMessage}
 import services.graphstages.Crunch
-import services.graphstages.Crunch.LoadMinute
+import services.graphstages.Crunch.{LoadMinute, Loads}
 
 import scala.collection.immutable.SortedMap
 
@@ -48,15 +48,16 @@ class QueueLoadActor(now: () => SDateLike, expireAfterMillis: Long)
     super.postRecoveryComplete()
   }
 
-  override def stateToMessage: GeneratedMessage = QueueLoadsMessage(state.map {
-      case (_, lm) => QueueLoadMessage(Option(lm.terminalName), Option(lm.queueName), Option(lm.minute), Option(lm.paxLoad), Option(lm.workLoad))
-    }.toSeq)
+  override def stateToMessage: GeneratedMessage = queueLoadsToMessage(state)
+
+  def queueLoadsToMessage(queueLoads: SortedMap[TQM, LoadMinute]): QueueLoadsMessage = QueueLoadsMessage(queueLoads.map {
+    case (_, lm) => QueueLoadMessage(Option(lm.terminalName), Option(lm.queueName), Option(lm.minute), Option(lm.paxLoad), Option(lm.workLoad))
+  }.toSeq)
 
   override def receiveCommand: Receive = {
-    case qlm@QueueLoadsMessage(queueLoads) =>
-      val newLoads = queueLoadMessageToLoadMinutes(queueLoads)
+    case Loads(newLoads) =>
       state = state ++ newLoads
-      persistAndMaybeSnapshot(qlm)
+      persistAndMaybeSnapshot(queueLoadsToMessage(state))
 
     case SaveSnapshotSuccess(md) =>
       log.info(s"Save snapshot success: $md")

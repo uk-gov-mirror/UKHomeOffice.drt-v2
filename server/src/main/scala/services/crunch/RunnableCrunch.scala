@@ -180,7 +180,7 @@ object RunnableCrunch {
 
           workload.out ~> batchLoad ~> workloadFanOut ~> crunch
                                        workloadFanOut ~> simulation.in0
-                                       workloadFanOut.map(_.loadMinutes) ~> queueLoadSink
+                                       workloadFanOut ~> queueLoadSink
 
           crunch                   ~> portState.in1
           actualDesksAndWaitTimes  ~> portState.in2
