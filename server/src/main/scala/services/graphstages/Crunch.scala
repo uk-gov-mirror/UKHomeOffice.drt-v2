@@ -19,7 +19,7 @@ object Crunch {
   case class FlightSplitDiff(flightId: Int, paxType: PaxType, terminalName: TerminalName, queueName: QueueName, paxLoad: Double, workLoad: Double, minute: MillisSinceEpoch)
 
   case class LoadMinute(terminalName: TerminalName, queueName: QueueName, paxLoad: Double, workLoad: Double, minute: MillisSinceEpoch) extends TerminalQueueMinute {
-    lazy val uniqueId: TQM = TQM(terminalName, queueName, minute)
+    lazy val key: TQM = TQM(terminalName, queueName, minute)
   }
 
   object LoadMinute {
@@ -308,7 +308,7 @@ object Crunch {
       case Some(existingDayLoads) =>
         dayLoadMinutes
           .foldLeft(existingDayLoads.loadMinutes) {
-            case (daySoFar, (_, loadMinute)) => daySoFar.updated(loadMinute.uniqueId, loadMinute)
+            case (daySoFar, (_, loadMinute)) => daySoFar.updated(loadMinute.key, loadMinute)
           }
     }
   }

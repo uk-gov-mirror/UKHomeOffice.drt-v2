@@ -52,7 +52,7 @@ class SimulationGraphStage(name: String = "",
           log.info(s"Received ${cms.size} initial crunch minutes")
           SortedMap[TQM, LoadMinute]() ++ cms.map(cm => {
             val lm = LoadMinute(cm.terminalName, cm.queueName, cm.paxLoad, cm.workLoad, cm.minute)
-            (lm.uniqueId, lm)
+            (lm.key, lm)
           })
       }
 

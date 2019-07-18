@@ -145,7 +145,7 @@ class WorkloadGraphStage(name: String = "",
       val toRemoveIds = existingLoads.keys.toSet -- updatedLoads.keys.toSet
       val removes = toRemoveIds
         .map(id => existingLoads.get(id))
-        .collect { case Some(lm) if lm.workLoad != 0 => (lm.uniqueId, lm.copy(paxLoad = 0, workLoad = 0)) }
+        .collect { case Some(lm) if lm.workLoad != 0 => (lm.key, lm.copy(paxLoad = 0, workLoad = 0)) }
 
       val diff = updates.toMap ++ removes
       log.info(s"${diff.size} updated load minutes (${updates.size} updates + ${removes.size} removes)")

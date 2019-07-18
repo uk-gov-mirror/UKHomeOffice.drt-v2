@@ -56,6 +56,8 @@ object RunnableCrunch {
                                        fcstCrunchStateActor: ActorRef,
                                        aggregatedArrivalsStateActor: ActorRef,
 
+                                       queueLoadActor: ActorRef,
+
                                        crunchPeriodStartMillis: SDateLike => SDateLike,
                                        now: () => SDateLike,
                                        portQueues: Map[TerminalName, Seq[QueueName]]
@@ -116,7 +118,7 @@ object RunnableCrunch {
 
           val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
           val arrivalSplitsFanOut = builder.add(Broadcast[FlightsWithSplits](2))
-          val workloadFanOut = builder.add(Broadcast[Loads](2))
+          val workloadFanOut = builder.add(Broadcast[Loads](3))
           val staffFanOut = builder.add(Broadcast[StaffMinutes](2))
           val portStateFanOut = builder.add(Broadcast[PortStateWithDiff](3))
 
@@ -130,6 +132,7 @@ object RunnableCrunch {
           val fcstSink = builder.add(Sink.actorRef(fcstCrunchStateActor, "complete"))
           val aggregatedArrivalsSink = builder.add(Sink.actorRef(aggregatedArrivalsStateActor, "complete"))
           val manifestsRequestSink = builder.add(Sink.actorRef(manifestsRequestActor, "complete"))
+          val queueLoadSink = builder.add(Sink.actorRef(queueLoadActor, "complete"))
 
           // @formatter:off
           baseArrivals ~> baseArrivalsFanOut ~> arrivals.in0
@@ -177,6 +180,7 @@ object RunnableCrunch {
 
           workload.out ~> batchLoad ~> workloadFanOut ~> crunch
                                        workloadFanOut ~> simulation.in0
+                                       workloadFanOut.map(_.loadMinutes) ~> queueLoadSink
 
           crunch                   ~> portState.in1
           actualDesksAndWaitTimes  ~> portState.in2

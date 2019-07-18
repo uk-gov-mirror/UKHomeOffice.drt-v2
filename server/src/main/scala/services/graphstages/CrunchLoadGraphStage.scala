@@ -44,7 +44,7 @@ class CrunchLoadGraphStage(name: String = "",
         case None => SortedMap[TQM, LoadMinute]()
         case Some(CrunchMinutes(cms)) => SortedMap[TQM, LoadMinute]() ++ cms.map(cm => {
           val lm = LoadMinute(cm.terminalName, cm.queueName, cm.paxLoad, cm.workLoad, cm.minute)
-          (lm.uniqueId, lm)
+          (lm.key, lm)
         })
       }
 
