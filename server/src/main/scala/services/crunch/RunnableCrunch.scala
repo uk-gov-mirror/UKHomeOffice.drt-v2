@@ -151,11 +151,9 @@ object RunnableCrunch {
               case (ManifestsFeedSuccess(DqManifests(_, acc), _), ManifestsFeedSuccess(DqManifests(_, ms), createdAt)) =>
                 val existingManifests = acc.toSeq.map(vm => BestAvailableManifest(vm))
                 val newManifests = ms.toSeq.map(vm => BestAvailableManifest(vm))
-                log.info(s"xxxx Conflating live (1) ${existingManifests.length} + ${newManifests.length}")
                 BestManifestsFeedSuccess(existingManifests ++ newManifests, createdAt)
               case (BestManifestsFeedSuccess(acc, _), ManifestsFeedSuccess(DqManifests(_, ms), createdAt)) =>
                 val newManifests = ms.toSeq.map(vm => BestAvailableManifest(vm))
-                log.info(s"xxxx Conflating live (2) ${acc.length} + ${newManifests.length}")
                 BestManifestsFeedSuccess(acc ++ newManifests, createdAt)
             } ~> manifestGraphKillSwitch ~> arrivalSplits.in1
 
@@ -163,7 +161,6 @@ object RunnableCrunch {
 
           manifestsHistoric.out.conflate[ManifestsFeedResponse] {
             case (BestManifestsFeedSuccess(acc, _), BestManifestsFeedSuccess(newManifests, createdAt)) =>
-              log.info(s"xxxx Conflating historic ${acc.length} + ${newManifests.length}")
               BestManifestsFeedSuccess(acc ++ newManifests, createdAt)
           } ~> arrivalSplits.in2
 
