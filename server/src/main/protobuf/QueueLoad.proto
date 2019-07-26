@@ -10,6 +10,5 @@ message QueueLoadMessage {
     optional string terminal = 1;
     optional string queue = 2;
     optional int64 minute = 3;
-    optional double pax = 4;
-    optional double work = 5;
+    optional double work = 4;
 }

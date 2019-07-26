@@ -1,11 +1,15 @@
 package services.crunch.workload
 
 import controllers.ArrivalGenerator
+import drt.shared.FlightsApi.{QueueName, TerminalName}
 import drt.shared.SplitRatiosNs.SplitSources
 import drt.shared._
 import org.specs2.mutable.Specification
 import services.SDate
-import services.graphstages.WorkloadCalculator
+import services.graphstages.Crunch.LoadMinute
+import services.graphstages.{Crunch, WorkloadCalculator}
+
+import scala.collection.immutable.SortedMap
 
 class WorkloadSpec extends Specification {
   "Given an arrival with 1 pax and 1 split containing 1 pax with no nationality data " +
@@ -246,5 +250,54 @@ class WorkloadSpec extends Specification {
       (PaxTypes.EeaMachineReadable, Queues.EeaDesk, eeaDeskWorkloadInSeconds * 2 / 12),
       (PaxTypes.VisaNational, Queues.NonEeaDesk, nonEEADeskWorkloadInSeconds * 2 / 12)
     )
+  }
+
+  val terminalQueues: TerminalName => Seq[QueueName] = (t: TerminalName) => Map(
+    "T1" -> Seq("Q1", "Q2"),
+    "T2" -> Seq("Q1")
+  ).getOrElse(t, Seq())
+
+  "Given some loads and affected TQMs from one day at one terminal" >> {
+    val day1 = SDate("2019-01-01T12:00").millisSinceEpoch + 180 * Crunch.oneMinuteMillis
+    val day2 = SDate("2019-01-02T12:00").millisSinceEpoch + 240 * Crunch.oneMinuteMillis
+    val day3 = SDate("2019-01-03T12:00").millisSinceEpoch + 320 * Crunch.oneMinuteMillis
+    val loadMinutes = SortedMap[TQM, LoadMinute](
+      TQM("T1", "Q1", day1) -> LoadMinute("T1", "Q1", 5, 15, day1),
+      TQM("T1", "Q1", day2) -> LoadMinute("T1", "Q1", 6, 10, day2),
+      TQM("T1", "Q1", day3) -> LoadMinute("T1", "Q1", 7, 30, day3)
+    )
+
+    val affectedTQMs = Seq(TQM("T1", "Q1", day2 + 360 * Crunch.oneMinuteMillis))
+
+    val offsetMillis = 300 * Crunch.oneMinuteMillis
+
+    val result = WorkloadCalculator.daysOfLoadsAffected(loadMinutes, affectedTQMs, offsetMillis, terminalQueues)
+
+    "When I ask for full days of loads for the affected TQMs" >> {
+      "I should see 1440 minutes of loads for each queue at that terminal" >> {
+        val expectedSize = 1440 * terminalQueues("T1").size
+
+        result.size === expectedSize
+      }
+
+      "I should see (1440 * 2) - 1, ie 1 day per queue minus the one defined minute" >> {
+        val zeroWorkloadsCount = result.count(_._2.workLoad == 0)
+
+        zeroWorkloadsCount === 1440 + 1439
+      }
+
+      "I should see 1 workload of 10 for the one defined minute" >> {
+        val nonZeroWorkloads = result.toMap.get(TQM("T1", "Q1", day2)).map(_.workLoad)
+
+        nonZeroWorkloads === Option(10)
+      }
+
+      "The first minute of the day should be day 2's local time midnight plus the offset minutes" >> {
+        val firstMinuteOfDay = result.map(_._1.minute).min
+        val expectedFirstMinute = SDate("2019-01-02T00:00").millisSinceEpoch + offsetMillis
+
+        firstMinuteOfDay === expectedFirstMinute
+      }
+    }
   }
 }

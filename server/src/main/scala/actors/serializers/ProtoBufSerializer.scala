@@ -6,6 +6,7 @@ import server.protobuf.messages.Alert.{Alert, AlertSnapshotMessage}
 import server.protobuf.messages.CrunchState.{CrunchDiffMessage, CrunchStateSnapshotMessage}
 import server.protobuf.messages.FixedPointMessage.FixedPointsStateSnapshotMessage
 import server.protobuf.messages.FlightsMessage.{FeedStatusMessage, FeedStatusesMessage, FlightStateSnapshotMessage, FlightsDiffMessage}
+import server.protobuf.messages.QueueLoad.{QueueLoadMessage, QueueLoadsMessage}
 import server.protobuf.messages.RegisteredArrivalMessage.{RegisteredArrivalMessage, RegisteredArrivalsMessage}
 import server.protobuf.messages.ShiftMessage.ShiftStateSnapshotMessage
 import server.protobuf.messages.StaffMovementMessages.StaffMovementsStateSnapshotMessage
@@ -33,6 +34,8 @@ class ProtoBufSerializer extends SerializerWithStringManifest {
   final val AlertSnapshot: String = classOf[AlertSnapshotMessage].getName
   final val RegisteredArrivals: String = classOf[RegisteredArrivalsMessage].getName
   final val RegisteredArrival: String = classOf[RegisteredArrivalMessage].getName
+  final val QueueLoads: String = classOf[QueueLoadsMessage].getName
+  final val QueueLoad: String = classOf[QueueLoadMessage].getName
 
   override def toBinary(objectToSerialize: AnyRef): Array[Byte] = {
     objectToSerialize match {
@@ -53,6 +56,8 @@ class ProtoBufSerializer extends SerializerWithStringManifest {
       case m: AlertSnapshotMessage => m.toByteArray
       case m: RegisteredArrivalMessage => m.toByteArray
       case m: RegisteredArrivalsMessage => m.toByteArray
+      case m: QueueLoadsMessage => m.toByteArray
+      case m: QueueLoadMessage => m.toByteArray
     }
   }
 
@@ -77,6 +82,8 @@ class ProtoBufSerializer extends SerializerWithStringManifest {
       case Alerts => Alert.parseFrom(bytes)
       case RegisteredArrival => RegisteredArrivalMessage.parseFrom(bytes)
       case RegisteredArrivals => RegisteredArrivalsMessage.parseFrom(bytes)
+      case QueueLoads => QueueLoadsMessage.parseFrom(bytes)
+      case QueueLoad => QueueLoadMessage.parseFrom(bytes)
     }
   }
 }

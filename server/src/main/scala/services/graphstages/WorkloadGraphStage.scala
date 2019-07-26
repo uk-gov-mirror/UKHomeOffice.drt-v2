@@ -8,6 +8,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import services.SDate
 import services.graphstages.Crunch._
 
+import scala.collection.immutable
 import scala.collection.immutable.{Map, SortedMap}
 import scala.language.postfixOps
 
@@ -94,8 +95,10 @@ class WorkloadGraphStage(name: String = "",
         log.info(s"Got latestDiff")
 
         loadMinutes = loadMinutes ++ latestDiff
+
+        val daysAffectedFullWorkloads = WorkloadCalculator.daysOfLoadsAffected(loadMinutes, affectedTqms, airportConfig.crunchOffsetMinutes * Crunch.oneMinuteMillis, airportConfig.nonTransferQueues)
         log.info(s"Merged load minutes")
-        updatedLoadsToPush = purgeExpired(updatedLoadsToPush ++ latestDiff, now, expireAfterMillis.toInt)
+        updatedLoadsToPush = updatedLoadsToPush ++ daysAffectedFullWorkloads
         log.info(s"${updatedLoadsToPush.size} load minutes to push (${updatedLoadsToPush.values.count(_.paxLoad == 0d)} zero pax minutes)")
 
         pushStateIfReady()

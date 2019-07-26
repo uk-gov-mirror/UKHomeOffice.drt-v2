@@ -56,7 +56,7 @@ class S3ManifestPoller(sourceQueue: SourceQueueWithComplete[ManifestsFeedRespons
         log.info(s"Fetched ${maybeManifests.count(_.isDefined)} manifests up to file $latestFileName")
         ManifestsFeedSuccess(DqManifests(latestFileName, maybeManifests.flatten), SDate.now())
       case Failure(t) =>
-        log.warn(s"Failed to fetch new manifests", t)
+        log.warn(s"Failed to fetch new manifests", t.getMessage)
         ManifestsFeedFailure(t.toString, SDate.now())
     }
   }

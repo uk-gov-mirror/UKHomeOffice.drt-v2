@@ -449,6 +449,8 @@ trait SDateLike {
 
   def startOfTheMonth(): SDateLike
 
+  def getLocalPreviousMidnight: SDateLike
+
   def getLastSunday: SDateLike =
     if (getDayOfWeek() == 7)
       this

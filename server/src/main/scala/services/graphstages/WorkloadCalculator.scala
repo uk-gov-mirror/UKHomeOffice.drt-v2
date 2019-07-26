@@ -1,14 +1,15 @@
 package services.graphstages
 
 import drt.shared.CrunchApi.MillisSinceEpoch
+import drt.shared.FlightsApi.{QueueName, TerminalName}
 import drt.shared.SplitRatiosNs.SplitSources
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
-import services.PcpArrival
-import services.graphstages.Crunch.FlightSplitMinute
+import services.{PcpArrival, SDate}
+import services.graphstages.Crunch.{FlightSplitMinute, LoadMinute}
 import services.workloadcalculator.PaxLoadCalculator.{Load, minutesForHours, paxDeparturesPerMinutes, paxOffFlowRate}
 
-import scala.collection.immutable.Map
+import scala.collection.immutable.{Map, SortedMap}
 
 object WorkloadCalculator {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -101,5 +102,23 @@ object WorkloadCalculator {
         defaultWorkload
     }
     FlightSplitMinute(flight.uniqueId, apiSplitRatio.passengerType, flight.Terminal, apiSplitRatio.queueType, splitPaxInMinute, splitWorkLoadInMinute, minuteMillis)
+  }
+
+  def daysOfLoadsAffected(loadMinutes: SortedMap[TQM, LoadMinute], affectedTqms: Iterable[TQM], dayOffsetMillis: Long, terminalQueues: TerminalName => Seq[QueueName]): Seq[(TQM, LoadMinute)] = {
+    val uniqueMinutes: Set[MillisSinceEpoch] = affectedTqms.map(_.minute).toSet
+    val daysAffected = uniqueMinutes.map(m => SDate(m).getLocalPreviousMidnight.millisSinceEpoch + dayOffsetMillis).toSeq
+    val affectedTerminals = affectedTqms.map(_.terminalName).toSet.toSeq
+    val daysAffectedFullWorkloads: Seq[(TQM, LoadMinute)] = for {
+      dayStartMillis <- daysAffected
+      t <- affectedTerminals
+      q <- terminalQueues(t)
+      minOfDay <- 0L until Crunch.oneDayMillis by Crunch.oneMinuteMillis
+    } yield {
+      val m = dayStartMillis + minOfDay
+      val tqm = TQM(t, q, m)
+      val lm = loadMinutes.getOrElse(tqm, LoadMinute(terminalName = t, queueName = q, paxLoad = 0, workLoad = 0, minute = m))
+      (tqm, lm)
+    }
+    daysAffectedFullWorkloads
   }
 }

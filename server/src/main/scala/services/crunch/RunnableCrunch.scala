@@ -118,7 +118,8 @@ object RunnableCrunch {
 
           val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
           val arrivalSplitsFanOut = builder.add(Broadcast[FlightsWithSplits](2))
-          val workloadFanOut = builder.add(Broadcast[Loads](3))
+          val workloadFanOut = builder.add(Broadcast[Loads](2))
+          val batchedWorkloadFanOut = builder.add(Broadcast[Loads](2))
           val staffFanOut = builder.add(Broadcast[StaffMinutes](2))
           val portStateFanOut = builder.add(Broadcast[PortStateWithDiff](3))
 
@@ -175,9 +176,9 @@ object RunnableCrunch {
           arrivalSplits.out ~> arrivalSplitsFanOut ~> workload
                                arrivalSplitsFanOut ~> portState.in0
 
-          workload.out ~> batchLoad ~> workloadFanOut ~> crunch
-                                       workloadFanOut ~> simulation.in0
-                                       workloadFanOut ~> queueLoadSink
+          workload.out ~> workloadFanOut ~> batchLoad ~> batchedWorkloadFanOut ~> crunch
+                                                         batchedWorkloadFanOut ~> simulation.in0
+                          workloadFanOut ~> queueLoadSink
 
           crunch                   ~> portState.in1
           actualDesksAndWaitTimes  ~> portState.in2

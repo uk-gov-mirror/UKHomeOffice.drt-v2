@@ -78,7 +78,7 @@ abstract case class ChromaFetcher(override val feedType: ChromaFeedType, implici
 
   case class livePipeline(token: String) {
 
-    val pipeline: (HttpRequest => Future[List[ChromaLiveFlight]]) = {
+    val pipeline: HttpRequest => Future[List[ChromaLiveFlight]] = {
       log.info(s"Sending request for $token")
       val logRequest: HttpRequest => HttpRequest = { r => log.debug(r.toString); r }
 
