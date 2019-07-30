@@ -1,5 +1,6 @@
 package services.crunch
 
+import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.AskableActorRef
 import akka.stream._
@@ -47,7 +48,6 @@ case class CrunchProps[FR](logLabel: String = "",
                            useLegacyManifests: Boolean = false,
                            now: () => SDateLike = () => SDate.now(),
                            initialFlightsWithSplits: Option[FlightsWithSplits] = None,
-                           splitsPredictorStage: SplitsPredictorBase,
                            b5JStartDate: SDateLike,
                            manifestsLiveSource: Source[ManifestsFeedResponse, SourceQueueWithComplete[ManifestsFeedResponse]],
                            manifestsHistoricSource: Source[ManifestsFeedResponse, SourceQueueWithComplete[ManifestsFeedResponse]],
@@ -62,6 +62,7 @@ case class CrunchProps[FR](logLabel: String = "",
                            arrivalsBaseSource: Source[ArrivalsFeedResponse, FR],
                            arrivalsFcstSource: Source[ArrivalsFeedResponse, FR],
                            arrivalsLiveSource: Source[ArrivalsFeedResponse, FR],
+                           desksAndWaitsSource: Source[DesksAndWaitsMinutes, NotUsed],
                            initialShifts: ShiftAssignments = ShiftAssignments(Seq()),
                            initialFixedPoints: FixedPointAssignments = FixedPointAssignments(Seq()),
                            initialStaffMovements: Seq[StaffMovement] = Seq(),
@@ -134,8 +135,6 @@ object CrunchSystem {
       now = props.now,
       maxDaysToCrunch = props.maxDaysToCrunch)
 
-    val splitsPredictorStage = props.splitsPredictorStage
-
     val staffGraphStage = new StaffGraphStage(
       name = props.logLabel,
       initialShifts = props.initialShifts,
@@ -189,9 +188,9 @@ object CrunchSystem {
       expireAfterMillis = props.expireAfterMillis,
       now = props.now)
 
-    val crunchSystem = RunnableCrunch(
+    val crunchSystem = DrtGraph(
       props.arrivalsBaseSource, props.arrivalsFcstSource, props.arrivalsLiveSource, props.manifestsLiveSource, props.manifestsHistoricSource, shiftsSource, fixedPointsSource, staffMovementsSource, actualDesksAndQueuesSource,
-      arrivalsStage, arrivalSplitsGraphStage, splitsPredictorStage, workloadGraphStage, loadBatcher, crunchLoadGraphStage, staffGraphStage, staffBatcher, simulationGraphStage, portStateGraphStage, fcstArrivalsDiffingStage, liveArrivalsDiffingStage,
+      arrivalsStage, arrivalSplitsGraphStage, workloadGraphStage, loadBatcher, props.desksAndWaitsSource, staffGraphStage, staffBatcher, simulationGraphStage, portStateGraphStage, fcstArrivalsDiffingStage, liveArrivalsDiffingStage,
       props.actors("base-arrivals").actorRef, props.actors("forecast-arrivals").actorRef, props.actors("live-arrivals").actorRef,
       props.voyageManifestsActor, props.voyageManifestsRequestActor,
       props.liveCrunchStateActor, props.forecastCrunchStateActor,
@@ -200,7 +199,7 @@ object CrunchSystem {
       crunchStartDateProvider, props.now, props.airportConfig.queues
     )
 
-    val (baseIn, fcstIn, liveIn, manifestsLiveIn, manifestsHistoricIn, shiftsIn, fixedPointsIn, movementsIn, actDesksIn, arrivalsKillSwitch, manifestsKillSwitch) = crunchSystem.run
+    val (baseIn, fcstIn, liveIn, manifestsLiveIn, manifestsHistoricIn, shiftsIn, fixedPointsIn, movementsIn, actDesksIn, _, arrivalsKillSwitch, manifestsKillSwitch) = crunchSystem.run
 
     CrunchSystem(
       shifts = shiftsIn,

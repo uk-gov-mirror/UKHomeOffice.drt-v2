@@ -4,6 +4,8 @@ import actors.Sizes.oneMegaByte
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props, Scheduler}
 import akka.pattern.AskableActorRef
+import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
+import akka.persistence.query.{EventEnvelope, PersistenceQuery}
 import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
 import akka.stream.{Materializer, OverflowStrategy}
 import akka.util.Timeout
@@ -23,24 +25,23 @@ import drt.server.feeds.lhr.sftp.LhrSftpLiveContentProvider
 import drt.server.feeds.lhr.{LHRFlightFeed, LHRForecastFeed}
 import drt.server.feeds.ltn.LtnLiveFeed
 import drt.server.feeds.{ArrivalsFeedResponse, ArrivalsFeedSuccess, ManifestsFeedResponse}
-import drt.shared.CrunchApi.{MillisSinceEpoch, PortState}
+import drt.shared.CrunchApi.{DesksAndWaitTimeMinute, MillisSinceEpoch, PortState}
 import drt.shared.FlightsApi.{Flights, TerminalName}
 import drt.shared._
 import manifests.ManifestLookup
 import manifests.actors.{RegisteredArrivals, RegisteredArrivalsActor}
 import manifests.graph.{BatchStage, LookupStage, ManifestsGraph}
 import manifests.passengers.S3ManifestPoller
-import org.apache.spark.sql.SparkSession
 import org.joda.time.DateTimeZone
 import play.api.Configuration
 import play.api.mvc.{Headers, Session}
+import server.protobuf.messages.DesksAndWaits.DesksAndWaitsUpdatesMessage
 import services.PcpArrival.{GateOrStandWalkTime, gateOrStandWalkTimeCalculator, walkTimeMillisProviderFromCsv}
 import services.SplitsProvider.SplitProvider
 import services._
 import services.crunch._
-import services.graphstages.Crunch.{oneDayMillis, oneMinuteMillis}
+import services.graphstages.Crunch.{DesksAndWaitsMinutes, oneDayMillis, oneMinuteMillis}
 import services.graphstages._
-import services.prediction.SparkSplitsPredictorFactory
 import slickdb.{ArrivalTable, Tables, VoyageManifestPassengerInfoTable}
 
 import scala.collection.immutable.SortedMap
@@ -158,6 +159,15 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
   val purgeOldLiveSnapshots = false
   val purgeOldForecastSnapshots = true
 
+  val queries: JdbcReadJournal = PersistenceQuery(system).readJournalFor[JdbcReadJournal](JdbcReadJournal.Identifier)
+  val desksAndWaitsEventSource: Source[DesksAndWaitsMinutes, NotUsed] = queries
+    .eventsByPersistenceId("desks-and-waits", 0L, Long.MaxValue)
+    .map {
+      case EventEnvelope(_, _, seqNr, DesksAndWaitsUpdatesMessage(desksAndWaits)) =>
+        val daws = DesksAndWaitsMinutes(desksAndWaits.map(daw => DesksAndWaitTimeMinute(daw.getTerminal, daw.getQueue, daw.getMinute, daw.getDesks, daw.getWaits)))
+        daws
+    }
+
   val optimiserService: OptimiserLike = if (config.get[Boolean]("crunch.optimiser-service.use-local")) {
     OptimiserLocal
   } else {
@@ -195,7 +205,6 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
 
   lazy val alertsActor: ActorRef = system.actorOf(Props(classOf[AlertsActor]))
   val historicalSplitsProvider: SplitProvider = SplitsProvider.csvProvider
-  val splitsPredictorStage: SplitsPredictorBase = createSplitsPredictionStage(params.useSplitsPrediction, params.rawSplitsUrl)
 
   val s3ApiProvider = S3ApiProvider(params.awSCredentials, params.dqZipBucketName)
   val initialManifestsState: Option[VoyageManifestState] = initialState(voyageManifestsActor, GetState)
@@ -332,7 +341,6 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
       ),
       useNationalityBasedProcessingTimes = params.useNationalityBasedProcessingTimes,
       useLegacyManifests = params.useLegacyManifests,
-      splitsPredictorStage = splitsPredictorStage,
       b5JStartDate = SDate(params.b5JStartDate),
       manifestsLiveSource = voyageManifestsLiveSource,
       manifestsHistoricSource = voyageManifestsHistoricSource,
@@ -347,6 +355,7 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
       arrivalsBaseSource = baseArrivalsSource(),
       arrivalsFcstSource = forecastArrivalsSource(airportConfig.feedPortCode),
       arrivalsLiveSource = liveArrivalsSource(airportConfig.feedPortCode),
+      desksAndWaitsSource = desksAndWaitsEventSource,
       initialShifts = initialState(shiftsActor, GetState).getOrElse(ShiftAssignments(Seq())),
       initialFixedPoints = initialState(fixedPointsActor, GetState).getOrElse(FixedPointAssignments(Seq())),
       initialStaffMovements = initialState[StaffMovements](staffMovementsActor, GetState).map(_.movements).getOrElse(Seq[StaffMovement]()),
@@ -389,20 +398,6 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
         fps.flights ++ lps.flights,
         fps.crunchMinutes ++ lps.crunchMinutes,
         fps.staffMinutes ++ lps.staffMinutes))
-  }
-
-  def createSplitsPredictionStage(predictSplits: Boolean,
-                                  rawSplitsUrl: String): SplitsPredictorBase = if (predictSplits)
-    new SplitsPredictorStage(SparkSplitsPredictorFactory(createSparkSession(), rawSplitsUrl, airportConfig.feedPortCode))
-  else
-    new DummySplitsPredictor()
-
-  def createSparkSession(): SparkSession = {
-    SparkSession
-      .builder
-      .appName("DRT Predictor")
-      .config("spark.master", "local")
-      .getOrCreate()
   }
 
   def liveArrivalsSource(portCode: String): Source[ArrivalsFeedResponse, Cancellable] = {

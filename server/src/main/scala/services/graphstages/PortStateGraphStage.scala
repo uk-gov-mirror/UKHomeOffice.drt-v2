@@ -41,6 +41,8 @@ class PortStateGraphStage(name: String = "",
   val inActualDeskStats: Inlet[ActualDeskStats] = Inlet[ActualDeskStats]("ActualDeskStats.in")
   val inStaffMinutes: Inlet[StaffMinutes] = Inlet[StaffMinutes]("StaffMinutes.in")
   val inSimulationMinutes: Inlet[SimulationMinutes] = Inlet[SimulationMinutes]("SimulationMinutes.in")
+  val inLoadMinutes: Inlet[Loads] = Inlet[Loads]("LoadsMinutes.in")
+  val inDesksAndWaits: Inlet[DesksAndWaitsMinutes] = Inlet[DesksAndWaitsMinutes]("DesksAndWaitsMinutes.in")
   val outPortState: Outlet[PortStateWithDiff] = Outlet[PortStateWithDiff]("PortStateWithDiff.out")
 
   override val shape = new FanInShape5(

@@ -1,12 +1,11 @@
 package actors
 
 import akka.persistence._
+import drt.shared.CrunchApi.LoadMinute
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
 import server.protobuf.messages.QueueLoad.{QueueLoadMessage, QueueLoadsMessage}
-import services.graphstages.Crunch.{LoadMinute, Loads}
-
-import scala.collection.immutable.SortedMap
+import services.graphstages.Crunch.Loads
 
 
 class QueueLoadActor() extends PersistentActor {
@@ -15,7 +14,7 @@ class QueueLoadActor() extends PersistentActor {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def queueLoadsToMessage(queueLoads: SortedMap[TQM, LoadMinute]): QueueLoadsMessage = QueueLoadsMessage(
+  def queueLoadsToMessage(queueLoads: Map[TQM, LoadMinute]): QueueLoadsMessage = QueueLoadsMessage(
     queueLoads.map { case (_, lm) => loadMinuteToMessage(lm) }.toSeq)
 
   def loadMinuteToMessage(lm: LoadMinute) = QueueLoadMessage(

@@ -2,6 +2,7 @@ package services.graphstages
 
 import akka.stream._
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
+import drt.shared.CrunchApi.LoadMinute
 import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
@@ -42,9 +43,7 @@ class WorkloadGraphStage(name: String = "",
       loadMinutes = optionalInitialLoads match {
         case Some(Loads(lms)) =>
           log.info(s"Received ${lms.size} initial loads")
-          val afterPurged = purgeExpired(lms, now, expireAfterMillis.toInt)
-          log.info(s"Storing ${afterPurged.size} initial loads")
-          afterPurged
+          SortedMap[TQM, LoadMinute]() ++ lms
         case _ =>
           log.warn(s"Did not receive any loads to initialise with")
           SortedMap()

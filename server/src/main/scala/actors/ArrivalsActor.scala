@@ -2,7 +2,7 @@ package actors
 
 import actors.FlightMessageConversion._
 import akka.persistence._
-import com.trueaccord.scalapb.GeneratedMessage
+import scalapb.GeneratedMessage
 import drt.server.feeds.{ArrivalsFeedFailure, ArrivalsFeedSuccess, ArrivalsFeedSuccessAck}
 import drt.shared.FlightsApi.Flights
 import drt.shared._

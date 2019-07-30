@@ -5,9 +5,9 @@ addSbtPlugin("net.virtual-void" % "sbt-optimizer" % "0.1.2")
 
 // the protobuf sbt plugin must come before the scalajs plugin, see
 // https://github.com/scalapb/ScalaPB/issues/150
-addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.6")
+addSbtPlugin("com.thesamet" % "sbt-protoc" % "0.99.20")
 
-libraryDependencies += "com.trueaccord.scalapb" %% "compilerplugin" % "0.6.0-pre1"
+libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.9.0-M1"
 libraryDependencies += "com.typesafe" % "config" % "1.3.0"
 
 

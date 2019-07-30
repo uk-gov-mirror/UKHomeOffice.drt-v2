@@ -1,20 +1,21 @@
 package services.crunch
 
-import akka.actor.ActorRef
+import akka.NotUsed
+import akka.actor.{ActorRef, Cancellable}
 import akka.stream._
 import akka.stream.scaladsl.{Broadcast, GraphDSL, RunnableGraph, Sink, Source}
 import akka.stream.stage.GraphStage
 import drt.chroma.ArrivalsDiffingStage
+import drt.server.feeds._
 import drt.shared.CrunchApi._
 import drt.shared.FlightsApi.{FlightsWithSplits, QueueName, TerminalName}
 import drt.shared._
 import manifests.passengers.BestAvailableManifest
 import org.slf4j.{Logger, LoggerFactory}
-import drt.server.feeds._
-import services.graphstages.Crunch.Loads
+import services.graphstages.Crunch.{DesksAndWaitsMinutes, Loads}
 import services.graphstages._
 
-object RunnableCrunch {
+object DrtGraph {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   val oneDayMillis: Int = 60 * 60 * 24 * 1000
@@ -35,7 +36,7 @@ object RunnableCrunch {
                                        arrivalSplitsStage: GraphStage[FanInShape3[ArrivalsDiff, ManifestsFeedResponse, ManifestsFeedResponse, FlightsWithSplits]],
                                        workloadGraphStage: WorkloadGraphStage,
                                        loadBatchUpdateGraphStage: BatchLoadsByCrunchPeriodGraphStage,
-                                       crunchLoadGraphStage: CrunchLoadGraphStage,
+                                       deskRecsSource: Source[DesksAndWaitsMinutes, NotUsed],
                                        staffGraphStage: StaffGraphStage,
                                        staffBatchUpdateGraphStage: StaffBatchUpdateGraphStage,
                                        simulationGraphStage: SimulationGraphStage,
@@ -60,7 +61,7 @@ object RunnableCrunch {
                                        crunchPeriodStartMillis: SDateLike => SDateLike,
                                        now: () => SDateLike,
                                        portQueues: Map[TerminalName, Seq[QueueName]]
-                                      ): RunnableGraph[(FR, FR, FR, MS, MS, SS, SFP, SMM, SAD, UniqueKillSwitch, UniqueKillSwitch)] = {
+                                      ): RunnableGraph[(FR, FR, FR, MS, MS, SS, SFP, SMM, SAD, NotUsed, UniqueKillSwitch, UniqueKillSwitch)] = {
 
     val arrivalsKillSwitch = KillSwitches.single[ArrivalsDiff]
 
@@ -79,9 +80,10 @@ object RunnableCrunch {
       fixedPointsSource.async,
       staffMovementsSource.async,
       actualDesksAndWaitTimesSource.async,
+      deskRecsSource.async,
       arrivalsKillSwitch,
       manifestsKillSwitch
-    )((_, _, _, _, _, _, _, _, _, _, _)) {
+    )((_, _, _, _, _, _, _, _, _, _, _, _)) {
 
       implicit builder =>
         (
@@ -94,6 +96,7 @@ object RunnableCrunch {
           fixedPoints,
           staffMovements,
           actualDesksAndWaitTimes,
+          desksAndWaits,
           arrivalsGraphKillSwitch,
           manifestGraphKillSwitch
         ) =>
@@ -101,7 +104,6 @@ object RunnableCrunch {
           val arrivalSplits = builder.add(arrivalSplitsStage.async)
           val workload = builder.add(workloadGraphStage.async)
           val batchLoad = builder.add(loadBatchUpdateGraphStage.async)
-          val crunch = builder.add(crunchLoadGraphStage.async)
           val staff = builder.add(staffGraphStage.async)
           val batchStaff = builder.add(staffBatchUpdateGraphStage.async)
           val simulation = builder.add(simulationGraphStage.async)
@@ -118,7 +120,6 @@ object RunnableCrunch {
           val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
           val arrivalSplitsFanOut = builder.add(Broadcast[FlightsWithSplits](2))
           val workloadFanOut = builder.add(Broadcast[Loads](2))
-          val batchedWorkloadFanOut = builder.add(Broadcast[Loads](2))
           val staffFanOut = builder.add(Broadcast[StaffMinutes](2))
           val portStateFanOut = builder.add(Broadcast[PortStateWithDiff](3))
 
@@ -175,11 +176,10 @@ object RunnableCrunch {
           arrivalSplits.out ~> arrivalSplitsFanOut ~> workload
                                arrivalSplitsFanOut ~> portState.in0
 
-          workload.out ~> workloadFanOut ~> batchLoad ~> batchedWorkloadFanOut ~> crunch
-                                                         batchedWorkloadFanOut ~> simulation.in0
+          workload.out ~> workloadFanOut ~> batchLoad ~> simulation.in0
                           workloadFanOut ~> queueLoadSink
 
-          crunch                   ~> portState.in1
+          desksAndWaits            ~> portState.in5
           actualDesksAndWaitTimes  ~> portState.in2
           staff.out ~> staffFanOut ~> portState.in3
                        staffFanOut ~> batchStaff ~> simulation.in1
