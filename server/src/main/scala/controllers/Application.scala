@@ -398,21 +398,21 @@ class Application @Inject()(implicit val config: Configuration,
     } yield {
       (fs, ls) match {
         case (Left(forecastError), Left(liveError)) =>
-          log.error(s"Healthcheck failed to get live or forecast response ${forecastError.message}, ${liveError.message}")
+          log.error(s"Health check failed to get live or forecast response ${forecastError.message}, ${liveError.message}")
           BadGateway(
             """{
               |   "error": "Unable to retrieve live or forecast state
               |}
             """.stripMargin)
         case (_, Left(liveError)) =>
-          log.error(s"Healthcheck failed to get live response, ${liveError.message}")
+          log.error(s"Health check failed to get live response, ${liveError.message}")
           BadGateway(
             """{
               |   "error": "Unable to retrieve live state
               |}
             """)
         case (Left(forecastError), _) =>
-          log.error(s"Healthcheck failed to get forecast response ${forecastError.message}")
+          log.error(s"Health check failed to get forecast response ${forecastError.message}")
           BadGateway(
             """{
               |   "error": "Unable to retrieve forecast state
