@@ -1,7 +1,6 @@
 package feeds
 
 import akka.actor.ActorSystem
-import akka.pattern.pipe
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Sink
 import akka.testkit.{TestKit, TestProbe}
@@ -62,7 +61,7 @@ class CiriumFeedSpec extends TestKit(ActorSystem("testActorSystem", ConfigFactor
       Option("12"),
       Option(100000),
       "LHR",
-      "1",
+      "T1",
       "TST1000",
       "TST1000",
       "JFK",
