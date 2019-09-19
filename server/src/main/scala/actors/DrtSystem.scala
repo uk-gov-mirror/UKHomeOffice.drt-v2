@@ -17,6 +17,7 @@ import drt.http.ProdSendAndReceive
 import drt.server.feeds.api.S3ApiProvider
 import drt.server.feeds.bhx.{BHXClient, BHXFeed}
 import drt.server.feeds.chroma.{ChromaForecastFeed, ChromaLiveFeed}
+import drt.server.feeds.cirium.CiriumFeed
 import drt.server.feeds.legacy.bhx.{BHXForecastFeedLegacy, BHXLiveFeedLegacy}
 import drt.server.feeds.lgw.{LGWFeed, LGWForecastFeed}
 import drt.server.feeds.lhr.live.LegacyLhrLiveContentProvider
@@ -474,6 +475,9 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
           case None => DateTimeZone.UTC
         }
         LtnLiveFeed(url, token, username, password, timeZone).tickingSource
+      case "STN" => CiriumFeed("http://localhost:8080/statuses/stn").tickingSource
+        
+//      case "STN" => CiriumFeed("http://cirium-feed:8080/statuses/stn").tickingSource
       case _ => createLiveChromaFlightFeed(ChromaLive).chromaVanillaFlights(30 seconds)
     }
     feed

@@ -58,7 +58,7 @@ object CiriumFeed {
     f.airportResources.flatMap(_.baggage),
     Option(f.flightId),
     f.arrivalAirportFsCode,
-    f.airportResources.map(_.arrivalTerminal.getOrElse("UNK")).getOrElse("UNK"),
+    f.airportResources.flatMap(_.arrivalTerminal.map(t => s"T$t")).getOrElse("UNK"),
     f.operatingCarrierFsCode + f.flightNumber,
     f.operatingCarrierFsCode + f.flightNumber,
     f.departureAirportFsCode,
