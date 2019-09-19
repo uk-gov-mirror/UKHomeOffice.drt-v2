@@ -475,7 +475,7 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
           case None => DateTimeZone.UTC
         }
         LtnLiveFeed(url, token, username, password, timeZone).tickingSource
-      case "STN" => CiriumFeed("http://localhost:8080/statuses/stn").tickingSource
+      case "STN" => CiriumFeed("http://cirium-feed:8080/statuses/stn").tickingSource
 
 //      case "STN" => CiriumFeed("http://cirium-feed:8080/statuses/stn").tickingSource
       case _ => createLiveChromaFlightFeed(ChromaLive).chromaVanillaFlights(30 seconds)
