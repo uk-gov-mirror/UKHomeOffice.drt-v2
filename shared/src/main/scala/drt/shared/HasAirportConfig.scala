@@ -474,6 +474,7 @@ object AirportConfigs {
       "Referral Officer, 00:00, 23:59, 1",
       "Forgery Officer, 00:00, 23:59, 1"),
     role = STNAccess,
+    hasEstChox = true,
     terminalPaxTypeQueueAllocation = Map(
       "T1" -> (defaultQueueRatios + (EeaMachineReadable -> List(
         EGate -> 0.8084,

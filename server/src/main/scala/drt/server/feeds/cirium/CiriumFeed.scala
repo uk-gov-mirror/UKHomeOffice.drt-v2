@@ -8,7 +8,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import drt.shared.FlightsApi.Flights
-import drt.shared.{Arrival, CiriumFeedSource}
+import drt.shared.{Arrival, CiriumFeedSource, LiveFeedSource}
 import org.slf4j.{Logger, LoggerFactory}
 import server.feeds.{ArrivalsFeedResponse, ArrivalsFeedSuccess}
 import uk.gov.homeoffice.cirium.JsonSupport._
@@ -58,7 +58,7 @@ object CiriumFeed {
     f.airportResources.flatMap(_.baggage),
     Option(f.flightId),
     f.arrivalAirportFsCode,
-    f.airportResources.flatMap(_.arrivalTerminal.map(t => s"T$t")).getOrElse("UNK"),
+    "T1",
     f.operatingCarrierFsCode + f.flightNumber,
     f.operatingCarrierFsCode + f.flightNumber,
     f.departureAirportFsCode,

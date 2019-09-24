@@ -153,4 +153,5 @@ class CiriumFeedSpec extends TestKit(ActorSystem("testActorSystem", ConfigFactor
       "1000"
     )))
   }
+
 }
