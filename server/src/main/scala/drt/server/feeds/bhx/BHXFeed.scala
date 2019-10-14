@@ -37,12 +37,25 @@ object BHXFeed {
           client.initialFlights.map {
             case s: ArrivalsFeedSuccess =>
               initialRequest = false
+              log.info(s"Got ${s.arrivals.flights.size} flights from initial request")
               s
             case f: ArrivalsFeedFailure =>
               f
           }
-        else
-          client.updateFlights
+        else {
+
+          val flights = client.updateFlights
+
+
+          flights.map {
+            case s: ArrivalsFeedSuccess =>
+              initialRequest = false
+              log.info(s"Got ${s.arrivals.flights.size} flights from update request")
+              s
+            case f: ArrivalsFeedFailure =>
+              f
+          }
+        }
       })
 
     tickingSource
@@ -145,7 +158,7 @@ trait BHXClientLike extends ScalaXmlSupport {
     sendXMLRequest(updateXml(bhxLiveFeedUser))
   }
 
-  def sendXMLRequest(postXml: String)(implicit actorSystem: ActorSystem) = {
+  def sendXMLRequest(postXml: String)(implicit actorSystem: ActorSystem): Future[ArrivalsFeedResponse] = {
 
     implicit val xmlToResUM: Unmarshaller[NodeSeq, BHXFlightsResponse] = BHXFlight.unmarshaller
     implicit val resToBHXResUM: Unmarshaller[HttpResponse, BHXFlightsResponse] = BHXFlight.responseToAUnmarshaller
