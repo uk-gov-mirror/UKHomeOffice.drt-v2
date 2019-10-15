@@ -171,7 +171,7 @@ trait BHXClientLike extends ScalaXmlSupport {
 
     makeRequest(soapEndPoint, headers, postXml)
       .map(res => {
-        log.info(s"Got a response from BHX ${res.status}")
+        log.info(s"Got a response from BHX status: ${res.status} content type: ${res.entity.contentType} ${res.entity.httpEntity.toString}")
         val bhxResponse = Unmarshal[HttpResponse](res).to[BHXFlightsResponse]
 
         bhxResponse.map {
@@ -255,6 +255,7 @@ object BHXFlight extends NodeSeqUnmarshaller {
 
   implicit val unmarshaller: Unmarshaller[NodeSeq, BHXFlightsResponse] = Unmarshaller.strict[NodeSeq, BHXFlightsResponse] { xml =>
 
+    log.info(s"Got ${xml.length} XML Nodes")
 
     val flightNodeSeq = xml \ "Body" \ "IATA_AIDX_FlightLegRS" \ "FlightLeg"
 
@@ -321,11 +322,12 @@ object BHXFlight extends NodeSeqUnmarshaller {
       val seats: immutable.Seq[Option[Int]] = cpn.flatMap(p => {
         (p \ seatingField).map(seatingNode =>
 
-        if (seatingNode.text.length == 0)
-          None
-        else
-          maybeNodeText(seatingNode).map(_.toInt)
-        )})
+          if (seatingNode.text.length == 0)
+            None
+          else
+            maybeNodeText(seatingNode).map(_.toInt)
+        )
+      })
       if (seats.count(_.isDefined) > 0)
         Option(seats.flatten.sum)
       else
