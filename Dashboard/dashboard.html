@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DRT - BorderForce (Ian)</title>
+    <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+    <!-- Color scale -->
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <link rel="stylesheet" media="screen" href="/stylesheets/main-less.css">
+    <link rel="stylesheet" media="screen" href="stylesheets/ian-styles.css"> 
+    <script type='text/javascript' src='./scripts/dashboard-scripts.js'></script>
+</head>
+<body>
+    <input type="hidden" id="timebucket"/>
+    <!----------------------->
+    <!--scripts start here -->
+    <!----------------------->
+    <script type='text/javascript'>
+        //populate_pax();
+        //populate_arrivals();
+        var today = new Date();
+        var currentHour = today.getHours(); 
+        var currentMinute = today.getMinutes();
+  
+        if (currentMinute >= 0 && currentMinute <= 15) {
+            var tb = currentHour*4;
+        } else if (currentMinute > 15 && currentMinute <= 30) {
+            var tb = currentHour*4 + 1;
+        } else if (currentMinute > 30 && currentMinute <= 45) {
+            var tb = currentHour*4 + 2 ;
+        } else {
+            var tb = currentHour*4 + 3;
+        }
+        document.getElementById("timebucket").value = tb;
+        populate_queue_details(document.getElementById("timebucket").value);
+        populate_arrivals(tb);
+        //populate_passenger_mix(tb);
+    </script>
+
+
+
+</body>
+</html>
