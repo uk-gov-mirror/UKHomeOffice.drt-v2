@@ -5,7 +5,7 @@ import akka.actor.{Actor, Props}
 import akka.pattern.AskableActorRef
 import akka.util.Timeout
 import drt.shared.CrunchApi._
-import drt.shared.FlightsApi.{FlightsWithSplits, TerminalName}
+import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
 import services.SDate
@@ -36,12 +36,32 @@ class PortStateActor(liveStateActor: AskableActorRef,
 
   implicit val timeout: Timeout = new Timeout(1 minute)
 
-  val state: PortStateMutable = PortStateMutable.empty
-
   var maybeCrunchActor: Option[AskableActorRef] = None
   var crunchSourceIsReady: Boolean = true
   var maybeSimActor: Option[AskableActorRef] = None
   var simulationActorIsReady: Boolean = true
+
+  val stateDays: mutable.SortedMap[String, AskableActorRef] = mutable.SortedMap[String, AskableActorRef]()
+
+  def actorForDay(day: String): AskableActorRef = {
+    stateDays.get(day) match {
+      case Some(dayActor) =>
+        log.info(s"Got an existing day actor for $day")
+        dayActor
+      case None =>
+        log.info(s"Starting a day actor for $day")
+        val forDay: AskableActorRef = context.actorOf(PortStateDayActor.props(day, airportConfig.queues, now))
+        stateDays(day) = forDay
+        forDay
+    }
+  }
+
+  def persistUpdates(updates: PortStateMinutes): Unit = {
+    val daysToUpdate = updates.minutesUpdated.map(ms => SDate(ms).toISODateOnly).toSet
+    daysToUpdate.map { day =>
+      actorForDay(day).ask(updates)
+    }
+  }
 
   override def receive: Receive = {
     case SetCrunchActor(crunchActor) =>
@@ -52,13 +72,6 @@ class PortStateActor(liveStateActor: AskableActorRef,
       log.info(s"Received simulationSourceActor")
       maybeSimActor = Option(simActor)
 
-    case ps: PortState =>
-      log.info(s"Received initial PortState")
-      state.crunchMinutes ++= ps.crunchMinutes
-      state.staffMinutes ++= ps.staffMinutes
-      state.flights ++= ps.flights
-      log.info(s"Finished setting state")
-
     case StreamInitialized => sender() ! Ack
 
     case StreamCompleted => log.info(s"Stream completed")
@@ -68,15 +81,19 @@ class PortStateActor(liveStateActor: AskableActorRef,
     case updates: PortStateMinutes =>
       log.debug(s"Processing incoming PortStateMinutes ${updates.getClass}")
 
-      val diff = updates.applyTo(state, nowMillis)
-
-      if (diff.flightMinuteUpdates.nonEmpty) flightMinutesBuffer ++= diff.flightMinuteUpdates
-      if (diff.crunchMinuteUpdates.nonEmpty) loadMinutesBuffer ++= crunchMinutesToLoads(diff).map(lm => (lm.uniqueId, lm))
+      updates match {
+        case fws: FlightsWithSplits => flightMinutesBuffer ++= fws.minutesUpdated
+        case drms: DeskRecMinutes => loadMinutesBuffer ++= drms.minutes.map { drm =>
+          val lm = LoadMinute(drm)
+          (lm.uniqueId, lm)
+        }
+        case _ =>
+      }
 
       handleCrunchRequest()
       handleSimulationRequest()
 
-      splitDiffAndSend(diff)
+      persistUpdates(updates)
 
     case SetCrunchSourceReady =>
       crunchSourceIsReady = true
@@ -92,56 +109,104 @@ class PortStateActor(liveStateActor: AskableActorRef,
     case HandleSimulationRequest =>
       handleSimulationRequest()
 
-    case GetState =>
-      log.debug(s"Received GetState request. Replying with PortState containing ${state.crunchMinutes.count} crunch minutes")
-      sender() ! Option(state.immutable)
+    //    case GetState =>
+    //      log.debug(s"Received GetState request. Replying with PortState containing ${state.crunchMinutes.count} crunch minutes")
+    //      sender() ! Option(state.immutable)
 
-    case GetPortState(start, end) =>
-      log.debug(s"Received GetPortState Request from ${SDate(start).toISOString()} to ${SDate(end).toISOString()}")
-      sender() ! stateForPeriod(start, end)
+    case GetPortState(startMillis, endMillis) =>
+      log.debug(s"Received GetPortState Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
+      val days = daysFromMillis(startMillis, endMillis)
+      val updates: Set[Future[Option[PortStateMutable]]] = days.map { day =>
+        actorForDay(day).ask(GetPortState(startMillis, endMillis)).asInstanceOf[Future[Option[PortStateMutable]]]
+      }
+      val replyTo = sender()
+      Future.sequence(updates)
+        .map(_.reduce[Option[PortStateMutable]] {
+          case (None, maybePs) => maybePs
+          case (maybePs, None) => maybePs
+          case (Some(ps1), Some(ps2)) =>
+            ps1.flights ++= ps2.flights.all
+            ps1.crunchMinutes ++= ps2.crunchMinutes.all
+            ps1.staffMinutes ++= ps2.staffMinutes.all
+            Option(ps1.window(SDate(startMillis), SDate(endMillis)).mutable)
+        })
+        .foreach(maybePsu => {
+          replyTo ! maybePsu
+        })
 
-    case GetPortStateForTerminal(start, end, terminalName) =>
-      log.debug(s"Received GetPortState Request from ${SDate(start).toISOString()} to ${SDate(end).toISOString()}")
-      sender() ! stateForPeriodForTerminal(start, end, terminalName)
+    case GetPortStateForTerminal(startMillis, endMillis, terminalName) =>
+      log.debug(s"Received GetPortState Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
 
-    case GetUpdatesSince(millis, start, end) =>
-      val updates: Option[PortStateUpdates] = state.updates(millis, start, end)
-      sender() ! updates
+      val days = daysFromMillis(startMillis, endMillis)
+      val updates: Set[Future[Option[PortStateMutable]]] = days.map { day =>
+        actorForDay(day).ask(GetPortState(startMillis, endMillis)).asInstanceOf[Future[Option[PortStateMutable]]]
+      }
+      val replyTo = sender()
+      Future.sequence(updates)
+        .map(_.reduce[Option[PortStateMutable]] {
+          case (None, maybePs) => maybePs
+          case (maybePs, None) => maybePs
+          case (Some(ps1), Some(ps2)) =>
+            ps1.flights ++= ps2.flights.all
+            ps1.crunchMinutes ++= ps2.crunchMinutes.all
+            ps1.staffMinutes ++= ps2.staffMinutes.all
+            Option(ps1.windowWithTerminalFilter(SDate(startMillis), SDate(endMillis), Seq(terminalName)).mutable)
+        })
+        .foreach(maybePsu => {
+          replyTo ! maybePsu
+        })
+
+    case GetUpdatesSince(sinceMillis, startMillis, endMillis) =>
+      val replyTo = sender()
+      val days = daysFromMillis(startMillis, endMillis)
+      val updates: Set[Future[Option[PortStateUpdates]]] = days.map { day =>
+        actorForDay(day).ask(GetUpdatesSince(sinceMillis, startMillis, endMillis)).asInstanceOf[Future[Option[PortStateUpdates]]]
+      }
+      Future.sequence(updates)
+        .map(_.reduce[Option[PortStateUpdates]] {
+          case (None, maybePsu) => maybePsu
+          case (maybePsu, None) => maybePsu
+          case (Some(psu1), Some(psu2)) => Option(PortStateUpdates(
+            List(psu1.latest, psu2.latest).max,
+            psu1.flights ++ psu2.flights,
+            (psu1.minutes.map(m => (m.key, m)).toMap ++ psu2.minutes.map(m => (m.key, m)).toMap).values.toSet,
+            (psu1.staff.map(m => (m.key, m)).toMap ++ psu2.staff.map(m => (m.key, m)).toMap).values.toSet
+          ))
+        })
+        .foreach(maybePsu => {
+          replyTo ! maybePsu
+        })
 
     case GetFlights(startMillis, endMillis) =>
       val start = SDate(startMillis)
       val end = SDate(endMillis)
       log.info(s"Got request for flights between ${start.toISOString()} - ${end.toISOString()}")
-      val flightsToSend = state.flights.range(start, end).values.toList
-      sender() ! FlightsWithSplits(flightsToSend, List())
+      val replyTo = sender()
+      val days = daysFromMillis(startMillis, endMillis)
+      val updates: Set[Future[FlightsWithSplits]] = days.map { day =>
+        println(s"Sending GetFlights(${start.toISOString()}, ${end.toISOString()}) to $day actor")
+        actorForDay(day).ask(GetFlights(startMillis, endMillis)).asInstanceOf[Future[FlightsWithSplits]]
+      }
+      Future.sequence(updates)
+        .map(_.reduce[FlightsWithSplits] {
+          case (fs1, fs2) => FlightsWithSplits(
+            flightsToUpdate = fs1.flightsToUpdate ++ fs2.flightsToUpdate,
+            arrivalsToRemove = fs1.arrivalsToRemove ++ fs2.arrivalsToRemove
+          )
+        })
+        .foreach { fs =>
+          println(s"Sending flights back to sender")
+          replyTo ! fs
+        }
 
     case unexpected => log.warn(s"Got unexpected: $unexpected")
   }
 
-  def stateForPeriod(start: MillisSinceEpoch, end: MillisSinceEpoch): Option[PortState] = Option(state.window(SDate(start), SDate(end)))
-
-  def stateForPeriodForTerminal(start: MillisSinceEpoch, end: MillisSinceEpoch, terminalName: TerminalName): Option[PortState] = Option(state.windowWithTerminalFilter(SDate(start), SDate(end), Seq(terminalName)))
+  def daysFromMillis(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): Set[String] =
+    (startMillis until endMillis by Crunch.oneHourMillis).map(hr => SDate(hr).toISODateOnly).toSet
 
   val flightMinutesBuffer: mutable.Set[MillisSinceEpoch] = mutable.Set[MillisSinceEpoch]()
   val loadMinutesBuffer: mutable.Map[TQM, LoadMinute] = mutable.Map[TQM, LoadMinute]()
-
-  def splitDiffAndSend(diff: PortStateDiff): Unit = {
-    val replyTo = sender()
-
-    splitDiff(diff) match {
-      case (live, forecast) =>
-        Future
-          .sequence(Seq(
-            askAndLogOnFailure(liveStateActor, live, "live crunch persistence request failed"),
-            askAndLogOnFailure(forecastStateActor, forecast, "forecast crunch persistence request failed"))
-          )
-          .recover { case t => log.error("A future failed", t) }
-          .onComplete { _ =>
-            log.debug(s"Sending Ack")
-            replyTo ! Ack
-          }
-    }
-  }
 
   private def handleCrunchRequest(): Unit = (maybeCrunchActor, flightMinutesBuffer.nonEmpty, crunchSourceIsReady) match {
     case (Some(crunchActor), true, true) =>
@@ -158,7 +223,6 @@ class PortStateActor(liveStateActor: AskableActorRef,
     case _ => Unit
   }
 
-
   private def handleSimulationRequest(): Unit = (maybeSimActor, loadMinutesBuffer.nonEmpty, simulationActorIsReady) match {
     case (Some(simActor), true, true) =>
       simulationActorIsReady = false
@@ -173,32 +237,6 @@ class PortStateActor(liveStateActor: AskableActorRef,
       loadMinutesBuffer.clear()
     case _ => Unit
   }
-
-  private def askAndLogOnFailure[A](actor: AskableActorRef, question: Any, msg: String): Future[Any] = actor
-    .ask(question)
-    .recover {
-      case t => log.error(msg, t)
-    }
-
-  private def crunchMinutesToLoads(diff: PortStateDiff): Iterable[LoadMinute] = diff.crunchMinuteUpdates.map {
-    case (_, cm) => LoadMinute(cm)
-  }
-
-  private def splitDiff(diff: PortStateDiff): (PortStateDiff, PortStateDiff) = {
-    val liveDiff = diff.window(liveStart(now).millisSinceEpoch, liveEnd(now, liveDaysAhead).millisSinceEpoch)
-    val forecastDiff = diff.window(forecastStart(now).millisSinceEpoch, forecastEnd(now).millisSinceEpoch)
-    (liveDiff, forecastDiff)
-  }
-
-  private def nowMillis: MillisSinceEpoch = now().millisSinceEpoch
-
-  def liveStart(now: () => SDateLike): SDateLike = Crunch.getLocalLastMidnight(now()).addDays(-1)
-
-  def liveEnd(now: () => SDateLike, liveStateDaysAhead: Int): SDateLike = Crunch.getLocalNextMidnight(now()).addDays(liveStateDaysAhead)
-
-  def forecastEnd(now: () => SDateLike): SDateLike = Crunch.getLocalNextMidnight(now()).addDays(360)
-
-  def forecastStart(now: () => SDateLike): SDateLike = Crunch.getLocalNextMidnight(now()).addDays(1)
 }
 
 case object HandleCrunchRequest

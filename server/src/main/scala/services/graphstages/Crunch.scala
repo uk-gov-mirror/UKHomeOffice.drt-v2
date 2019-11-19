@@ -52,6 +52,7 @@ object Crunch {
 
   object LoadMinute {
     def apply(cm: CrunchMinute): LoadMinute = LoadMinute(cm.terminalName, cm.queueName, cm.paxLoad, cm.workLoad, cm.minute)
+    def apply(drm: DeskRecMinute): LoadMinute = LoadMinute(drm.terminalName, drm.queueName, drm.paxLoad, drm.workLoad, drm.minute)
   }
 
   case class Loads(loadMinutes: SortedMap[TQM, LoadMinute]) {

@@ -263,7 +263,7 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
           manifestResponsesSource,
           params.recrunchOnStart,
           params.refreshArrivalsOnStart,
-          checkRequiredStaffUpdatesOnStartup = true)
+          checkRequiredStaffUpdatesOnStartup = false)
 
         portStateActor ! SetSimulationActor(crunchInputs.loadsToSimulate)
 

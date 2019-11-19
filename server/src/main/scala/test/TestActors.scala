@@ -131,7 +131,7 @@ object TestActors {
   case class TestPortStateActor(live: AskableActorRef, forecast: AskableActorRef, airportConfig: AirportConfig, expireAfterMillis: Long, now: () => SDateLike, liveDaysAhead: Int)
     extends PortStateActor(live, forecast, airportConfig, expireAfterMillis, now, liveDaysAhead) {
     def reset: Receive = {
-      case ResetActor => state.clear()
+      case ResetActor => stateDays.clear()
     }
 
     override def receive: Receive = reset orElse super.receive

@@ -439,4 +439,6 @@ case class SimulationMinutes(minutes: Seq[SimulationMinute]) extends PortStateMi
     portState.crunchMinutes +++= minutesDiff
     PortStateDiff(Seq(), Seq(), Seq(), minutesDiff, Seq())
   }
+
+  override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
 }

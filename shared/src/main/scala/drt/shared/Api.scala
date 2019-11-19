@@ -11,7 +11,7 @@ import upickle.Js
 import upickle.default.{macroRW, readwriter, ReadWriter => RW}
 
 import scala.collection.immutable.{NumericRange, Map => IMap, SortedMap => ISortedMap}
-import scala.collection.{Map, SortedMap}
+import scala.collection.{Map, SortedMap, immutable}
 import scala.concurrent.Future
 import scala.util.matching.Regex
 
@@ -467,10 +467,10 @@ trait SDateLike {
   )
 
   /**
-    * Days of the week 1 to 7 (Monday is 1)
-    *
-    * @return
-    */
+   * Days of the week 1 to 7 (Monday is 1)
+   *
+   * @return
+   */
   def getDayOfWeek(): Int
 
   def getFullYear(): Int
@@ -554,6 +554,8 @@ trait MinuteComparison[A <: WithLastUpdated] {
 trait PortStateMinutes {
   def applyTo(portStateMutable: PortStateMutable, now: MillisSinceEpoch): PortStateDiff
 
+  def minutesUpdated: Iterable[MillisSinceEpoch]
+
   def addIfUpdated[A <: MinuteComparison[C], B <: WithTerminal[B], C <: WithLastUpdated](maybeExisting: Option[C], now: MillisSinceEpoch, existingUpdates: List[C], incoming: A, newMinute: () => C): List[C] = {
     maybeExisting match {
       case None => newMinute() :: existingUpdates
@@ -612,6 +614,12 @@ object FlightsApi {
     }
 
     lazy val nonEmpty: Boolean = flightsToUpdate.nonEmpty || arrivalsToRemove.nonEmpty
+
+    override def minutesUpdated: Iterable[MillisSinceEpoch] = {
+      val minutesFromRemovals: List[MillisSinceEpoch] = arrivalsToRemove.flatMap(_.pcpRange().toList)
+      val minutesFromUpdates = flightsToUpdate.flatMap(_.apiFlight.pcpRange())
+      minutesFromRemovals ++ minutesFromUpdates
+    }
   }
 
   type TerminalName = String
@@ -706,6 +714,8 @@ object CrunchApi {
       portState.staffMinutes +++= minutesDiff
       PortStateDiff(Seq(), Seq(), Seq(), Seq(), minutesDiff)
     }
+
+    override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
   }
 
   object StaffMinutes {
@@ -807,6 +817,8 @@ object CrunchApi {
 
       PortStateDiff(Seq(), Seq(), Seq(), crunchMinutesDiff, Seq())
     }
+
+    override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
   }
 
   trait SimulationMinuteLike {
@@ -844,6 +856,12 @@ object CrunchApi {
       (startMinute, deskStat) <- deskStats
       minute <- startMinute until startMinute + 15 * oneMinuteMillis by oneMinuteMillis
     } yield (TQM(tn, qn, minute), deskStat)
+
+    override def minutesUpdated: Iterable[MillisSinceEpoch] = for {
+      (_, queueMinutes) <- portDeskSlots
+      (_, deskStats) <- queueMinutes
+      (startMinute, _) <- deskStats
+    } yield startMinute
   }
 
   case class CrunchMinutes(crunchMinutes: Set[CrunchMinute])
