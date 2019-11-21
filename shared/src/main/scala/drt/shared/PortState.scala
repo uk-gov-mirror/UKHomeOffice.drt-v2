@@ -10,7 +10,7 @@ import scala.collection.{Map, SortedMap}
 case class PortState(flights: ISortedMap[UniqueArrival, ApiFlightWithSplits],
                      crunchMinutes: ISortedMap[TQM, CrunchMinute],
                      staffMinutes: ISortedMap[TM, StaffMinute]) extends PortStateLike {
-  def window(start: SDateLike, end: SDateLike, portQueues: IMap[TerminalName, Seq[QueueName]]): PortState = {
+  def window(start: SDateLike, end: SDateLike): PortState = {
     val roundedStart = start.roundToMinute()
     val roundedEnd = end.roundToMinute()
 
@@ -162,7 +162,7 @@ sealed trait PortStateLike {
     List(latestFlights, latestCrunch, latestStaff).max
   }
 
-  def window(start: SDateLike, end: SDateLike, portQueues: IMap[TerminalName, Seq[QueueName]]): PortState
+  def window(start: SDateLike, end: SDateLike): PortState
 
   def windowWithTerminalFilter(start: SDateLike, end: SDateLike, portQueues: IMap[TerminalName, Seq[QueueName]]): PortState
 }
@@ -245,21 +245,21 @@ class PortStateMutable {
     } else None
   }
 
-  def applyFlightsWithSplitsDiff(flightRemovals: Seq[UniqueArrival], flightUpdates: SortedMap[UniqueArrival, ApiFlightWithSplits], nowMillis: MillisSinceEpoch): Unit = {
+  def applyFlightsWithSplitsDiff(flightRemovals: Seq[UniqueArrival], flightUpdates: Iterable[(UniqueArrival, ApiFlightWithSplits)], nowMillis: MillisSinceEpoch): Unit = {
     flights --= flightRemovals
-    flights ++= flightUpdates
+    flights ++= flightUpdates.map { case (k, fws) => (k, fws.copy(lastUpdated = Option(nowMillis))) }
   }
 
-  def applyCrunchDiff(crunchMinuteUpdates: SortedMap[TQM, CrunchMinute], nowMillis: MillisSinceEpoch): Unit = {
-    crunchMinutes ++= crunchMinuteUpdates
+  def applyCrunchDiff(crunchMinuteUpdates: Iterable[(TQM, CrunchMinute)], nowMillis: MillisSinceEpoch): Unit = {
+    crunchMinutes ++= crunchMinuteUpdates.map { case (k, cm) => (k, cm.copy(lastUpdated = Option(nowMillis))) }
   }
 
   def applyCrunchDiff(crunchMinuteUpdates: Seq[CrunchMinute], nowMillis: MillisSinceEpoch): Unit = {
     crunchMinutes ++= crunchMinuteUpdates.map(cm => (cm.key, cm.copy(lastUpdated = Option(nowMillis))))
   }
 
-  def applyStaffDiff(staffMinuteUpdates: SortedMap[TM, StaffMinute], nowMillis: MillisSinceEpoch): Unit = {
-    staffMinutes ++= staffMinuteUpdates
+  def applyStaffDiff(staffMinuteUpdates: Iterable[(TM, StaffMinute)], nowMillis: MillisSinceEpoch): Unit = {
+    staffMinutes ++= staffMinuteUpdates.map { case (k, sm) => (k, sm.copy(lastUpdated = Option(nowMillis))) }
   }
 
   def applyStaffDiff(staffMinuteUpdates: Seq[StaffMinute], nowMillis: MillisSinceEpoch): Unit = {

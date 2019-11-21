@@ -26,7 +26,7 @@ import drt.server.feeds.lhr.{LHRFlightFeed, LHRForecastFeed}
 import drt.server.feeds.ltn.{LtnFeedRequester, LtnLiveFeed}
 import drt.server.feeds.mag.{MagFeed, ProdFeedRequester}
 import drt.shared.CrunchApi.MillisSinceEpoch
-import drt.shared.FlightsApi.{Flights, TerminalName}
+import drt.shared.FlightsApi.{Flights, FlightsWithSplits, TerminalName}
 import drt.shared._
 import graphs.SinkToSourceBridge
 import manifests.ManifestLookup
@@ -323,7 +323,11 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
     }
   }
 
-  def startCrunchGraph(portStateActor: ActorRef): (ActorRef, UniqueKillSwitch) = RunnableDeskRecs(portStateActor, 1440, TryRenjin.crunch, airportConfig).run()
+  implicit val scheduler: Scheduler = system.scheduler
+
+  val retrier = Retry.retry[FlightsWithSplits](RetryDelays.fibonacci, 5, 5 seconds) _
+
+  def startCrunchGraph(portStateActor: ActorRef): (ActorRef, UniqueKillSwitch) = RunnableDeskRecs(portStateActor, 1440, TryRenjin.crunch, airportConfig, retrier).run()
 
   override def getFeedStatus: Future[Seq[FeedStatuses]] = {
     val actors: Seq[AskableActorRef] = Seq(liveArrivalsActor, liveBaseArrivalsActor, forecastArrivalsActor, baseArrivalsActor, voyageManifestsActor)
@@ -445,14 +449,14 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
   }
 
   def queryActorWithRetry[A](askableActor: AskableActorRef, toAsk: Any): Future[Option[A]] = {
-    val future = askableActor.ask(toAsk)(new Timeout(2 minutes)).map {
+    val future = () => askableActor.ask(toAsk)(new Timeout(2 minutes)).map {
       case Some(state: A) if state.isInstanceOf[A] => Option(state)
       case state: A if !state.isInstanceOf[Option[A]] => Option(state)
       case _ => None
     }
 
     implicit val scheduler: Scheduler = actorSystem.scheduler
-    Retry.retry(future, RetryDelays.fibonacci, 3, 5 seconds)
+    Retry.retry(RetryDelays.fibonacci, 3, 5 seconds)(future)
   }
 
   def mergePortStates(maybeForecastPs: Option[PortState],

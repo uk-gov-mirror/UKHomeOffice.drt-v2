@@ -6,7 +6,6 @@ import drt.shared._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
 import services._
-import services.crunch.deskrecs.RunnableDeskRecs.log
 
 import scala.collection.immutable.{Map, SortedMap}
 import scala.collection.mutable
@@ -355,4 +354,6 @@ object Crunch {
     val maxDesks = deskRecMinutes.map(desksForHourOfDayInUKLocalTime(_, queueMinMaxDesks._2))
     (minDesks, maxDesks)
   }
+
+  def millisToDay: MillisSinceEpoch => String = (millis: MillisSinceEpoch) => SDate(millis).toISODateOnly
 }

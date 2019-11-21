@@ -3,14 +3,14 @@ package services.crunch
 import actors.Sizes.oneMegaByte
 import actors._
 import actors.acking.AckingReceiver.Ack
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props, Scheduler}
 import akka.pattern.AskableActorRef
 import akka.stream.QueueOfferResult.Enqueued
 import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
 import akka.stream.{ActorMaterializer, OverflowStrategy, QueueOfferResult, UniqueKillSwitch}
 import akka.testkit.{TestKit, TestProbe}
 import drt.shared.CrunchApi._
-import drt.shared.FlightsApi.{QueueName, TerminalName}
+import drt.shared.FlightsApi.{FlightsWithSplits, QueueName, TerminalName}
 import drt.shared.PaxTypes.{B5JPlusNational, B5JPlusNationalBelowEGateAge, EeaBelowEGateAge, EeaMachineReadable, EeaNonMachineReadable, NonVisaNational, Transit, VisaNational}
 import drt.shared.PaxTypesAndQueues._
 import drt.shared.SplitRatiosNs.{SplitRatio, SplitRatios, SplitSources}
@@ -21,13 +21,13 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.specs2.mutable.SpecificationLike
 import server.feeds.{ArrivalsFeedResponse, ManifestsFeedResponse}
 import services._
-import services.crunch.deskrecs.RunnableDeskRecs
+import services.crunch.deskrecs.{GetFlights, RunnableDeskRecs}
 import services.graphstages.CrunchMocks
 import slickdb.Tables
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
 
 class CrunchStateMockActor extends Actor {
@@ -41,15 +41,40 @@ class PortStateTestActor(liveActor: ActorRef, forecastActor: ActorRef, airportCo
 
   val state = new PortStateMutable
 
-  override def persistUpdates(updates: PortStateMinutes): Unit = {
+  override def updateActorForDay(day: String, updates: PortStateMinutes): Future[Any] = {
+    log.info(s"Received updates for our test state")
     updates.applyTo(state, now().millisSinceEpoch)
     probe ! state.immutable
+    Future()
   }
 
-    //  override def splitDiffAndSend(diff: PortStateDiff): Unit = {
-//    super.splitDiffAndSend(diff)
-//    probe ! state.immutable
-//  }
+  def testReceive: Receive = {
+    case initialPortState: PortState =>
+      state.flights ++= initialPortState.flights
+      state.crunchMinutes ++= initialPortState.crunchMinutes
+      state.staffMinutes ++= initialPortState.staffMinutes
+  }
+
+  override def receive: Receive = testReceive orElse super.receive
+
+  override def makeRequest[X](startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, request: Any, reduce: Iterable[X] => X): Unit = request match {
+    case GetPortState(startMillis, endMillis) =>
+      log.info(s"Received GetPortState(${SDate(startMillis).toISOString()}, ${SDate(endMillis).toISOString()}) request")
+      sender() ! Option(state.window(SDate(startMillis), SDate(endMillis)))
+
+    case GetPortStateForTerminal(startMillis, endMillis, terminalName) =>
+      log.info(s"Received GetPortState(${SDate(startMillis).toISOString()}, ${SDate(endMillis).toISOString()}, $terminalName) request")
+      sender() ! Option(state.windowWithTerminalFilter(SDate(startMillis), SDate(endMillis), Seq(terminalName)))
+
+    case GetUpdatesSince(sinceMillis, startMillis, endMillis) =>
+      log.info(s"Received GetUpdatesSince(${SDate(startMillis).toISOString()}, ${SDate(endMillis).toISOString()}) request")
+      sender() ! state.updates(sinceMillis, startMillis, endMillis)
+
+    case GetFlights(startMillis, endMillis) =>
+      log.info(s"Received GetFlights(${SDate(startMillis).toISOString()}, ${SDate(endMillis).toISOString()})")
+      val flightsToSend = state.flights.range(SDate(startMillis), SDate(endMillis)).values.toList
+      sender() ! FlightsWithSplits(flightsToSend, List())
+  }
 }
 
 object PortStateTestActor {
@@ -86,6 +111,7 @@ class CrunchTestLike
 
   implicit val actorSystem: ActorSystem = system
   implicit val materializer: ActorMaterializer = ActorMaterializer()
+  implicit val scheduler: Scheduler = system.scheduler
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -204,7 +230,9 @@ class CrunchTestLike
     val portStateActor = createPortStateActor(logLabel, portStateProbe, now)
     initialPortState.foreach(ps => portStateActor ! ps)
 
-    val (millisToCrunchActor: ActorRef, _: UniqueKillSwitch) = RunnableDeskRecs(portStateActor, minutesToCrunch, cruncher, airportConfig).run()
+    val retrier = Retry.retry[FlightsWithSplits](RetryDelays.fibonacci, 5, 5 seconds) _
+
+    val (millisToCrunchActor: ActorRef, _: UniqueKillSwitch) = RunnableDeskRecs(portStateActor, minutesToCrunch, cruncher, airportConfig, retrier).run()
     portStateActor ! SetCrunchActor(millisToCrunchActor)
 
     val manifestsSource: Source[ManifestsFeedResponse, SourceQueueWithComplete[ManifestsFeedResponse]] = Source.queue[ManifestsFeedResponse](0, OverflowStrategy.backpressure)
@@ -389,4 +417,3 @@ class CrunchTestLike
     }
   }
 }
-

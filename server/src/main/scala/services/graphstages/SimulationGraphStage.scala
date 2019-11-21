@@ -441,4 +441,7 @@ case class SimulationMinutes(minutes: Seq[SimulationMinute]) extends PortStateMi
   }
 
   override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
+
+  def byDay(millisToDay: MillisSinceEpoch => String): Map[String, SimulationMinutes] =
+    minutes.groupBy(sm => millisToDay(sm.minute)).map { case (d, sms) => (d, SimulationMinutes(sms)) }
 }

@@ -1,18 +1,18 @@
 package services.crunch.deskrecs
 
 import actors.acking.AckingReceiver._
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Scheduler}
 import akka.pattern.AskableActorRef
 import akka.stream.scaladsl.{GraphDSL, RunnableGraph, Sink, Source}
 import akka.stream.{ClosedShape, KillSwitches, UniqueKillSwitch}
 import akka.util.Timeout
-import drt.shared.CrunchApi.{DeskRecMinutes, MillisSinceEpoch}
+import drt.shared.CrunchApi.{DeskRecMinute, DeskRecMinutes, MillisSinceEpoch}
 import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
 import services.graphstages.Crunch._
 import services.graphstages.{Crunch, WorkloadCalculator}
-import services.{SDate, TryCrunch}
+import services.{Retry, RetryDelays, SDate, TryCrunch}
 
 import scala.collection.immutable.{SortedMap, SortedSet}
 import scala.concurrent.duration._
@@ -30,8 +30,9 @@ object RunnableDeskRecs {
   def apply(portStateActor: ActorRef,
             minutesToCrunch: Int,
             crunch: TryCrunch,
-            airportConfig: AirportConfig
-           )(implicit executionContext: ExecutionContext, timeout: Timeout = new Timeout(10 seconds)): RunnableGraph[(ActorRef, UniqueKillSwitch)] = {
+            airportConfig: AirportConfig,
+            futureWithRetry: (() => Future[FlightsWithSplits]) => Future[FlightsWithSplits]
+           )(implicit executionContext: ExecutionContext, timeout: Timeout = new Timeout(10 seconds), scheduler: Scheduler): RunnableGraph[(ActorRef, UniqueKillSwitch)] = {
     import akka.stream.scaladsl.GraphDSL.Implicits._
 
     val askablePortStateActor: AskableActorRef = portStateActor
@@ -40,7 +41,7 @@ object RunnableDeskRecs {
 
     val graph = GraphDSL.create(
       Source.actorRefWithAck[List[Long]](Ack).async,
-      KillSwitches.single[DeskRecMinutes])((_, _)) {
+      KillSwitches.single[(String, DeskRecMinutes)])((_, _)) {
       implicit builder =>
         (daysToCrunchAsync, killSwitch) =>
           val deskRecsSink = builder.add(Sink.actorRefWithAck(portStateActor, StreamInitialized, Ack, StreamCompleted, StreamFailure))
@@ -53,13 +54,14 @@ object RunnableDeskRecs {
             }
             .mapAsync(parallelismLevel) { crunchStartMillis =>
               log.info(s"Asking for flights for ${SDate(crunchStartMillis).toISOString()}")
-              flightsToCrunch(minutesToCrunch, askablePortStateActor, crunchStartMillis)
+              flightsToCrunch(minutesToCrunch, askablePortStateActor, crunchStartMillis, futureWithRetry)
             }
             .map { case (crunchStartMillis, flights) =>
               log.info(s"Crunching ${SDate(crunchStartMillis).toISOString()} flights: ${flights.flightsToUpdate.size}")
               crunchFlights(flights, crunchStartMillis, minutesToCrunch, crunch, airportConfig)
             }
-            .map(drms => DeskRecMinutes(drms.values.toSeq)) ~> killSwitch ~> deskRecsSink
+            .map(drms => DeskRecMinutes(drms.values.toSeq))
+          .mapConcat(_.byDay(Crunch.millisToDay)) ~> killSwitch ~> deskRecsSink
 
           ClosedShape
     }
@@ -109,16 +111,17 @@ object RunnableDeskRecs {
       }
   }
 
-  private def flightsToCrunch(minutesToCrunch: Int, askablePortStateActor: AskableActorRef, crunchStartMillis: MillisSinceEpoch)
-                             (implicit executionContext: ExecutionContext, timeout: Timeout): Future[(MillisSinceEpoch, FlightsWithSplits)] = askablePortStateActor
-    .ask(GetFlights(crunchStartMillis, crunchStartMillis + (minutesToCrunch * 60000L)))
-    .asInstanceOf[Future[FlightsWithSplits]]
-    .map { fs => (crunchStartMillis, fs) }
-    .recoverWith {
-      case t =>
-        log.error("Failed to fetch flights from PortStateActor", t)
-        Future((crunchStartMillis, FlightsWithSplits(List(), List())))
-    }
+  private def flightsToCrunch(minutesToCrunch: Int, askablePortStateActor: AskableActorRef, crunchStartMillis: MillisSinceEpoch, futureWithRetry: (() => Future[FlightsWithSplits]) => Future[FlightsWithSplits])
+                             (implicit executionContext: ExecutionContext, timeout: Timeout, scheduler: Scheduler): Future[(MillisSinceEpoch, FlightsWithSplits)] = {
+    val eventualFlights = () => askablePortStateActor.ask(GetFlights(crunchStartMillis, crunchStartMillis + (minutesToCrunch * 60000L))).asInstanceOf[Future[FlightsWithSplits]]
+    futureWithRetry(eventualFlights)
+      .map { fs => (crunchStartMillis, fs) }
+      .recoverWith {
+        case t =>
+          log.error("Failed to fetch flights from PortStateActor", t)
+          Future((crunchStartMillis, FlightsWithSplits(List(), List())))
+      }
+  }
 }
 
 case class GetFlights(from: MillisSinceEpoch, to: MillisSinceEpoch)

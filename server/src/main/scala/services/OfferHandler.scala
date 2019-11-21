@@ -4,7 +4,6 @@ import akka.actor.Scheduler
 import akka.pattern.after
 import akka.stream.scaladsl.SourceQueueWithComplete
 import org.slf4j.{Logger, LoggerFactory}
-import services.OfferHandler.log
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,7 +18,7 @@ object OfferHandler {
 
     maybeOnSuccess.foreach(onSuccess => eventualResult.foreach(_ => onSuccess()))
 
-    Retry.retry(eventualResult, RetryDelays.fibonacci.drop(1), retries, 5 seconds).onComplete {
+    Retry.retry(RetryDelays.fibonacci.drop(2), retries, 5 seconds)(() => eventualResult).onComplete {
       case Failure(throwable) =>
         log.error(s"Failed to enqueue ${thingToOffer.getClass} after . $retries", throwable)
     }
@@ -27,12 +26,14 @@ object OfferHandler {
 }
 
 object Retry {
-  def retry[T](futureToRetry: => Future[T], delay: Seq[FiniteDuration], retries: Int, defaultDelay: FiniteDuration)(implicit ec: ExecutionContext, s: Scheduler): Future[T] = futureToRetry
+  val log: Logger = LoggerFactory.getLogger(getClass)
+
+  def retry[T](delay: Seq[FiniteDuration], retries: Int, defaultDelay: FiniteDuration)(futureToRetry: () => Future[T])(implicit ec: ExecutionContext, s: Scheduler): Future[T] = futureToRetry()
     .recoverWith {
       case _ if retries > 0 =>
         val nextDelayDuration = delay.headOption.getOrElse(defaultDelay)
         log.warn(s"Future failed. Trying again after $nextDelayDuration. $retries retries remaining")
-        after(nextDelayDuration, s)(retry(futureToRetry, delay.tail, retries - 1, defaultDelay))
+        after(nextDelayDuration, s)(retry(delay.tail, retries - 1, defaultDelay)(futureToRetry))
     }
 }
 

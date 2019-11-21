@@ -1,31 +1,36 @@
 package actors
 
 import actors.PortStateMessageConversion._
-import actors.acking.AckingReceiver.{Ack, StreamCompleted}
+import actors.acking.AckingReceiver.StreamCompleted
 import actors.restore.RestorerWithLegacy
 import akka.actor.Props
 import akka.persistence._
+import akka.persistence.jdbc.query.scaladsl.JdbcReadJournal
+import akka.persistence.query.{EventEnvelope, PersistenceQuery}
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Sink
 import drt.shared.CrunchApi._
-import drt.shared.FlightsApi.{QueueName, TerminalName}
+import drt.shared.FlightsApi.{FlightsWithSplits, QueueName, TerminalName}
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
 import scalapb.GeneratedMessage
 import server.protobuf.messages.CrunchState.{CrunchDiffMessage, CrunchStateSnapshotMessage}
 import server.protobuf.messages.FlightsMessage.UniqueArrivalMessage
 import services.SDate
+import services.crunch.deskrecs.GetFlights
 import services.graphstages.Crunch
 
 import scala.language.postfixOps
 
 
-object PortStateDayActor {
+object PortStateDayReadOnlyActor {
   def props(day: String, portQueues: Map[TerminalName, Seq[QueueName]], now: () => SDateLike): Props =
-    Props(new PortStateDayActor(day, portQueues, now))
+    Props(new PortStateDayReadOnlyActor(day, portQueues, now))
 }
 
-class PortStateDayActor(day: String,
-                        portQueues: Map[TerminalName, Seq[QueueName]],
-                        now: () => SDateLike) extends PersistentActor with RecoveryActorLike with PersistentDrtActor[PortStateMutable] {
+class PortStateDayReadOnlyActor(day: String,
+                                portQueues: Map[TerminalName, Seq[QueueName]],
+                                now: () => SDateLike) extends PersistentActor with RecoveryActorLike with PersistentDrtActor[PortStateMutable] {
   override def persistenceId: String = s"port-state-$day"
 
   val log: Logger = LoggerFactory.getLogger(persistenceId)
@@ -35,6 +40,8 @@ class PortStateDayActor(day: String,
   var state: PortStateMutable = initialState
 
   def initialState: PortStateMutable = PortStateMutable.empty
+
+  val queries = PersistenceQuery(context.system).readJournalFor[JdbcReadJournal](JdbcReadJournal.Identifier)
 
   val startMillis: MillisSinceEpoch = SDate(day).millisSinceEpoch
   val endMillis: MillisSinceEpoch = SDate(day).addHours(24).millisSinceEpoch
@@ -52,6 +59,8 @@ class PortStateDayActor(day: String,
     state.flights ++= restorer.items
     restorer.clear()
 
+    context.self ! StartStreamingUpdates(lastSequenceNr)
+
     super.postRecoveryComplete()
   }
 
@@ -64,15 +73,41 @@ class PortStateDayActor(day: String,
   override def stateToMessage: GeneratedMessage = portStateToSnapshotMessage(state)
 
   override def receiveCommand: Receive = {
-    case updates: PortStateMinutes =>
-      val diff = updates.applyTo(state, now().millisSinceEpoch)
-      if (!diff.isEmpty) {
-        log.info(s"Received PortStateMinutes ${updates.getClass}")
-        val diffMsg = diffMessage(diff)
-        persistAndMaybeSnapshot(diffMsg)
-      }
+    case StartStreamingUpdates(seqNr: Long) =>
+      log.info("Starting the event stream")
+      implicit val mat: ActorMaterializer = ActorMaterializer()
+      queries.eventsByPersistenceId(persistenceId, seqNr + 1, Long.MaxValue).map {
+        case EventEnvelope(offset, pId, sn, event) =>
+          log.info(s"Received a streamed event: ${event.getClass}. Sending to myself for processing")
+          context.self ! event
+      }.to(Sink.actorRef(context.self, StreamCompleted)).run()
 
-      sender() ! Ack
+    case diff: CrunchDiffMessage =>
+      val (flightRemovals, flightUpdates, crunchMinuteUpdates, staffMinuteUpdates) = crunchDiffFromMessage(diff, endMillis)
+      val portStateDiff = PortStateDiff(flightRemovals.map(RemoveFlight), flightUpdates, Seq(), crunchMinuteUpdates, staffMinuteUpdates)
+      applyDiff(portStateDiff, endMillis)
+
+    case GetState =>
+      log.debug(s"Received GetState request. Replying with PortState containing ${state.crunchMinutes.count} crunch minutes")
+      sender() ! Option(state.immutable)
+
+    case GetPortState(startMillis, endMillis) =>
+      log.info(s"Received GetPortState(${SDate(startMillis).toISOString()}, ${SDate(startMillis).toISOString()}) request. Replying with PortState containing ${state.crunchMinutes.count} crunch minutes")
+      sender() ! Option(state.window(SDate(startMillis), SDate(endMillis)))
+
+    case GetPortStateForTerminal(startMillis, endMillis, terminalName) =>
+      log.debug(s"Received GetPortState(${SDate(startMillis).toISOString()}, ${SDate(startMillis).toISOString()}, $terminalName) request. Replying with PortState containing ${state.crunchMinutes.count} crunch minutes")
+      sender() ! Option(state.windowWithTerminalFilter(SDate(startMillis), SDate(endMillis), Seq(terminalName)))
+
+    case GetUpdatesSince(sinceMillis, startMillis, endMillis) =>
+      sender() ! state.updates(sinceMillis, startMillis, endMillis)
+
+    case GetFlights(startMillis, endMillis) =>
+      val start = SDate(startMillis)
+      val end = SDate(endMillis)
+      log.info(s"Got request for flights between ${start.toISOString()} - ${end.toISOString()}")
+      val flightsToSend = state.flights.range(start, end).values.toList
+      sender() ! FlightsWithSplits(flightsToSend, List())
 
     case SaveSnapshotSuccess(SnapshotMetadata(_, seqNr, _)) =>
       log.info(s"Snapshot success for sequenceNr: $seqNr")
@@ -111,6 +146,7 @@ class PortStateDayActor(day: String,
     restorer.update(flightUpdates)
     restorer.removeLegacies(cdm.flightIdsToRemoveOLD)
     restorer.remove(flightRemovals)
+//    state.applyFlightsWithSplitsDiff(flightRemovals, flightUpdates.map(fws => (fws.unique, fws)), nowMillis)
     state.applyCrunchDiff(crunchMinuteUpdates, nowMillis)
     state.applyStaffDiff(staffMinuteUpdates, nowMillis)
   }
@@ -149,3 +185,5 @@ class PortStateDayActor(day: String,
     case unexpected => log.error(s"Received an unexpected snapshot message: ${unexpected.getClass}")
   }
 }
+
+case class StartStreamingUpdates(lastSequenceNr: Long)

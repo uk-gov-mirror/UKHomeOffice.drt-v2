@@ -11,11 +11,11 @@ import scala.collection.{SortedMap, mutable}
 abstract class IndexedByTerminal[K <: WithTerminal[K], A <: WithLastUpdated]() {
   protected val items: mutable.Map[TerminalName, MSortedMap[K, A]] = mutable.Map()
 
-  def ++=(toAdd: SortedMap[K, A]): Unit = toAdd.groupBy(_._1.terminal).foreach {
+  def ++=(toAdd: Iterable[(K, A)]): Unit = toAdd.groupBy(_._1.terminal).foreach {
     case (t, things) => updateTerminalItems(t, things)
   }
 
-  protected def updateTerminalItems(t: TerminalName, things: SortedMap[K, A]): Unit = {
+  protected def updateTerminalItems(t: TerminalName, things: Iterable[(K, A)]): Unit = {
     if (items.contains(t)) {
       items(t) ++= things
     } else {
@@ -23,7 +23,7 @@ abstract class IndexedByTerminal[K <: WithTerminal[K], A <: WithLastUpdated]() {
     }
   }
 
-  def ++=(toAdd: Seq[(K, A)]): Unit = ++=(SortedMap[K, A]() ++ toAdd)
+//  def ++=(toAdd: Seq[(K, A)]): Unit = ++=(SortedMap[K, A]() ++ toAdd)
 
   def +++=(toAdd: Seq[A]): Unit
 
@@ -77,12 +77,12 @@ abstract class IndexedByTerminalWithUpdatesCache[K <: WithTerminal[K], A <: With
 
   val recentUpdates: mutable.SortedMap[MillisSinceEpoch, ListBuffer[(K, A)]] = mutable.SortedMap()
 
-  override def updateTerminalItems(t: TerminalName, things: SortedMap[K, A]): Unit = {
+  override def updateTerminalItems(t: TerminalName, things: Iterable[(K, A)]): Unit = {
     super.updateTerminalItems(t, things)
     updateRecentUpdates(things)
   }
 
-  private def updateRecentUpdates(toAdd: SortedMap[K, A]): Unit = {
+  private def updateRecentUpdates(toAdd: Iterable[(K, A)]): Unit = {
     toAdd
       .groupBy {
         case (_, item) => item.lastUpdated.getOrElse(0L)

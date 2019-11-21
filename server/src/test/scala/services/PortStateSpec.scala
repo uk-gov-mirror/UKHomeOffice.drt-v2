@@ -136,7 +136,7 @@ class PortStateSpec extends CrunchTestLike {
 
     val ps = PortState(List(), cms.toList, sms.toList)
 
-    val result = ps.window(SDate("2019-01-02"), SDate("2019-01-03"), terminalQueues)
+    val result = ps.window(SDate("2019-01-02"), SDate("2019-01-03"))
 
     val expectedCms = for {
       (terminal, queues) <- terminalQueues

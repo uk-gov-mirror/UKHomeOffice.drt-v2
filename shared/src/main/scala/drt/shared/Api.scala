@@ -13,6 +13,7 @@ import upickle.default.{macroRW, readwriter, ReadWriter => RW}
 import scala.collection.immutable.{NumericRange, Map => IMap, SortedMap => ISortedMap}
 import scala.collection.{Map, SortedMap, immutable}
 import scala.concurrent.Future
+import scala.io.Source
 import scala.util.matching.Regex
 
 object DeskAndPaxTypeCombinations {
@@ -620,6 +621,23 @@ object FlightsApi {
       val minutesFromUpdates = flightsToUpdate.flatMap(_.apiFlight.pcpRange())
       minutesFromRemovals ++ minutesFromUpdates
     }
+
+    def byDay(millisToDay: MillisSinceEpoch => String): immutable.Iterable[(String, FlightsWithSplits)] = {
+      val startPcpUpdates = flightsToUpdate.groupBy { fws => millisToDay(fws.apiFlight.pcpRange().min) }
+      val endPcpUpdates = flightsToUpdate.groupBy { fws => millisToDay(fws.apiFlight.pcpRange().max) }
+      val startPcpRemovals = arrivalsToRemove.groupBy { a => millisToDay(a.pcpRange().min) }
+      val endPcpRemovals = arrivalsToRemove.groupBy { a => millisToDay(a.pcpRange().max) }
+
+      val allDays = (startPcpUpdates.keys ++ endPcpUpdates.keys ++ startPcpRemovals.keys ++ endPcpRemovals.keys).toSet
+
+      allDays.map { dayMillis =>
+        val startUpdates = startPcpUpdates.getOrElse(dayMillis, List())
+        val endUpdates = endPcpUpdates.getOrElse(dayMillis, List())
+        val startRemovals = startPcpRemovals.getOrElse(dayMillis, List())
+        val endRemovals = endPcpRemovals.getOrElse(dayMillis, List())
+        (dayMillis, FlightsWithSplits((startUpdates.toSet ++ endUpdates.toSet).toList, (startRemovals.toSet ++ endRemovals.toSet).toList))
+      }.toMap
+    }
   }
 
   type TerminalName = String
@@ -716,6 +734,9 @@ object CrunchApi {
     }
 
     override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
+
+    def byDay(millisToDay: MillisSinceEpoch => String): immutable.Iterable[(String, StaffMinutes)] =
+      minutes.groupBy(sm => millisToDay(sm.minute)).map { case (d, sms) => (d, StaffMinutes(sms)) }
   }
 
   object StaffMinutes {
@@ -819,6 +840,9 @@ object CrunchApi {
     }
 
     override def minutesUpdated: Iterable[MillisSinceEpoch] = minutes.map(_.minute).toSet
+
+    def byDay(millisToDay: MillisSinceEpoch => String): immutable.Iterable[(String, DeskRecMinutes)] =
+      minutes.groupBy(drm => millisToDay(drm.minute)).map { case (d, m) => (d, DeskRecMinutes(m)) }
   }
 
   trait SimulationMinuteLike {
@@ -862,6 +886,35 @@ object CrunchApi {
       (_, deskStats) <- queueMinutes
       (startMinute, _) <- deskStats
     } yield startMinute
+
+    def byDay(millisToDay: MillisSinceEpoch => String): immutable.Iterable[(String, ActualDeskStats)] = {
+      portDeskSlots
+        .flatMap {
+          case (t, tMins) => tMins.flatMap {
+            case (q, qMins) => qMins.map {
+              case (m, ds) =>
+                (t, q, m, ds)
+            }
+          }
+        }
+        .groupBy { case (_, _, m, _) => millisToDay(m) }
+        .map {
+          case (d, mins) =>
+            val dayMins = mins
+              .map { case (t, q, m, ds) => (TQM(t, q, m), ds) }
+              .groupBy { case (tqm, _) => tqm.terminalName }
+              .map { case (t, tMins) =>
+                val byQueue = tMins
+                  .groupBy { case ((tqm, _)) => tqm.queueName }
+                  .map { case (q, qMins) =>
+                    val byMinute = qMins.map { case (tqm, ds) => (tqm.minute, ds) }.toMap
+                    (q, byMinute)
+                  }
+                (t, byQueue)
+              }
+            (d, ActualDeskStats(dayMins))
+        }
+    }
   }
 
   case class CrunchMinutes(crunchMinutes: Set[CrunchMinute])

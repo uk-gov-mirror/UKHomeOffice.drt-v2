@@ -13,7 +13,7 @@ import drt.shared._
 import manifests.passengers.BestAvailableManifest
 import org.slf4j.{Logger, LoggerFactory}
 import server.feeds._
-import services.graphstages.Crunch.Loads
+import services.graphstages.Crunch.{Loads, millisToDay}
 import services.graphstages._
 
 import scala.concurrent.duration._
@@ -202,7 +202,7 @@ object RunnableCrunch {
                           arrivalsFanOut.map { _.toUpdate.values.toList } ~> manifestRequestsSink
 
           arrivalSplits.out ~> arrivalSplitsFanOut
-                               arrivalSplitsFanOut ~> flightsWithSplitsSink
+                               arrivalSplitsFanOut.mapConcat(_.byDay(millisToDay)) ~> flightsWithSplitsSink
                                arrivalSplitsFanOut
                                  .map(_.arrivalsToRemove.map(a => RemoveFlight(a.unique)).toList)
                                  .conflateWithSeed(List(_)) { case (acc, incoming) =>
@@ -216,14 +216,15 @@ object RunnableCrunch {
                                     acc :+ incoming }
                                  .mapConcat(_.flatten) ~> arrivalUpdatesSink
 
-          actualDesksAndWaitTimesSourceSync  ~> deskStatsSink
+          actualDesksAndWaitTimesSourceSync.out.mapConcat(_.byDay(millisToDay))  ~> deskStatsSink
 
           loadsToSimulateSourceAsync ~> simulation.in0
 
-          staff.out ~> staffFanOut ~> staffSink
+          staff.out ~> staffFanOut
+                       staffFanOut.mapConcat(_.byDay(millisToDay)) ~> staffSink
                        staffFanOut ~> batchStaff ~> simulation.in1
 
-          simulation.out ~> simulationsSink
+          simulation.out.mapConcat(_.byDay(millisToDay)) ~> simulationsSink
           // @formatter:on
 
           ClosedShape
