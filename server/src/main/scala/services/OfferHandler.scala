@@ -8,7 +8,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.Failure
 
 object OfferHandler {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -18,10 +17,8 @@ object OfferHandler {
 
     maybeOnSuccess.foreach(onSuccess => eventualResult.foreach(_ => onSuccess()))
 
-    Retry.retry(RetryDelays.fibonacci.drop(2), retries, 5 seconds)(() => eventualResult).onComplete {
-      case Failure(throwable) =>
-        log.error(s"Failed to enqueue ${thingToOffer.getClass} after . $retries", throwable)
-    }
+    Retry.retry(RetryDelays.fibonacci.drop(2), retries, 5 seconds)(() => eventualResult).failed.foreach(throwable =>
+      log.error(s"Failed to enqueue ${thingToOffer.getClass} after . $retries", throwable))
   }
 }
 

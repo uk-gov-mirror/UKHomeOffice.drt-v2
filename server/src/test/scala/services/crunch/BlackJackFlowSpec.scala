@@ -53,11 +53,8 @@ class BlackJackFlowSpec extends CrunchTestLike {
           case PortState(_, c, _) => c
         }
         val actDesks = crunchMinutes.values.toList.sortBy(_.minute).map { cm =>
-          println(s"${cm.terminalName} / ${cm.queueName} / ${SDate(cm.minute).toISOString()}: ${cm.actDesks} / ${cm.actWait}")
           (cm.actDesks, cm.actWait)
         }.take(30)
-
-        println(s"actDesks: $actDesks")
 
         actDesks == expected
     }

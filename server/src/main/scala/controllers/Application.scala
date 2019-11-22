@@ -314,7 +314,7 @@ class Application @Inject()(implicit val config: Configuration,
           .map(kcGroups => kcGroups.filter(g => groups.contains(g.name))
             .map(g => keyCloakClient.removeUserFromGroup(userId, g.id)))
 
-      override def portStateActor: AskableActorRef = ctrl.portStateActor
+      override def portStateActor: AskableActorRef = ctrl.portStateActorStatic
 
       def getShowAlertModalDialog(): Boolean = config
         .getOptional[Boolean]("feature-flags.display-modal-alert")
@@ -362,7 +362,7 @@ class Application @Inject()(implicit val config: Configuration,
     val requestStart = SDate.now()
     val startMillis = getLocalLastMidnight(SDate.now()).millisSinceEpoch
     val endMillis = getLocalNextMidnight(SDate.now()).millisSinceEpoch
-    val portState = ActorDataRequest.portState[PortState](ctrl.portStateActor, GetPortState(startMillis, endMillis))
+    val portState = ActorDataRequest.portState[PortState](ctrl.portStateActorStatic, GetPortState(startMillis, endMillis))
 
     portState.map {
       case Left(liveError) =>

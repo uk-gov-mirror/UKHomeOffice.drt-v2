@@ -27,7 +27,8 @@ object RunnableDeskRecs {
     Crunch.getLocalLastMidnight(MilliDate(adjustedMinute.millisSinceEpoch)).addMinutes(offsetMinutes)
   }
 
-  def apply(portStateActor: ActorRef,
+  def apply(flightsActor: ActorRef,
+            deskRecsActor: ActorRef,
             minutesToCrunch: Int,
             crunch: TryCrunch,
             airportConfig: AirportConfig,
@@ -35,7 +36,7 @@ object RunnableDeskRecs {
            )(implicit executionContext: ExecutionContext, timeout: Timeout = new Timeout(10 seconds), scheduler: Scheduler): RunnableGraph[(ActorRef, UniqueKillSwitch)] = {
     import akka.stream.scaladsl.GraphDSL.Implicits._
 
-    val askablePortStateActor: AskableActorRef = portStateActor
+    val askableFlightsActor: AskableActorRef = flightsActor
 
     val crunchPeriodStartMillis: SDateLike => SDateLike = crunchStartWithOffset(airportConfig.crunchOffsetMinutes)
 
@@ -44,7 +45,7 @@ object RunnableDeskRecs {
       KillSwitches.single[(String, DeskRecMinutes)])((_, _)) {
       implicit builder =>
         (daysToCrunchAsync, killSwitch) =>
-          val deskRecsSink = builder.add(Sink.actorRefWithAck(portStateActor, StreamInitialized, Ack, StreamCompleted, StreamFailure))
+          val deskRecsSink = builder.add(Sink.actorRefWithAck(deskRecsActor, StreamInitialized, Ack, StreamCompleted, StreamFailure))
           val parallelismLevel = 2
 
           daysToCrunchAsync.out
@@ -54,7 +55,7 @@ object RunnableDeskRecs {
             }
             .mapAsync(parallelismLevel) { crunchStartMillis =>
               log.info(s"Asking for flights for ${SDate(crunchStartMillis).toISOString()}")
-              flightsToCrunch(minutesToCrunch, askablePortStateActor, crunchStartMillis, futureWithRetry)
+              flightsToCrunch(minutesToCrunch, askableFlightsActor, crunchStartMillis, futureWithRetry)
             }
             .map { case (crunchStartMillis, flights) =>
               log.info(s"Crunching ${SDate(crunchStartMillis).toISOString()} flights: ${flights.flightsToUpdate.size}")

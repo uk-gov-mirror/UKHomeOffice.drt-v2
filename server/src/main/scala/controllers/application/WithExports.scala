@@ -74,7 +74,7 @@ trait WithExports {
       timedEndPoint(s"Export planning", Option(s"$terminalName")) {
         val (startOfForecast, endOfForecast) = startAndEndForDay(startDay.toLong, 180)
 
-        val portStateFuture = ctrl.portStateActor.ask(
+        val portStateFuture = ctrl.portStateActorStatic.ask(
           GetPortStateForTerminal(startOfForecast.millisSinceEpoch, endOfForecast.millisSinceEpoch, terminalName)
         )(new Timeout(30 seconds))
 
@@ -110,7 +110,7 @@ trait WithExports {
           getLocalNextMidnight(now)
         } else startOfWeekMidnight
 
-        val portStateFuture = ctrl.portStateActor.ask(
+        val portStateFuture = ctrl.portStateActorStatic.ask(
           GetPortStateForTerminal(startOfForecast.millisSinceEpoch, endOfForecast.millisSinceEpoch, terminalName)
         )(new Timeout(30 seconds))
 
@@ -372,7 +372,7 @@ trait WithExports {
     val firstMinute = getLocalLastMidnight(SDate(day)).millisSinceEpoch
     val lastMinute = SDate(firstMinute).addHours(airportConfig.dayLengthHours).millisSinceEpoch
 
-    val portStateFuture = ctrl.portStateActor.ask(GetPortStateForTerminal(firstMinute, lastMinute, terminalName))(new Timeout(30 seconds))
+    val portStateFuture = ctrl.portStateActorStatic.ask(GetPortStateForTerminal(firstMinute, lastMinute, terminalName))(new Timeout(30 seconds))
 
     portStateFuture.map {
       case Some(ps: PortState) => Right(Option(ps))

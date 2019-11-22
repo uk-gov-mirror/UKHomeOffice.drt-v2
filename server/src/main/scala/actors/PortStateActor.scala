@@ -1,7 +1,9 @@
 package actors
 
+import java.util.UUID
+
 import actors.acking.AckingReceiver.{Ack, StreamCompleted, StreamFailure, StreamInitialized}
-import akka.actor.{Actor, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.AskableActorRef
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
@@ -22,21 +24,22 @@ import scala.language.postfixOps
 
 
 object PortStateActor {
-  def props(liveStateActor: AskableActorRef, forecastStateActor: AskableActorRef, airportConfig: AirportConfig, expireAfterMillis: Long, now: () => SDateLike, liveDaysAhead: Int): Props =
-    Props(new PortStateActor(liveStateActor, forecastStateActor, airportConfig, expireAfterMillis, now, 2))
+  def propsStreaming(airportConfig: AirportConfig, expireAfterMillis: Long, now: () => SDateLike): Props =
+    Props(new PortStateActor(airportConfig, expireAfterMillis, now, isStreaming = true))
+
+  def propsStatic(airportConfig: AirportConfig, expireAfterMillis: Long, now: () => SDateLike): Props =
+    Props(new PortStateActor(airportConfig, expireAfterMillis, now, isStreaming = false))
 }
 
-class PortStateActor(liveStateActor: AskableActorRef,
-                     forecastStateActor: AskableActorRef,
-                     airportConfig: AirportConfig,
+class PortStateActor(airportConfig: AirportConfig,
                      expireAfterMillis: Long,
                      now: () => SDateLike,
-                     liveDaysAhead: Int) extends Actor {
+                     isStreaming: Boolean) extends Actor {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   implicit val ec: ExecutionContextExecutor = context.dispatcher
 
-  //  implicit val mat: ActorMaterializer = ActorMaterializer()
+  implicit val mat: ActorMaterializer = ActorMaterializer()
 
   implicit val timeout: Timeout = new Timeout(1 minute)
 
@@ -57,32 +60,43 @@ class PortStateActor(liveStateActor: AskableActorRef,
       case None =>
         val actorCacheSize = stateDays.size
         if (actorCacheSize > actorCacheCapacity) {
-          val daysToDrop = lastQueries.toSeq.sortBy(_._2).take(actorCacheSize - actorCacheCapacity)
+          val daysToDrop = lastQueries.toSeq.sortBy(_._2).take(actorCacheSize - actorCacheCapacity).map(_._1)
           log.info(s"Dropping cached read actors ${daysToDrop.mkString(", ")}")
-          daysToDrop.foreach { case (dayToDrop, _) =>
+          daysToDrop.foreach { dayToDrop =>
             stateDays.get(dayToDrop).foreach(_ ? PoisonPill)
             stateDays -= dayToDrop
             lastQueries -= dayToDrop
           }
         }
         log.info(s"Starting a day actor for $day")
-        val forDay: AskableActorRef = context.actorOf(PortStateDayReadOnlyActor.props(day, airportConfig.queues, now), s"port-state-streaming-$day")
+        val props = if (isStreaming)
+          PortStateDayReadOnlyActor.propsStreaming(day, airportConfig.queues, now)
+        else
+          PortStateDayReadOnlyActor.propsStatic(day, airportConfig.queues, now)
+
+        val forDay: AskableActorRef = context.actorOf(props, s"port-state-$day-$generateRandomUuid")
         stateDays(day) = forDay
         lastQueries(day) = now().millisSinceEpoch
         forDay
     }
   }
 
+  def generateRandomUuid: String = UUID.randomUUID().toString
+
   def updateActorForDay(day: String, updates: PortStateMinutes): Future[Any] = {
     log.info(s"Starting a day actor for $day")
-    val forDay: AskableActorRef = context.actorOf(PortStateDayActor.props(day, airportConfig.queues, now), s"port-state-wo-$day")
-    forDay.ask(updates).map { _ =>
+    val writeActor: AskableActorRef = dayWriteActor(day)
+    writeActor.ask(updates).map { _ =>
       log.info(s"Update finished for $day. Sending PoisonPill")
-      forDay.ask(PoisonPill).map { _ =>
+      writeActor.ask(PoisonPill).map { _ =>
         log.info(s"PoisonPill processed for $day")
       }
     }
   }
+
+  def dayWriteActor(day: String): ActorRef = context.actorOf(PortStateDayActor.props(day, airportConfig.queues, now), writeActorName(day))
+
+  def writeActorName(day: String): String = s"port-state-wo-$day-$generateRandomUuid"
 
   override def receive: Receive = {
     case SetCrunchActor(crunchActor) =>
@@ -137,40 +151,39 @@ class PortStateActor(liveStateActor: AskableActorRef,
 
     case request@GetPortState(startMillis, endMillis) =>
       log.debug(s"Received GetPortState Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
-      makeRequest(startMillis, endMillis, request, reducePortStates(startMillis, endMillis))
+      makeRequest2(startMillis, endMillis, request, reducePortStates2(startMillis, endMillis))
 
     case request@GetPortStateForTerminal(startMillis, endMillis, terminalName) =>
       log.debug(s"Received GetPortStateForTerminal Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
       val terminalQueues = airportConfig.queues.filterKeys(_ == terminalName)
-      makeRequest(startMillis, endMillis, request, reduceTerminalPortState(startMillis, endMillis, terminalQueues))
+      makeRequest2(startMillis, endMillis, request, reduceTerminalPortState2(startMillis, endMillis, terminalQueues))
 
     case request@GetUpdatesSince(_, startMillis, endMillis) =>
       log.debug(s"Received GetUpdatesSince Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
-      makeRequest(startMillis, endMillis, request, reducePortStateUpdates(startMillis, endMillis))
+      makeRequest2(startMillis, endMillis, request, reducePortStateUpdates2(startMillis, endMillis))
 
     case request@GetFlights(startMillis, endMillis) =>
       log.debug(s"Received GetFlights Request from ${SDate(startMillis).toISOString()} to ${SDate(endMillis).toISOString()}")
-      makeRequest(startMillis, endMillis, request, reduceFlights(startMillis, endMillis))
+      makeRequest2(startMillis, endMillis, request, reduceFlights2(startMillis, endMillis))
 
     case unexpected => log.warn(s"Got unexpected: $unexpected")
   }
 
-  def makeRequest[X](startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, request: Any, reduce: Iterable[X] => X): Unit = {
+  def makeRequest2[X](startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, request: Any, reduce: (X, X) => X): Unit = {
     val days = daysFromMillis(startMillis, endMillis)
-    val updates: Set[Future[X]] = days.map { day =>
-      actorForDay(day).ask(request).asInstanceOf[Future[X]]
-    }
     val replyTo = sender()
-    Future.sequence(updates)
-      .map(reduce)
-      .foreach { maybePsu =>
-        log.info(s"Sending $request response")
-        replyTo ! maybePsu
+
+    Source(days)
+      .mapAsync(1) { day =>
+        actorForDay(day).ask(request).asInstanceOf[Future[X]]
       }
+      .reduce(reduce)
+      .to(Sink.actorRef(replyTo, "make request finished"))
+      .run()
   }
 
-  def reduceTerminalPortState(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, terminals: Map[TerminalName, Seq[QueueName]]): Iterable[Option[PortState]] => Option[PortState] =
-    (maybePortStates: Iterable[Option[PortState]]) => maybePortStates.reduce[Option[PortState]] {
+  def reduceTerminalPortState2(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, terminals: Map[TerminalName, Seq[QueueName]]): (Option[PortState], Option[PortState]) => Option[PortState] =
+    (maybePs1: Option[PortState], maybePs2: Option[PortState]) => (maybePs1, maybePs2) match {
       case (None, maybePs) => maybePs
       case (maybePs, None) => maybePs
       case (Some(ps1), Some(ps2)) =>
@@ -182,8 +195,8 @@ class PortStateActor(liveStateActor: AskableActorRef,
         Option(ps1.windowWithTerminalFilter(SDate(startMillis), SDate(endMillis), terminals))
     }
 
-  def reducePortStates(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): Iterable[Option[PortState]] => Option[PortState] =
-    (maybePortStates: Iterable[Option[PortState]]) => maybePortStates.reduce[Option[PortState]] {
+  def reducePortStates2(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): (Option[PortState], Option[PortState]) => Option[PortState] =
+    (maybePs1: Option[PortState], maybePs2: Option[PortState]) => (maybePs1, maybePs2) match {
       case (None, maybePs) => maybePs
       case (maybePs, None) => maybePs
       case (Some(ps1), Some(ps2)) =>
@@ -195,8 +208,8 @@ class PortStateActor(liveStateActor: AskableActorRef,
         Option(ps1.window(SDate(startMillis), SDate(endMillis)))
     }
 
-  def reducePortStateUpdates(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): Iterable[Option[PortStateUpdates]] => Option[PortStateUpdates] =
-    (maybePortStates: Iterable[Option[PortStateUpdates]]) => maybePortStates.reduce[Option[PortStateUpdates]] {
+  def reducePortStateUpdates2(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): (Option[PortStateUpdates], Option[PortStateUpdates]) => Option[PortStateUpdates] =
+    (maybePs1: Option[PortStateUpdates], maybePs2: Option[PortStateUpdates]) => (maybePs1, maybePs2) match {
       case (None, maybePsu) => maybePsu
       case (maybePsu, None) => maybePsu
       case (Some(psu1), Some(psu2)) => Option(PortStateUpdates(
@@ -207,8 +220,8 @@ class PortStateActor(liveStateActor: AskableActorRef,
       ))
     }
 
-  def reduceFlights(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): Iterable[FlightsWithSplits] => FlightsWithSplits =
-    (flights: Iterable[FlightsWithSplits]) => flights.reduce[FlightsWithSplits] {
+  def reduceFlights2(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): (FlightsWithSplits, FlightsWithSplits) => FlightsWithSplits =
+    (fws1: FlightsWithSplits, fws2: FlightsWithSplits) => (fws1, fws2) match {
       case (fs1, fs2) => FlightsWithSplits(
         flightsToUpdate = fs1.flightsToUpdate ++ fs2.flightsToUpdate,
         arrivalsToRemove = fs1.arrivalsToRemove ++ fs2.arrivalsToRemove

@@ -57,7 +57,8 @@ import scala.util.{Failure, Success}
 trait DrtSystemInterface extends UserRoleProviderLike {
   val now: () => SDateLike = () => SDate.now()
 
-  val portStateActor: ActorRef
+  val portStateActorStreaming: ActorRef
+  val portStateActorStatic: ActorRef
   val shiftsActor: ActorRef
   val fixedPointsActor: ActorRef
   val staffMovementsActor: ActorRef
@@ -192,7 +193,8 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
 
   lazy val liveCrunchStateActor: AskableActorRef = system.actorOf(liveCrunchStateProps, name = "crunch-live-state-actor")
   lazy val forecastCrunchStateActor: AskableActorRef = system.actorOf(forecastCrunchStateProps, name = "crunch-forecast-state-actor")
-  lazy val portStateActor: ActorRef = system.actorOf(PortStateActor.props(liveCrunchStateActor, forecastCrunchStateActor, airportConfig, expireAfterMillis, now, liveDaysAhead), name = "port-state-actor")
+  lazy val portStateActorStreaming: ActorRef = system.actorOf(PortStateActor.propsStreaming(airportConfig, expireAfterMillis, now), name = "port-state-actor-streaming")
+  lazy val portStateActorStatic: ActorRef = system.actorOf(PortStateActor.propsStatic(airportConfig, expireAfterMillis, now), name = "port-state-actor-static")
 
   lazy val voyageManifestsActor: ActorRef = system.actorOf(Props(classOf[VoyageManifestsActor], params.snapshotMegaBytesVoyageManifests, now, expireAfterMillis, Option(params.snapshotIntervalVm)), name = "voyage-manifests-actor")
   lazy val lookup = ManifestLookup(VoyageManifestPassengerInfoTable(PostgresTables))
@@ -244,10 +246,10 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
       case Success((maybeLiveState, maybeForecastState, maybeBaseArrivals, maybeForecastArrivals, maybeLiveArrivals, maybeRegisteredArrivals)) =>
         system.log.info(s"Successfully restored initial state for App")
         val initialPortState: Option[PortState] = mergePortStates(maybeForecastState, maybeLiveState)
-        initialPortState.foreach(ps => portStateActor ! ps)
+        initialPortState.foreach(ps => portStateActorStreaming ! ps)
 
-        val (crunchSourceActor: ActorRef, _) = startCrunchGraph(portStateActor)
-        portStateActor ! SetCrunchActor(crunchSourceActor)
+        val (crunchSourceActor: ActorRef, _) = startCrunchGraph(portStateActorStreaming, portStateActorStatic)
+        portStateActorStatic ! SetCrunchActor(crunchSourceActor)
 
         val (manifestRequestsSource, _, manifestRequestsSink) = SinkToSourceBridge[List[Arrival]]
 
@@ -265,7 +267,7 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
           params.refreshArrivalsOnStart,
           checkRequiredStaffUpdatesOnStartup = false)
 
-        portStateActor ! SetSimulationActor(crunchInputs.loadsToSimulate)
+        portStateActorStatic ! SetSimulationActor(crunchInputs.loadsToSimulate)
 
         if (maybeRegisteredArrivals.isDefined) log.info(s"sending ${maybeRegisteredArrivals.get.arrivals.size} initial registered arrivals to batch stage")
         else log.info(s"sending no registered arrivals to batch stage")
@@ -327,7 +329,8 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
 
   val retrier = Retry.retry[FlightsWithSplits](RetryDelays.fibonacci, 5, 5 seconds) _
 
-  def startCrunchGraph(portStateActor: ActorRef): (ActorRef, UniqueKillSwitch) = RunnableDeskRecs(portStateActor, 1440, TryRenjin.crunch, airportConfig, retrier).run()
+  def startCrunchGraph(flightsSourceActor: ActorRef, deskRecsSinkActor: ActorRef): (ActorRef, UniqueKillSwitch) =
+    RunnableDeskRecs(flightsSourceActor, deskRecsSinkActor, 1440, TryRenjin.crunch, airportConfig, retrier).run()
 
   override def getFeedStatus: Future[Seq[FeedStatuses]] = {
     val actors: Seq[AskableActorRef] = Seq(liveArrivalsActor, liveBaseArrivalsActor, forecastArrivalsActor, baseArrivalsActor, voyageManifestsActor)
@@ -387,7 +390,7 @@ case class DrtSystem(actorSystem: ActorSystem, config: Configuration, airportCon
       airportConfig = airportConfig,
       pcpArrival = pcpArrivalTimeCalculator,
       historicalSplitsProvider = historicalSplitsProvider,
-      portStateActor = portStateActor,
+      portStateActor = portStateActorStatic,
       maxDaysToCrunch = params.forecastMaxDays,
       expireAfterMillis = expireAfterMillis,
       actors = Map(

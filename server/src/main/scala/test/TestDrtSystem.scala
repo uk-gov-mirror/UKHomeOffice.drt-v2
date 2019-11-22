@@ -32,13 +32,10 @@ class TestDrtSystem(override val actorSystem: ActorSystem, override val config: 
   override lazy val forecastArrivalsActor: ActorRef = system.actorOf(Props(classOf[TestForecastPortArrivalsActor], now, expireAfterMillis), name = "forecast-arrivals-actor")
   override lazy val liveArrivalsActor: ActorRef = system.actorOf(Props(classOf[TestLiveArrivalsActor], now, expireAfterMillis), name = "live-arrivals-actor")
 
-  val testLiveCrunchStateProps = Props(classOf[TestCrunchStateActor], airportConfig.portStateSnapshotInterval, "crunch-state", airportConfig.queues, now, expireAfterMillis, purgeOldLiveSnapshots)
-  val testForecastCrunchStateProps = Props(classOf[TestCrunchStateActor], 100, "forecast-crunch-state", airportConfig.queues, now, expireAfterMillis, purgeOldForecastSnapshots)
   val testManifestsActor: ActorRef = actorSystem.actorOf(Props(classOf[TestManifestsActor]), s"TestActor-APIManifests")
 
-  override lazy val liveCrunchStateActor: AskableActorRef = system.actorOf(testLiveCrunchStateProps, name = "crunch-live-state-actor")
-  override lazy val forecastCrunchStateActor: AskableActorRef = system.actorOf(testForecastCrunchStateProps, name = "crunch-forecast-state-actor")
-  override lazy val portStateActor: ActorRef = system.actorOf(TestPortStateActor.props(liveCrunchStateActor, forecastCrunchStateActor, airportConfig, expireAfterMillis, now, 2), name = "port-state-actor")
+  override lazy val portStateActorStreaming: ActorRef = system.actorOf(TestPortStateActor.propsStreaming(airportConfig, expireAfterMillis, now), name = "port-state-actor-streaming")
+  override lazy val portStateActorStatic: ActorRef = system.actorOf(TestPortStateActor.propsStatic(airportConfig, expireAfterMillis, now), name = "port-state-actor-static")
   override lazy val voyageManifestsActor: ActorRef = system.actorOf(Props(classOf[TestVoyageManifestsActor], now, expireAfterMillis, params.snapshotIntervalVm), name = "voyage-manifests-actor")
   override lazy val shiftsActor: ActorRef = system.actorOf(Props(classOf[TestShiftsActor], now, timeBeforeThisMonth(now)))
   override lazy val fixedPointsActor: ActorRef = system.actorOf(Props(classOf[TestFixedPointsActor], now))
@@ -93,9 +90,9 @@ class TestDrtSystem(override val actorSystem: ActorSystem, override val config: 
       val lookupRefreshDue: MillisSinceEpoch => Boolean = (lastLookupMillis: MillisSinceEpoch) => now().millisSinceEpoch - lastLookupMillis > 1000
       val manifestKillSwitch = startManifestsGraph(None, manifestResponsesSink, manifestRequestsSource, lookupRefreshDue)
 
-      val (millisToCrunchActor: ActorRef, crunchKillSwitch) = startCrunchGraph(portStateActor)
-      portStateActor ! SetCrunchActor(millisToCrunchActor)
-      portStateActor ! SetSimulationActor(cs.loadsToSimulate)
+      val (millisToCrunchActor: ActorRef, crunchKillSwitch) = startCrunchGraph(portStateActorStreaming, portStateActorStatic)
+      portStateActorStatic ! SetCrunchActor(millisToCrunchActor)
+      portStateActorStatic ! SetSimulationActor(cs.loadsToSimulate)
 
       subscribeStaffingActors(cs)
       startScheduledFeedImports(cs)
@@ -113,7 +110,8 @@ class TestDrtSystem(override val actorSystem: ActorSystem, override val config: 
       shiftsActor,
       fixedPointsActor,
       staffMovementsActor,
-      portStateActor,
+      portStateActorStreaming,
+      portStateActorStatic,
       aggregatedArrivalsActor
     )
 

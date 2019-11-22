@@ -47,7 +47,13 @@ class PortStateDayActor(day: String,
       messagesPersistedSinceSnapshotCounter += 1
   }
 
+  override def preStart(): Unit = {
+    log.info(s"In preStart")
+    super.preStart()
+  }
+
   override def postRecoveryComplete(): Unit = {
+    log.info(s"Recovery complete")
     restorer.finish()
     state.flights ++= restorer.items
     restorer.clear()

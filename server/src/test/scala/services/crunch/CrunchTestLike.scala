@@ -36,8 +36,8 @@ class CrunchStateMockActor extends Actor {
   }
 }
 
-class PortStateTestActor(liveActor: ActorRef, forecastActor: ActorRef, airportConfig: AirportConfig, probe: ActorRef, expireAfterMillis: Long, now: () => SDateLike, liveDaysAhead: Int)
-  extends PortStateActor(liveActor, forecastActor, airportConfig, expireAfterMillis, now, liveDaysAhead) {
+class PortStateTestActor(airportConfig: AirportConfig, probe: ActorRef, expireAfterMillis: Long, now: () => SDateLike)
+  extends PortStateActor(airportConfig, expireAfterMillis, now, true) {
 
   val state = new PortStateMutable
 
@@ -57,7 +57,9 @@ class PortStateTestActor(liveActor: ActorRef, forecastActor: ActorRef, airportCo
 
   override def receive: Receive = testReceive orElse super.receive
 
-  override def makeRequest[X](startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, request: Any, reduce: Iterable[X] => X): Unit = request match {
+  override def makeRequest2[X](startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch, request: Any, reduce: (X, X) => X): Unit = localRequests(request)
+
+  val localRequests: Any => Unit = {
     case GetPortState(startMillis, endMillis) =>
       log.info(s"Received GetPortState(${SDate(startMillis).toISOString()}, ${SDate(endMillis).toISOString()}) request")
       sender() ! Option(state.window(SDate(startMillis), SDate(endMillis)))
@@ -78,8 +80,8 @@ class PortStateTestActor(liveActor: ActorRef, forecastActor: ActorRef, airportCo
 }
 
 object PortStateTestActor {
-  def props(liveActor: ActorRef, forecastActor: ActorRef, airportConfig: AirportConfig, probe: ActorRef, expireAfterMillis: Long, now: () => SDateLike, liveDaysAhead: Int): Props =
-    Props(new PortStateTestActor(liveActor, forecastActor, airportConfig, probe, expireAfterMillis, now, liveDaysAhead))
+  def props(airportConfig: AirportConfig, probe: ActorRef, expireAfterMillis: Long, now: () => SDateLike): Props =
+    Props(new PortStateTestActor(airportConfig, probe, expireAfterMillis, now))
 }
 
 case class CrunchGraphInputsAndProbes(baseArrivalsInput: SourceQueueWithComplete[ArrivalsFeedResponse],
@@ -186,7 +188,7 @@ class CrunchTestLike
   }
 
   def createPortStateActor(name: String = "", testProbe: TestProbe, now: () => SDateLike): ActorRef = {
-    system.actorOf(PortStateTestActor.props(crunchStateMockActor, crunchStateMockActor, airportConfig, testProbe.ref, 24 * 360000L, now, 100), name = "port-state-actor")
+    system.actorOf(PortStateTestActor.props(airportConfig, testProbe.ref, 24 * 360000L, now), name = "port-state-actor")
   }
 
   def testProbe(name: String) = TestProbe(name = name)

@@ -61,7 +61,7 @@ trait WithPortState {
         val futureResult = ActorDataRequest.portState[X](tempActor, request)
         futureResult.foreach(_ => tempActor ! PoisonPill)
         futureResult
-      case _ => ActorDataRequest.portState[X](ctrl.portStateActor, request)
+      case _ => ActorDataRequest.portState[X](ctrl.portStateActorStreaming, request)
     }
   }
 
