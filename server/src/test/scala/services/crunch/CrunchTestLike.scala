@@ -234,7 +234,7 @@ class CrunchTestLike
 
     val retrier = Retry.retry[FlightsWithSplits](RetryDelays.fibonacci, 5, 5 seconds) _
 
-    val (millisToCrunchActor: ActorRef, _: UniqueKillSwitch) = RunnableDeskRecs(portStateActor, minutesToCrunch, cruncher, airportConfig, retrier).run()
+    val (millisToCrunchActor: ActorRef, _: UniqueKillSwitch) = RunnableDeskRecs(portStateActor, portStateActor, minutesToCrunch, cruncher, airportConfig, retrier).run()
     portStateActor ! SetCrunchActor(millisToCrunchActor)
 
     val manifestsSource: Source[ManifestsFeedResponse, SourceQueueWithComplete[ManifestsFeedResponse]] = Source.queue[ManifestsFeedResponse](0, OverflowStrategy.backpressure)
