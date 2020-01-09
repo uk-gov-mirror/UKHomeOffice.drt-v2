@@ -94,25 +94,29 @@ case class ManifestLookup(paxInfoTable: VoyageManifestPassengerInfoTable) extend
     val middleTs = lastYear.toISODateOnly
     val latestTs = latestWeek.toISODateOnly
 
-    sql"""SELECT
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
-          FROM
-            voyage_manifest_passenger_info
-          WHERE
-            event_code ='DC'
-            and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
-            and departure_port_code=${uniqueArrivalKey.departurePort.toString}
-            and voyage_number=${uniqueArrivalKey.voyageNumber.numeric}
-            and day_of_week = EXTRACT(DOW FROM TIMESTAMP '#$scheduledTs')::int
-            and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
-          GROUP BY
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
+    sql"""SELECT arrival_port_code, departure_port_code, voyage_number, scheduled_date FROM (
+            (SELECT
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date,
+              SUM(CASE WHEN nationality_country_code = '' THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100 AS missingPct
+            FROM
+              voyage_manifest_passenger_info
+            WHERE
+              event_code ='DC'
+              and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
+              and departure_port_code=${uniqueArrivalKey.departurePort.toString}
+              and voyage_number=${uniqueArrivalKey.voyageNumber.numeric}
+              and day_of_week = EXTRACT(DOW FROM TIMESTAMP '#$scheduledTs')::int
+              and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
+              and scheduled_date >= '#$earliestTs'
+            GROUP BY
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date) as tmp
+          WHERE missingPct < 20.0
           """.as[(String, String, String, Timestamp)]
   }
 
@@ -124,24 +128,27 @@ case class ManifestLookup(paxInfoTable: VoyageManifestPassengerInfoTable) extend
     val earliestTs = earliestWeek.toISODateOnly
     val middleTs = lastYear.toISODateOnly
     val latestTs = latestWeek.toISODateOnly
-    sql"""SELECT
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
-          FROM
-            voyage_manifest_passenger_info
-          WHERE
-            event_code ='DC'
-            and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
-            and departure_port_code=${uniqueArrivalKey.departurePort.toString}
-            and voyage_number=${uniqueArrivalKey.voyageNumber.numeric}
-            and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
-          GROUP BY
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
+    sql"""SELECT arrival_port_code, departure_port_code, voyage_number, scheduled_date FROM (
+            SELECT
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date,
+              SUM(CASE WHEN nationality_country_code = '' THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100 AS missingPct
+            FROM
+              voyage_manifest_passenger_info
+            WHERE
+              event_code ='DC'
+              and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
+              and departure_port_code=${uniqueArrivalKey.departurePort.toString}
+              and voyage_number=${uniqueArrivalKey.voyageNumber.numeric}
+              and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
+            GROUP BY
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date) as tmp
+          WHERE missingPct < 20.0
           """.as[(String, String, String, Timestamp)]
   }
 
@@ -153,25 +160,28 @@ case class ManifestLookup(paxInfoTable: VoyageManifestPassengerInfoTable) extend
     val earliestTs = earliestWeek.toISODateOnly
     val middleTs = lastYear.toISODateOnly
     val latestTs = latestWeek.toISODateOnly
-    sql"""SELECT
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
-          FROM
-            voyage_manifest_passenger_info
-          WHERE
-            event_code ='DC'
-            and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
-            and departure_port_code=${uniqueArrivalKey.departurePort.toString}
-            and day_of_week = EXTRACT(DOW FROM TIMESTAMP '#$scheduledTs')::int
-            and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
-          GROUP BY
-            arrival_port_code,
-            departure_port_code,
-            voyage_number,
-            scheduled_date
-          LIMIT 3
+    sql"""SELECT arrival_port_code, departure_port_code, voyage_number, scheduled_date FROM (
+            SELECT
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date,
+              SUM(CASE WHEN nationality_country_code = '' THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100 AS missingPct
+            FROM
+              voyage_manifest_passenger_info
+            WHERE
+              event_code ='DC'
+              and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
+              and departure_port_code=${uniqueArrivalKey.departurePort.toString}
+              and day_of_week = EXTRACT(DOW FROM TIMESTAMP '#$scheduledTs')::int
+              and week_of_year IN (EXTRACT(WEEK FROM TIMESTAMP '#$earliestTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$middleTs')::int, EXTRACT(WEEK FROM TIMESTAMP '#$latestTs')::int)
+            GROUP BY
+              arrival_port_code,
+              departure_port_code,
+              voyage_number,
+              scheduled_date
+            LIMIT 3) as tmp
+          WHERE missingPct < 20.0
           """.as[(String, String, String, Timestamp)]
   }
 
