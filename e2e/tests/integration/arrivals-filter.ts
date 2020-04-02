@@ -28,10 +28,10 @@ describe('Arrivals page filter', () => {
       .get('#arrivals > div').contains("No flights to display")
       .get('.time-range > :nth-child(1)').select("16")
       .get('.time-range > :nth-child(2)').select("17")
-      .get('.danger > :nth-child(1)').contains("TS0123")
+      .get('.arrivals__table__flight-code').contains("TS0123")
       .get('.time-range > :nth-child(1)').select("17")
       .get('.time-range > :nth-child(2)').select("18")
-      .get('.danger > :nth-child(1)').contains("TS0123")
+      .get('.arrivals__table__flight-code').contains("TS0123")
 
   });
 });
