@@ -70,8 +70,7 @@ trait DrtSystemInterface extends UserRoleProviderLike {
   val config: Configuration
   val airportConfig: AirportConfig
   val params: DrtConfigParameters = DrtConfigParameters(config)
-  val journalType: StreamingJournalLike = ProdStreamingJournal
-
+  val journalType: StreamingJournalLike = StreamingJournal.forConfig(config)
   def pcpPaxFn: Arrival => Int = if (params.useApiPaxNos)
     PcpPax.bestPaxEstimateWithApi
   else
@@ -82,6 +81,8 @@ trait DrtSystemInterface extends UserRoleProviderLike {
   val arrivalsImportActor: ActorRef = system.actorOf(Props(new ArrivalsImportActor()), name = "arrivals-import-actor")
   val registeredArrivalsActor: ActorRef = system.actorOf(Props(new RegisteredArrivalsActor(oneMegaByte, Option(500), airportConfig.portCode, now, expireAfterMillis)), name = "registered-arrivals-actor")
   val crunchQueueActor = system.actorOf(Props(new CrunchQueueActor(journalType, airportConfig.crunchOffsetMinutes)))
+
+  val usePartitionedPortState: Boolean = config.get[Boolean]("feature-flags.use-partitioned-state")
 
   val portStateActor: ActorRef
   val shiftsActor: ActorRef

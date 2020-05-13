@@ -19,7 +19,7 @@ object MockTerminalDayStaffActor {
 
 class MockTerminalDayStaffActor(day: SDateLike,
                                  terminal: Terminal,
-                                 initialState: Map[TM, StaffMinute]) extends TerminalDayStaffActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, () => day) {
+                                 initialState: Map[TM, StaffMinute]) extends TerminalDayStaffActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, () => day, None) {
   state = initialState
 }
 
@@ -45,7 +45,7 @@ class TerminalDayStaffActorSpec extends CrunchTestLike {
       val terminalSummariesActor: ActorRef = actorForTerminalAndDate(terminal, date)
 
       val eventual = sendMinuteQueryAndClear(staffMinutes, terminalSummariesActor)
-      val result = Await.result(eventual, 1 second)
+      val result = Await.result(eventual, 1 second).map(_.minutes)
 
       result === Option(MinutesContainer(Set(staffMinuteForDate(date).copy(lastUpdated = Option(date.millisSinceEpoch)))))
     }
@@ -69,16 +69,16 @@ class TerminalDayStaffActorSpec extends CrunchTestLike {
       val terminalSummariesActor: ActorRef = actorForTerminalAndDate(terminal, date)
 
       val eventual = sendMinuteQueryAndClear(staffMinutes, terminalSummariesActor)
-      val result = Await.result(eventual, 1 second)
+      val result = Await.result(eventual, 1 second).map(_.minutes)
 
       result === Option(MinutesContainer(Set(inside.copy(lastUpdated = Option(date.millisSinceEpoch)))))
     }
   }
 
   private def sendMinuteQueryAndClear(minutesContainer: MinutesContainer[StaffMinute, TM],
-                                      terminalSummariesActor: ActorRef): Future[Option[MinutesContainer[StaffMinute, TM]]] = {
+                                      terminalSummariesActor: ActorRef): Future[Option[MinutesState[StaffMinute, TM]]] = {
     terminalSummariesActor.ask(minutesContainer).flatMap { _ =>
-      terminalSummariesActor.ask(GetState).mapTo[Option[MinutesContainer[StaffMinute, TM]]]
+      terminalSummariesActor.ask(GetState).mapTo[Option[MinutesState[StaffMinute, TM]]]
     }
   }
 
@@ -87,6 +87,6 @@ class TerminalDayStaffActorSpec extends CrunchTestLike {
   }
 
   private def actorForTerminalAndDate(terminal: Terminal, date: SDateLike): ActorRef = {
-    system.actorOf(TerminalDayStaffActor.props(date, terminal, () => date))
+    system.actorOf(TerminalDayStaffActor.props(terminal, date, () => date))
   }
 }

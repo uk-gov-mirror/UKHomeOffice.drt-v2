@@ -1,9 +1,10 @@
 package actors.daily
 
 import actors.{RecoveryActorLike, Sizes}
+import akka.persistence.{Recovery, SnapshotSelectionCriteria}
 import drt.shared.CrunchApi.{MillisSinceEpoch, MinuteLike, MinutesContainer}
-import drt.shared.SDateLike
 import drt.shared.Terminals.Terminal
+import drt.shared.{SDateLike, WithTimeAccessor}
 import org.slf4j.{Logger, LoggerFactory}
 import scalapb.GeneratedMessage
 import services.SDate
@@ -11,11 +12,20 @@ import services.graphstages.Crunch
 
 case object GetSummariesWithActualApi
 
+case class MinutesState[A, B <: WithTimeAccessor](minutes: MinutesContainer[A, B], bookmarkSeqNr: Long) {
+  def window(start: SDateLike, end: SDateLike): MinutesState[A, B] = this.copy(minutes = minutes.window(start, end))
+}
+
+object TerminalDay {
+  type TerminalDayBookmarks = Map[(Terminal, MillisSinceEpoch), MillisSinceEpoch]
+}
+
 abstract class TerminalDayLikeActor(year: Int,
                                     month: Int,
                                     day: Int,
                                     terminal: Terminal,
-                                    now: () => SDateLike) extends RecoveryActorLike {
+                                    now: () => SDateLike,
+                                    maybePointInTime: Option[MillisSinceEpoch]) extends RecoveryActorLike {
   override val log: Logger = LoggerFactory.getLogger(f"$getClass-$terminal-$year%04d-$month%02d-$day%02d")
 
   val typeForPersistenceId: String
@@ -25,11 +35,21 @@ abstract class TerminalDayLikeActor(year: Int,
   override val snapshotBytesThreshold: Int = Sizes.oneMegaByte
   override val recoveryStartMillis: MillisSinceEpoch = now().millisSinceEpoch
 
-  val firstMinute: SDateLike = SDate(year, month, day, 0, 0, Crunch.europeLondonTimeZone)
+  val firstMinute: SDateLike = SDate(year, month, day, 0, 0, Crunch.utcTimeZone)
   val firstMinuteMillis: MillisSinceEpoch = firstMinute.millisSinceEpoch
   val lastMinuteMillis: MillisSinceEpoch = firstMinute.addDays(1).addMinutes(-1).millisSinceEpoch
 
-  def persistAndMaybeSnapshot[A, B](differences: Iterable[MinuteLike[A, B]], messageToPersist: GeneratedMessage): Unit = {
+  override def recovery: Recovery = maybePointInTime match {
+    case None => Recovery(SnapshotSelectionCriteria(Long.MaxValue, maxTimestamp = Long.MaxValue, 0L, 0L))
+    case Some(pointInTime) =>
+      val criteria = SnapshotSelectionCriteria(maxTimestamp = pointInTime)
+      val recovery = Recovery(fromSnapshot = criteria, replayMax = 10000)
+      log.info(s"Recovery: $recovery")
+      recovery
+  }
+
+  def persistAndMaybeSnapshot[A, B <: WithTimeAccessor](differences: Iterable[MinuteLike[A, B]],
+                                    messageToPersist: GeneratedMessage): Unit = {
     val replyTo = sender()
     persist(messageToPersist) { message =>
       val messageBytes = message.serializedSize
@@ -63,5 +83,4 @@ abstract class TerminalDayLikeActor(year: Int,
     state ++ diff.collect {
       case cm if firstMinuteMillis <= cm.minute && cm.minute < lastMinuteMillis => (cm.key, cm.toUpdatedMinute(cm.lastUpdated.getOrElse(0L)))
     }
-
 }

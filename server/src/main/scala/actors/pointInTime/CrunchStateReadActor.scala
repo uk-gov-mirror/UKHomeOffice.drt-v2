@@ -4,9 +4,10 @@ import actors.FlightMessageConversion.flightWithSplitsFromMessage
 import actors.PortStateMessageConversion.{crunchMinuteFromMessage, staffMinuteFromMessage}
 import actors.Sizes.oneMegaByte
 import actors._
+import actors.daily.MinutesState
 import akka.actor.Props
 import akka.persistence._
-import drt.shared.CrunchApi.{CrunchMinute, MillisSinceEpoch, StaffMinute}
+import drt.shared.CrunchApi.{CrunchMinute, MillisSinceEpoch, MinutesContainer, StaffMinute}
 import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
@@ -14,25 +15,9 @@ import drt.shared._
 import server.protobuf.messages.CrunchState._
 import services.SDate
 
-case object GetCrunchMinutes
+case class GetCrunchMinutes(terminal: Terminal)
 
-object CrunchStateReadActor {
-  def props(snapshotInterval: Int,
-            pointInTime: SDateLike,
-            expireAfterMillis: Int,
-            queues: Map[Terminal, Seq[Queue]],
-            startMillis: MillisSinceEpoch,
-            endMillis: MillisSinceEpoch): Props = Props(
-    new CrunchStateReadActor(
-      snapshotInterval,
-      pointInTime,
-      expireAfterMillis,
-      queues,
-      startMillis,
-      endMillis
-    )
-  )
-}
+case class GetStaffMinutes(terminal: Terminal)
 
 class CrunchStateReadActor(snapshotInterval: Int,
                            pointInTime: SDateLike,
@@ -77,6 +62,14 @@ class CrunchStateReadActor(snapshotInterval: Int,
     case GetState =>
       logInfo(s"Received GetState Request (pit: ${pointInTime.toISOString()}")
       sender() ! Option(state)
+
+    case GetCrunchMinutes(terminal) =>
+      log.debug(s"Received GetCrunchMinutes request")
+      sender() ! Option(MinutesState(MinutesContainer(state.immutable.crunchMinutes.filterKeys(tqm => tqm.terminal == terminal).values), Long.MaxValue))
+
+    case GetStaffMinutes(terminal) =>
+      log.debug(s"Received GetStaffMinutes request")
+      sender() ! Option(MinutesState(MinutesContainer(state.immutable.staffMinutes.filterKeys(tm => tm.terminal == terminal).values), Long.MaxValue))
 
     case GetPortState(start, end) =>
       logInfo(s"Received GetPortState Request from ${SDate(start).toISOString()} to ${SDate(end).toISOString()}")
