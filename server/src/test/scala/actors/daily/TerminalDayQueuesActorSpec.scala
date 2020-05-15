@@ -77,7 +77,7 @@ class TerminalDayQueuesActorSpec extends CrunchTestLike {
       val eventual = sendMinuteQueryAndClear(container, terminalSummariesActor)
       val result = Await.result(eventual, 1 second).map(_.minutes)
 
-      result === Option(MinutesContainer(minutes.map(_.copy(lastUpdated = Option(date.millisSinceEpoch)))))
+      result === Option(minutes.map(_.copy(lastUpdated = Option(date.millisSinceEpoch))))
     }
 
     "When I send minutes to persist which lie outside the day, and then ask for its state I should see None" >> {
@@ -101,18 +101,18 @@ class TerminalDayQueuesActorSpec extends CrunchTestLike {
       val eventual = sendMinuteQueryAndClear(crunchMinutes, terminalSummariesActor)
       val result = Await.result(eventual, 1 second).map(_.minutes)
 
-      result === Option(MinutesContainer(Set(inside.copy(lastUpdated = Option(date.millisSinceEpoch)))))
+      result === Option(Set(inside.copy(lastUpdated = Option(date.millisSinceEpoch))))
     }
   }
 
   private def sendMinuteQueryAndClear(minutesContainer: MinutesContainer[CrunchMinute, TQM],
-                                      terminalSummariesActor: ActorRef): Future[Option[MinutesState[CrunchMinute, TQM]]] = {
+                                      terminalSummariesActor: ActorRef): Future[Option[MinutesContainer[CrunchMinute, TQM]]] = {
     terminalSummariesActor.ask(minutesContainer).flatMap { _ =>
-      terminalSummariesActor.ask(GetState).mapTo[Option[MinutesState[CrunchMinute, TQM]]]
+      terminalSummariesActor.ask(GetState).mapTo[Option[MinutesContainer[CrunchMinute, TQM]]]
     }
   }
 
-  private def crunchMinuteForDate(date: SDateLike) = {
+  private def crunchMinuteForDate(date: SDateLike): CrunchMinute = {
     CrunchMinute(terminal, EeaDesk, date.millisSinceEpoch, 1, 2, 3, 4, None, None, None, None)
   }
 

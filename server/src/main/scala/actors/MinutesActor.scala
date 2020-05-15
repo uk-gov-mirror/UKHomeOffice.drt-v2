@@ -11,7 +11,7 @@ import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import drt.shared.CrunchApi.{MinutesContainer, _}
 import drt.shared.Terminals.Terminal
-import drt.shared._
+import drt.shared.{MilliTimes, SDateLike, WithTimeAccessor, _}
 import org.slf4j.{Logger, LoggerFactory}
 import services.SDate
 import services.graphstages.Crunch
@@ -32,7 +32,7 @@ class QueueMinutesActor(now: () => SDateLike,
                         terminals: Iterable[Terminal],
                         lookupPrimary: MinutesLookup[CrunchMinute, TQM],
                         lookupSecondary: MinutesLookup[CrunchMinute, TQM],
-                        updateMinutes: MinutesUpdate[CrunchMinute, TQM]) extends MinutesActor(now, terminals, lookupPrimary, lookupSecondary, updateMinutes) {
+                        updateMinutes: MinutesUpdate[CrunchMinute, TQM]) extends MinutesActor[CrunchMinute, TQM](now, terminals, lookupPrimary, lookupSecondary, updateMinutes) {
 
   val minutesBuffer: mutable.Map[TQM, LoadMinute] = mutable.Map[TQM, LoadMinute]()
   var maybeUpdateSubscriber: Option[ActorRef] = None
@@ -97,7 +97,7 @@ class StaffMinutesActor(now: () => SDateLike,
                         terminals: Iterable[Terminal],
                         lookupPrimary: MinutesLookup[StaffMinute, TM],
                         lookupSecondary: MinutesLookup[StaffMinute, TM],
-                        updateMinutes: MinutesUpdate[StaffMinute, TM]) extends MinutesActor(now, terminals, lookupPrimary, lookupSecondary, updateMinutes)
+                        updateMinutes: MinutesUpdate[StaffMinute, TM]) extends MinutesActor[StaffMinute, TM](now, terminals, lookupPrimary, lookupSecondary, updateMinutes)
 
 object MinutesWithBookmarks {
   def empty[A, B <: WithTimeAccessor]: MinutesWithBookmarks[A, B] = MinutesWithBookmarks(MinutesContainer.empty[A, B], Map())
