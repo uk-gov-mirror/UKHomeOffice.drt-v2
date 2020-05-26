@@ -68,7 +68,7 @@ case class ArrivalFeedExport()(implicit system: ActorSystem, executionContext: E
 
     val arrivalsForDay = arrivals
       .values
-      .filter(a => a.Terminal == terminal && !Ports.domesticPorts.contains(a.Origin))
+      .filter(a => a.Terminal == terminal)
       .filter(a => isScheduledForExportDay(a, exportDay))
 
     val csvData = arrivalsForDay
