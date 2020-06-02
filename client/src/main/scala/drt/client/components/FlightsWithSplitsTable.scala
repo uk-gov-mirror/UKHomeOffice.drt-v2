@@ -116,9 +116,6 @@ object FlightsWithSplitsTable {
       ("Est PCP Pax", None))
 
     val portColumnThs = columns
-      .filter {
-        case (label, _) => label != "Est Chox" || props.hasEstChox
-      }
       .map {
         case (label, None) => <.th(label)
         case (label, Some(className)) => <.th(label, ^.className := className)
@@ -242,7 +239,7 @@ object FlightTableRow {
         <.td(pcpTimeRange(flight, props.pcpPaxFn)),
         <.td(FlightComponents.paxComp(props.pcpPaxFn)(flightWithSplits))
       )
-      val flightFields = if (props.hasEstChox) firstCells ++ estCell ++ lastCells else firstCells ++ lastCells
+      val flightFields =  firstCells ++ estCell ++ lastCells
 
       val paxClass = FlightComponents.paxClassFromSplits(flightWithSplits)
 
