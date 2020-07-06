@@ -26,12 +26,6 @@ case class GetAllUpdatesSince(sinceMillis: MillisSinceEpoch)
 
 case class StartUpdatesStream(terminal: Terminal, day: SDateLike)
 
-object UpdatesSupervisor {
-  def props[A <: MinuteLike[A, B], B <: WithTimeAccessor](now: () => SDateLike,
-                                                          terminals: List[Terminal],
-                                                          updatesActorFactory: (Terminal, SDateLike) => Props): Props =
-    Props(new UpdatesSupervisor[A, B](now, terminals, updatesActorFactory))
-}
 
 class UpdatesSupervisor[A, B <: WithTimeAccessor](now: () => SDateLike,
                                                   terminals: List[Terminal],

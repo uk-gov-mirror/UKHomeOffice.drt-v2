@@ -10,7 +10,7 @@ import akka.util.Timeout
 import drt.shared.CrunchApi._
 import drt.shared.FlightsApi.{FlightsWithSplits, FlightsWithSplitsDiff}
 import drt.shared.Terminals.Terminal
-import drt.shared._
+import drt.shared.{SDateLike, _}
 import org.slf4j.{Logger, LoggerFactory}
 import services.crunch.deskrecs.{GetFlights, GetStateForDateRange, GetStateForTerminalDateRange, PortStateRequest}
 
@@ -29,29 +29,31 @@ object PartitionedPortStateActor {
   }
 }
 
+object ProdUpdatesActorProps {
+  def queues(now: () => SDateLike, journalType: StreamingJournalLike): (Terminal, SDateLike) => Props =
+    (terminal: Terminal, day: SDateLike) => {
+      Props(new TerminalDayQueuesUpdatesActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, now, journalType))
+    }
+
+  def staff(now: () => SDateLike, journalType: StreamingJournalLike): (Terminal, SDateLike) => Props =
+    (terminal: Terminal, day: SDateLike) => {
+      Props(new TerminalDayStaffUpdatesActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, now, journalType))
+    }
+}
+
 trait PartitionedPortStateActorLike {
   val now: () => SDateLike
   val context: ActorContext
   val journalType: StreamingJournalLike
   val terminals: List[Terminal]
 
-  val queueUpdatesProps: (Terminal, SDateLike) => Props =
-    (terminal: Terminal, day: SDateLike) => {
-      Props(new TerminalDayQueuesUpdatesActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, now, journalType))
-    }
-
-  val staffUpdatesProps: (Terminal, SDateLike) => Props =
-    (terminal: Terminal, day: SDateLike) => {
-      Props(new TerminalDayStaffUpdatesActor(day.getFullYear(), day.getMonth(), day.getDate(), terminal, now, journalType))
-    }
-
   val queueUpdatesSupervisor: ActorRef
   val staffUpdatesSupervisor: ActorRef
 }
 
 trait ProdPartitionedPortStateActor extends PartitionedPortStateActorLike {
-  override val queueUpdatesSupervisor: ActorRef = context.system.actorOf(Props(new UpdatesSupervisor[CrunchMinute, TQM](now, terminals, queueUpdatesProps)))
-  override val staffUpdatesSupervisor: ActorRef = context.system.actorOf(Props(new UpdatesSupervisor[StaffMinute, TM](now, terminals, staffUpdatesProps)))
+  override val queueUpdatesSupervisor: ActorRef = context.system.actorOf(Props(new UpdatesSupervisor[CrunchMinute, TQM](now, terminals, ProdUpdatesActorProps.queues(now, journalType))))
+  override val staffUpdatesSupervisor: ActorRef = context.system.actorOf(Props(new UpdatesSupervisor[StaffMinute, TM](now, terminals, ProdUpdatesActorProps.staff(now, journalType))))
 }
 
 class PartitionedPortStateActor(flightsActor: ActorRef,
