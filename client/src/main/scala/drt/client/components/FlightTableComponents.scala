@@ -63,7 +63,7 @@ object FlightTableComponents {
   }
 
   def pcpTimeRange(arrival: Arrival, bestPax: Arrival => Int): TagOf[Div] =
-    arrival.PcpTime.map { pcpTime: MillisSinceEpoch =>
+    arrival.pcpTime.map { pcpTime: MillisSinceEpoch =>
       val sdateFrom = SDate(MilliDate(pcpTime))
       val sdateTo = SDate(MilliDate(pcpTime + millisToDisembark(bestPax(arrival))))
       <.div(

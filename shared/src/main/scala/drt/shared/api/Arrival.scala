@@ -11,50 +11,50 @@ import scala.util.matching.Regex
 
 case class FlightCodeSuffix(suffix: String)
 
-case class Arrival(Operator: Option[Operator],
-                   CarrierCode: CarrierCode,
-                   VoyageNumber: VoyageNumber,
-                   FlightCodeSuffix: Option[FlightCodeSuffix],
-                   Status: ArrivalStatus,
-                   Estimated: Option[MillisSinceEpoch],
-                   Actual: Option[MillisSinceEpoch],
-                   EstimatedChox: Option[MillisSinceEpoch],
-                   ActualChox: Option[MillisSinceEpoch],
-                   Gate: Option[String],
-                   Stand: Option[String],
-                   MaxPax: Option[Int],
-                   ActPax: Option[Int],
-                   TranPax: Option[Int],
-                   RunwayID: Option[String],
-                   BaggageReclaimId: Option[String],
-                   AirportID: PortCode,
-                   Terminal: Terminal,
-                   Origin: PortCode,
-                   Scheduled: MillisSinceEpoch,
-                   PcpTime: Option[MillisSinceEpoch],
-                   FeedSources: Set[FeedSource],
-                   CarrierScheduled: Option[MillisSinceEpoch],
-                   ApiPax: Option[Int]
+case class Arrival(operator: Option[Operator],
+                   carrierCode: CarrierCode,
+                   voyageNumber: VoyageNumber,
+                   flightCodeSuffix: Option[FlightCodeSuffix],
+                   status: ArrivalStatus,
+                   sstimated: Option[MillisSinceEpoch],
+                   actual: Option[MillisSinceEpoch],
+                   estimatedChox: Option[MillisSinceEpoch],
+                   actualChox: Option[MillisSinceEpoch],
+                   gate: Option[String],
+                   stand: Option[String],
+                   maxPax: Option[Int],
+                   actPax: Option[Int],
+                   tranPax: Option[Int],
+                   runwayID: Option[String],
+                   baggageReclaimId: Option[String],
+                   airportID: PortCode,
+                   terminal: Terminal,
+                   origin: PortCode,
+                   scheduled: MillisSinceEpoch,
+                   pcpTime: Option[MillisSinceEpoch],
+                   feedSources: Set[FeedSource],
+                   carrierScheduled: Option[MillisSinceEpoch],
+                   apiPax: Option[Int]
                   ) extends WithUnique[UniqueArrival] {
   val paxOffPerMinute = 20
 
-  def suffixString: String = FlightCodeSuffix match {
+  def suffixString: String = flightCodeSuffix match {
     case None => ""
     case Some(s) => s.suffix
   }
 
-  def flightCode: String = s"$CarrierCode${VoyageNumber.toPaddedString}$suffixString"
+  def flightCode: String = s"$carrierCode${voyageNumber.toPaddedString}$suffixString"
 
-  def basicForComparison: Arrival = copy(PcpTime = None)
+  def basicForComparison: Arrival = copy(pcpTime = None)
 
   def equals(arrival: Arrival): Boolean = arrival.basicForComparison == basicForComparison
 
   lazy val uniqueId: Int = uniqueStr.hashCode
-  lazy val uniqueStr: String = s"$Terminal$Scheduled${VoyageNumber.numeric}"
+  lazy val uniqueStr: String = s"$terminal$scheduled${voyageNumber.numeric}"
 
   def hasPcpDuring(start: SDateLike, end: SDateLike): Boolean = {
-    val firstPcpMilli = PcpTime.getOrElse(0L)
-    val lastPcpMilli = firstPcpMilli + millisToDisembark(ActPax.getOrElse(0))
+    val firstPcpMilli = pcpTime.getOrElse(0L)
+    val lastPcpMilli = firstPcpMilli + millisToDisembark(actPax.getOrElse(0))
     val firstInRange = start.millisSinceEpoch <= firstPcpMilli && firstPcpMilli <= end.millisSinceEpoch
     val lastInRange = start.millisSinceEpoch <= lastPcpMilli && lastPcpMilli <= end.millisSinceEpoch
     firstInRange || lastInRange
@@ -66,21 +66,21 @@ case class Arrival(Operator: Option[Operator],
     (minutesToDisembark * oneMinuteInMillis).toLong
   }
 
-  lazy val pax: Int = ActPax.getOrElse(0)
+  lazy val pax: Int = actPax.getOrElse(0)
 
   lazy val minutesOfPaxArrivals: Int =
     if (pax <= 0) 0
     else (pax.toDouble / paxOffPerMinute).ceil.toInt - 1
 
   def pcpRange(): NumericRange[MillisSinceEpoch] = {
-    val pcpStart = PcpTime.getOrElse(0L)
+    val pcpStart = pcpTime.getOrElse(0L)
     val pcpEnd = pcpStart + oneMinuteMillis * minutesOfPaxArrivals
     pcpStart to pcpEnd by oneMinuteMillis
   }
 
-  lazy val unique: UniqueArrival = UniqueArrival(VoyageNumber.numeric, Terminal, Scheduled)
+  lazy val unique: UniqueArrival = UniqueArrival(voyageNumber.numeric, terminal, scheduled)
 
-  def isCancelled: Boolean = Status.description match {
+  def isCancelled: Boolean = status.description match {
     case st if st.toLowerCase.contains("cancelled") => true
     case st if st.toLowerCase.contains("canceled") => true
     case st if st.toLowerCase.contains("deleted") => true
@@ -91,7 +91,7 @@ case class Arrival(Operator: Option[Operator],
 object Arrival {
   val flightCodeRegex: Regex = "^([A-Z0-9]{2,3}?)([0-9]{1,4})([A-Z]*)$".r
 
-  def summaryString(arrival: Arrival): String = arrival.AirportID + "/" + arrival.Terminal + "@" + arrival.Scheduled + "!" + arrival.flightCode
+  def summaryString(arrival: Arrival): String = arrival.airportID + "/" + arrival.terminal + "@" + arrival.scheduled + "!" + arrival.flightCode
 
   def standardiseFlightCode(flightCode: String): String = {
     val flightCodeRegex = "^([A-Z0-9]{2,3}?)([0-9]{1,4})([A-Z]?)$".r
@@ -111,29 +111,29 @@ object Arrival {
   implicit val portCodeRw: ReadWriter[PortCode] = macroRW
   implicit val arrivalRw: ReadWriter[Arrival] = macroRW
 
-  def apply(Operator: Option[Operator],
-            Status: ArrivalStatus,
-            Estimated: Option[MillisSinceEpoch],
-            Actual: Option[MillisSinceEpoch],
-            EstimatedChox: Option[MillisSinceEpoch],
-            ActualChox: Option[MillisSinceEpoch],
-            Gate: Option[String],
-            Stand: Option[String],
-            MaxPax: Option[Int],
-            ActPax: Option[Int],
-            TranPax: Option[Int],
-            RunwayID: Option[String],
-            BaggageReclaimId: Option[String],
-            AirportID: PortCode,
-            Terminal: Terminal,
+  def apply(operator: Option[Operator],
+            status: ArrivalStatus,
+            estimated: Option[MillisSinceEpoch],
+            actual: Option[MillisSinceEpoch],
+            estimatedChox: Option[MillisSinceEpoch],
+            actualChox: Option[MillisSinceEpoch],
+            gate: Option[String],
+            stand: Option[String],
+            maxPax: Option[Int],
+            actPax: Option[Int],
+            tranPax: Option[Int],
+            runwayID: Option[String],
+            baggageReclaimId: Option[String],
+            airportID: PortCode,
+            terminal: Terminal,
             rawICAO: String,
             rawIATA: String,
-            Origin: PortCode,
-            Scheduled: MillisSinceEpoch,
-            PcpTime: Option[MillisSinceEpoch],
-            FeedSources: Set[FeedSource],
-            CarrierScheduled: Option[MillisSinceEpoch] = None,
-            ApiPax: Option[Int] = None
+            origin: PortCode,
+            scheduled: MillisSinceEpoch,
+            pcpTime: Option[MillisSinceEpoch],
+            feedSources: Set[FeedSource],
+            carrierScheduled: Option[MillisSinceEpoch] = None,
+            apiPax: Option[Int] = None
            ): Arrival = {
     val (carrierCode: CarrierCode, voyageNumber: VoyageNumber, maybeSuffix: Option[FlightCodeSuffix]) = {
       val bestCode = (rawIATA, rawICAO) match {
@@ -146,30 +146,30 @@ object Arrival {
     }
 
     Arrival(
-      Operator = Operator,
-      CarrierCode = carrierCode,
-      VoyageNumber = voyageNumber,
-      FlightCodeSuffix = maybeSuffix,
-      Status = Status,
-      Estimated = Estimated,
-      Actual = Actual,
-      EstimatedChox = EstimatedChox,
-      ActualChox = ActualChox,
-      Gate = Gate,
-      Stand = Stand,
-      MaxPax = MaxPax,
-      ActPax = ActPax,
-      TranPax = TranPax,
-      RunwayID = RunwayID,
-      BaggageReclaimId = BaggageReclaimId,
-      AirportID = AirportID,
-      Terminal = Terminal,
-      Origin = Origin,
-      Scheduled = Scheduled,
-      PcpTime = PcpTime,
-      FeedSources = FeedSources,
-      CarrierScheduled = CarrierScheduled,
-      ApiPax = ApiPax
+      operator = operator,
+      carrierCode = carrierCode,
+      voyageNumber = voyageNumber,
+      flightCodeSuffix = maybeSuffix,
+      status = status,
+      sstimated = estimated,
+      actual = actual,
+      estimatedChox = estimatedChox,
+      actualChox = actualChox,
+      gate = gate,
+      stand = stand,
+      maxPax = maxPax,
+      actPax = actPax,
+      tranPax = tranPax,
+      runwayID = runwayID,
+      baggageReclaimId = baggageReclaimId,
+      airportID = airportID,
+      terminal = terminal,
+      origin = origin,
+      scheduled = scheduled,
+      pcpTime = pcpTime,
+      feedSources = feedSources,
+      carrierScheduled = carrierScheduled,
+      apiPax = apiPax
       )
   }
 }

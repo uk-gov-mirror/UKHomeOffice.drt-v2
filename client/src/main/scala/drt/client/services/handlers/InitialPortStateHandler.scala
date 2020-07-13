@@ -43,7 +43,7 @@ class InitialPortStateHandler[M](getCurrentViewMode: () => ViewMode,
     case SetPortState(viewMode, portState) =>
       log.info(s"Received a PortState")
       val originCodes = portState.flights
-        .map { case (_, fws) => fws.apiFlight.Origin }
+        .map { case (_, fws) => fws.apiFlight.origin }
         .toSet
 
       val hideLoader = Effect(Future(HideLoader()))

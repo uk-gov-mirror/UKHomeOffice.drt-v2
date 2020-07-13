@@ -44,7 +44,7 @@ object FlightsWithSplitsTable {
 
       val flightsWithSplits = props.flightsWithSplits
       val flightsWithCodeShares: Seq[(ApiFlightWithSplits, Set[Arrival])] = FlightTableComponents.uniqueArrivalsWithCodeShares(flightsWithSplits)
-      val sortedFlights = flightsWithCodeShares.sortBy(_._1.apiFlight.PcpTime)
+      val sortedFlights = flightsWithCodeShares.sortBy(_._1.apiFlight.pcpTime)
       val isTimeLineSupplied = timelineComponent.isDefined
       val timelineTh = (if (isTimeLineSupplied) <.th("Timeline") :: Nil else List[TagMod]()).toTagMod
 
@@ -178,9 +178,9 @@ object FlightTableRow {
 
   def bestArrivalTime(f: Arrival): MillisSinceEpoch = {
     val best = (
-      Option(SDate(f.Scheduled)),
-      f.Estimated.map(SDate(_)),
-      f.Actual.map(SDate(_))
+      Option(SDate(f.scheduled)),
+      f.sstimated.map(SDate(_)),
+      f.actual.map(SDate(_))
     ) match {
       case (Some(sd), None, None) => sd
       case (_, Some(est), None) => est
@@ -200,7 +200,7 @@ object FlightTableRow {
       val allCodes = flight.flightCode :: codeShares.map(_.flightCode).toList
 
       val hasChangedStyle = if (state.hasChanged) ^.background := "rgba(255, 200, 200, 0.5) " else ^.outline := ""
-      val timeIndicatorClass = if (flight.PcpTime.getOrElse(0L) < SDate.now().millisSinceEpoch) "before-now" else "from-now"
+      val timeIndicatorClass = if (flight.pcpTime.getOrElse(0L) < SDate.now().millisSinceEpoch) "before-now" else "from-now"
 
       val queuePax: Map[Queue, Int] = ApiSplitsToSplitRatio
         .paxPerQueueUsingBestSplitsAsRatio(flightWithSplits, props.pcpPaxFn).getOrElse(Map())
@@ -223,22 +223,22 @@ object FlightTableRow {
 
       val firstCells = List[TagMod](
         <.td(^.className := flightCodeClass, flightCodeCell),
-        <.td(props.originMapper(flight.Origin)),
-        <.td(TerminalContentComponent.airportWrapper(flight.Origin) { proxy: ModelProxy[Pot[AirportInfo]] =>
+        <.td(props.originMapper(flight.origin)),
+        <.td(TerminalContentComponent.airportWrapper(flight.origin) { proxy: ModelProxy[Pot[AirportInfo]] =>
           <.span(
             proxy().renderEmpty(<.span()),
             proxy().render(ai => <.span(ai.country))
           )
         }),
-        <.td(s"${flight.Gate.getOrElse("")} / ${flight.Stand.getOrElse("")}"),
-        <.td(flight.Status.description),
-        <.td(localDateTimeWithPopup(Option(flight.Scheduled))),
-        <.td(localDateTimeWithPopup(flight.Estimated)),
-        <.td(localDateTimeWithPopup(flight.Actual))
+        <.td(s"${flight.gate.getOrElse("")} / ${flight.stand.getOrElse("")}"),
+        <.td(flight.status.description),
+        <.td(localDateTimeWithPopup(Option(flight.scheduled))),
+        <.td(localDateTimeWithPopup(flight.sstimated)),
+        <.td(localDateTimeWithPopup(flight.actual))
       )
-      val estCell = List(<.td(localDateTimeWithPopup(flight.EstimatedChox)))
+      val estCell = List(<.td(localDateTimeWithPopup(flight.estimatedChox)))
       val lastCells = List[TagMod](
-        <.td(localDateTimeWithPopup(flight.ActualChox)),
+        <.td(localDateTimeWithPopup(flight.actualChox)),
         <.td(pcpTimeRange(flight, props.pcpPaxFn)),
         <.td(FlightComponents.paxComp(props.pcpPaxFn)(flightWithSplits))
       )
@@ -281,7 +281,7 @@ object FlightTableRow {
 
   def offScheduleClass(arrival: Arrival): String = {
     val eta = bestArrivalTime(arrival)
-    val differenceFromScheduled = eta - arrival.Scheduled
+    val differenceFromScheduled = eta - arrival.scheduled
     val hourInMillis = 3600000
     val offScheduleClass = if (differenceFromScheduled > hourInMillis || differenceFromScheduled < -1 * hourInMillis)
       "danger"

@@ -29,7 +29,7 @@ class ArrivalsGraphStageSpec extends CrunchTestLike {
 
   val arrival_v1_with_no_chox_time: Arrival = arrival(iata = "BA0001", schDt = "2017-01-01T10:25Z", actPax = Option(100), origin = PortCode("JFK"), feedSources = Set(LiveFeedSource))
 
-  val arrival_v2_with_chox_time: Arrival = arrival_v1_with_no_chox_time.copy(Stand = Option("Stand1"), ActualChox = Option(SDate("2017-01-01T10:25Z").millisSinceEpoch))
+  val arrival_v2_with_chox_time: Arrival = arrival_v1_with_no_chox_time.copy(stand = Option("Stand1"), actualChox = Option(SDate("2017-01-01T10:25Z").millisSinceEpoch))
 
   val terminalSplits: Splits = Splits(Set(ApiPaxTypeAndQueueCount(EeaMachineReadable, EeaDesk, 100.0, None)), TerminalAverage, None, Percentage)
 
@@ -41,7 +41,7 @@ class ArrivalsGraphStageSpec extends CrunchTestLike {
 
     "a third arrival with an update to the chox time will change the arrival" >> {
       val crunch: CrunchGraphInputsAndProbes = runCrunchGraph(TestConfig(airportConfig = airportConfig, now = () => dateNow, initialPortState = initialPortState, initialLiveArrivals = initialLiveArrivals))
-      val arrival_v3_with_an_update_to_chox_time: Arrival = arrival_v2_with_chox_time.copy(ActualChox = Option(SDate("2017-01-01T10:30Z").millisSinceEpoch), Stand = Option("I will update"))
+      val arrival_v3_with_an_update_to_chox_time: Arrival = arrival_v2_with_chox_time.copy(actualChox = Option(SDate("2017-01-01T10:30Z").millisSinceEpoch), stand = Option("I will update"))
       offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(Flights(Seq(arrival_v3_with_an_update_to_chox_time))))
 
       val expectedArrivals: List[Arrival] = List(arrival_v3_with_an_update_to_chox_time)
@@ -69,7 +69,7 @@ class ArrivalsGraphStageSpec extends CrunchTestLike {
 
       crunch.portStateTestProbe.fishForMessage(5 seconds) {
         case ps: PortState =>
-          val portStateSources = ps.flights.values.flatMap(_.apiFlight.FeedSources).toSet
+          val portStateSources = ps.flights.values.flatMap(_.apiFlight.feedSources).toSet
           portStateSources == expected
       }
 
@@ -95,7 +95,7 @@ class ArrivalsGraphStageSpec extends CrunchTestLike {
 
       crunch.portStateTestProbe.fishForMessage(5 seconds) {
         case ps: PortState =>
-          val portStateSources = ps.flights.get(forecastArrival.unique).map(_.apiFlight.FeedSources).getOrElse(Set())
+          val portStateSources = ps.flights.get(forecastArrival.unique).map(_.apiFlight.feedSources).getOrElse(Set())
 
           portStateSources == expected
       }

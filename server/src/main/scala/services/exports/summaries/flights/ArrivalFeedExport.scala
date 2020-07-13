@@ -68,7 +68,7 @@ case class ArrivalFeedExport()(implicit system: ActorSystem, executionContext: E
 
     val arrivalsForDay = arrivals
       .values
-      .filter(a => a.Terminal == terminal && !Ports.domesticPorts.contains(a.Origin))
+      .filter(a => a.terminal == terminal && !Ports.domesticPorts.contains(a.origin))
       .filter(a => isScheduledForExportDay(a, exportDay))
 
     val csvData = arrivalsForDay
@@ -83,7 +83,7 @@ case class ArrivalFeedExport()(implicit system: ActorSystem, executionContext: E
   }
 
   def isScheduledForExportDay(arrival: Arrival, day: SDateLike): Boolean =
-    arrival.Scheduled > day.getLocalLastMidnight.millisSinceEpoch && arrival.Scheduled < day.getLocalNextMidnight.millisSinceEpoch
+    arrival.scheduled > day.getLocalLastMidnight.millisSinceEpoch && arrival.scheduled < day.getLocalNextMidnight.millisSinceEpoch
 
 
   def headingsSource: Source[Option[String], NotUsed] = Source(

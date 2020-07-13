@@ -30,26 +30,26 @@ class LGWFeedSpec extends CrunchTestLike with Mockito {
 
     arrivals.size mustEqual 1
     arrivals.head mustEqual Arrival(
-      Operator = None,
-      Status = "Landed",
-      Estimated = Some(SDate("2018-06-03T19:28:00Z").millisSinceEpoch),
-      Actual =  Some(SDate("2018-06-03T19:30:00Z").millisSinceEpoch),
-      EstimatedChox =  Some(SDate("2018-06-03T19:37:00Z").millisSinceEpoch),
-      ActualChox =  Some(SDate("2018-06-03T19:36:00Z").millisSinceEpoch),
-      Gate = None,
-      Stand = None,
-      MaxPax = Some(308),
-      ActPax = Some(120),
-      TranPax = None,
-      RunwayID = Some("08R"),
-      BaggageReclaimId = None,
-      AirportID = PortCode("LGW"),
-      Terminal = N,
+      operator = None,
+      status = "Landed",
+      estimated = Some(SDate("2018-06-03T19:28:00Z").millisSinceEpoch),
+      actual =  Some(SDate("2018-06-03T19:30:00Z").millisSinceEpoch),
+      estimatedChox =  Some(SDate("2018-06-03T19:37:00Z").millisSinceEpoch),
+      actualChox =  Some(SDate("2018-06-03T19:36:00Z").millisSinceEpoch),
+      gate = None,
+      stand = None,
+      maxPax = Some(308),
+      actPax = Some(120),
+      tranPax = None,
+      runwayID = Some("08R"),
+      baggageReclaimId = None,
+      airportID = PortCode("LGW"),
+      terminal = N,
       rawICAO = "VIR808",
       rawIATA = "VS808",
-      Origin = PortCode("LHR"),
-      FeedSources = Set(LiveFeedSource),
-      Scheduled = SDate("2018-06-03T19:50:00Z").millisSinceEpoch, PcpTime = None)
+      origin = PortCode("LHR"),
+      feedSources = Set(LiveFeedSource),
+      scheduled = SDate("2018-06-03T19:50:00Z").millisSinceEpoch, pcpTime = None)
 
 
   }
@@ -62,26 +62,26 @@ class LGWFeedSpec extends CrunchTestLike with Mockito {
 
     arrivals.size mustEqual 1
     arrivals.head mustEqual Arrival(
-      Operator = None,
-      Status = "Landed",
-      Estimated = Some(SDate("2018-06-03T19:28:00Z").millisSinceEpoch),
-      Actual =  Some(SDate("2018-06-03T19:30:00Z").millisSinceEpoch),
-      EstimatedChox =  Some(SDate("2018-06-03T19:37:00Z").millisSinceEpoch),
-      ActualChox =  Some(SDate("2018-06-03T19:36:00Z").millisSinceEpoch),
-      Gate = None,
-      Stand = None,
-      MaxPax = Some(0),
-      ActPax = Some(0),
-      TranPax = None,
-      RunwayID = Some("08R"),
-      BaggageReclaimId = None,
-      AirportID = PortCode("LGW"),
-      Terminal = N,
+      operator = None,
+      status = "Landed",
+      estimated = Some(SDate("2018-06-03T19:28:00Z").millisSinceEpoch),
+      actual =  Some(SDate("2018-06-03T19:30:00Z").millisSinceEpoch),
+      estimatedChox =  Some(SDate("2018-06-03T19:37:00Z").millisSinceEpoch),
+      actualChox =  Some(SDate("2018-06-03T19:36:00Z").millisSinceEpoch),
+      gate = None,
+      stand = None,
+      maxPax = Some(0),
+      actPax = Some(0),
+      tranPax = None,
+      runwayID = Some("08R"),
+      baggageReclaimId = None,
+      airportID = PortCode("LGW"),
+      terminal = N,
       rawICAO = "VIR808",
       rawIATA = "VS808",
-      Origin = PortCode("LHR"),
-      FeedSources = Set(LiveFeedSource),
-      Scheduled = SDate("2018-06-03T19:50:00Z").millisSinceEpoch, PcpTime = None)
+      origin = PortCode("LHR"),
+      feedSources = Set(LiveFeedSource),
+      scheduled = SDate("2018-06-03T19:50:00Z").millisSinceEpoch, pcpTime = None)
 
 
   }

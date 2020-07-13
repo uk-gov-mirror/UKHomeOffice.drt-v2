@@ -50,7 +50,7 @@ class WorkloadSpec extends Specification {
 
   "Given an arrival with a PCP time that has seconds, then these seconds should be ignored for workload calcs" >> {
     val arrival = ArrivalGenerator.arrival(actPax = Option(1))
-      .copy(PcpTime = Some(SDate("2018-08-28T17:07:05").millisSinceEpoch))
+      .copy(pcpTime = Some(SDate("2018-08-28T17:07:05").millisSinceEpoch))
 
     val splits = Set(
       Splits(

@@ -114,8 +114,8 @@ object AclFeed {
       .toList
 
     if (arrivals.nonEmpty) {
-      val latestArrival = arrivals.maxBy(_.Scheduled)
-      log.info(s"ACL: ${arrivals.length} arrivals. Latest scheduled arrival: ${SDate(latestArrival.Scheduled).toLocalDateTimeString()} (${latestArrival.flightCode})")
+      val latestArrival = arrivals.maxBy(_.scheduled)
+      log.info(s"ACL: ${arrivals.length} arrivals. Latest scheduled arrival: ${SDate(latestArrival.scheduled).toLocalDateTimeString()} (${latestArrival.flightCode})")
     }
     arrivals
   }
@@ -192,27 +192,27 @@ object AclFeed {
       val portTerminal = aclToPortTerminal(aclTerminal)
 
       Arrival(
-        Operator = operator,
-        Status = "ACL Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = Option(maxPax),
-        ActPax = Option(actPax),
-        TranPax = None,
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = fields(AclColIndex.Airport),
-        Terminal = portTerminal,
+        operator = operator,
+        status = "ACL Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = Option(maxPax),
+        actPax = Option(actPax),
+        tranPax = None,
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = fields(AclColIndex.Airport),
+        terminal = portTerminal,
         rawICAO = fields(AclColIndex.FlightNumber),
         rawIATA = fields(AclColIndex.FlightNumber),
-        Origin = fields(AclColIndex.Origin),
-        Scheduled = SDate(dateAndTimeToDateTimeIso(fields(AclColIndex.Date), fields(AclColIndex.Time))).millisSinceEpoch,
-        PcpTime = None,
-        FeedSources = Set(shared.AclFeedSource)
+        origin = fields(AclColIndex.Origin),
+        scheduled = SDate(dateAndTimeToDateTimeIso(fields(AclColIndex.Date), fields(AclColIndex.Time))).millisSinceEpoch,
+        pcpTime = None,
+        feedSources = Set(shared.AclFeedSource)
       )
     }
   }

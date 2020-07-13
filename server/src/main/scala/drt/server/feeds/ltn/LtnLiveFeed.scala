@@ -91,27 +91,27 @@ case class LtnLiveFeed(feedRequester: LtnFeedRequestLike, timeZone: DateTimeZone
     val status: String = ltnFeedFlight.FlightStatusDesc.getOrElse("Scheduled")
 
     Arrival(
-      Operator = operator,
-      Status = status,
-      Estimated = ltnFeedFlight.EstimatedDateTime.map(sdateWithTimeZoneApplied),
-      Actual = ltnFeedFlight.ActualDateTime.map(sdateWithTimeZoneApplied),
-      EstimatedChox = None,
-      ActualChox = ltnFeedFlight.AIBT.map(sdateWithTimeZoneApplied),
-      Gate = ltnFeedFlight.GateCode,
-      Stand = ltnFeedFlight.StandCode,
-      MaxPax = ltnFeedFlight.MaxPax,
-      ActPax = ltnFeedFlight.TotalPassengerCount,
-      TranPax = None,
-      RunwayID = ltnFeedFlight.Runway,
-      BaggageReclaimId = ltnFeedFlight.BaggageClaimUnit,
-      AirportID = "LTN",
-      Terminal = Terminal(ltnFeedFlight.TerminalCode.getOrElse(throw new Exception("Missing terminal"))),
+      operator = operator,
+      status = status,
+      estimated = ltnFeedFlight.EstimatedDateTime.map(sdateWithTimeZoneApplied),
+      actual = ltnFeedFlight.ActualDateTime.map(sdateWithTimeZoneApplied),
+      estimatedChox = None,
+      actualChox = ltnFeedFlight.AIBT.map(sdateWithTimeZoneApplied),
+      gate = ltnFeedFlight.GateCode,
+      stand = ltnFeedFlight.StandCode,
+      maxPax = ltnFeedFlight.MaxPax,
+      actPax = ltnFeedFlight.TotalPassengerCount,
+      tranPax = None,
+      runwayID = ltnFeedFlight.Runway,
+      baggageReclaimId = ltnFeedFlight.BaggageClaimUnit,
+      airportID = "LTN",
+      terminal = Terminal(ltnFeedFlight.TerminalCode.getOrElse(throw new Exception("Missing terminal"))),
       rawICAO = ltnFeedFlight.AirlineICAO.getOrElse(throw new Exception("Missing ICAO carrier code")) + ltnFeedFlight.FlightNumber.getOrElse(throw new Exception("Missing flight number")),
       rawIATA = ltnFeedFlight.AirlineIATA.getOrElse(throw new Exception("Missing IATA carrier code")) + ltnFeedFlight.FlightNumber.getOrElse(throw new Exception("Missing flight number")),
-      Origin = ltnFeedFlight.OriginDestAirportIATA.getOrElse(throw new Exception("Missing origin IATA port code")),
-      Scheduled = sdateWithTimeZoneApplied(ltnFeedFlight.ScheduledDateTime.getOrElse(throw new Exception("Missing scheduled date time"))),
-      PcpTime = None,
-      FeedSources = Set(LiveFeedSource)
+      origin = ltnFeedFlight.OriginDestAirportIATA.getOrElse(throw new Exception("Missing origin IATA port code")),
+      scheduled = sdateWithTimeZoneApplied(ltnFeedFlight.ScheduledDateTime.getOrElse(throw new Exception("Missing scheduled date time"))),
+      pcpTime = None,
+      feedSources = Set(LiveFeedSource)
       )
   }
 

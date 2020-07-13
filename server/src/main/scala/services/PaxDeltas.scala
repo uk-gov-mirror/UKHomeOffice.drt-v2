@@ -78,7 +78,7 @@ object PaxDeltas {
     val paxActor = passengersActorProvider()
     val updatedArrivalsSource = Source(arrivals)
       .mapAsync(1) { arrival =>
-        val request = GetAverageAdjustment(OriginAndTerminal(arrival.Origin, arrival.Terminal), numDaysInAverage)
+        val request = GetAverageAdjustment(OriginAndTerminal(arrival.origin, arrival.terminal), numDaysInAverage)
         lookupAndApplyAdjustment(paxActor, request, arrival)
       }
 
@@ -106,10 +106,10 @@ object PaxDeltas {
       }
 
   private def applyAdjustment(arrival: Arrival, delta: Double) = {
-    val updatedPax = arrival.ActPax.map(pax => (pax * delta).round.toInt) match {
+    val updatedPax = arrival.actPax.map(pax => (pax * delta).round.toInt) match {
       case Some(positiveWithDelta) if positiveWithDelta > 0 => Option(positiveWithDelta)
       case _ => Option(0)
     }
-    arrival.copy(ActPax = updatedPax)
+    arrival.copy(actPax = updatedPax)
   }
 }

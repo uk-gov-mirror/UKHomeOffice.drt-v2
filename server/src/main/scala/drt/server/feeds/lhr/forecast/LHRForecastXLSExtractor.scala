@@ -15,15 +15,37 @@ import services.graphstages.Crunch.europeLondonId
 import scala.util.Success
 
 
-case class LHRForecastFlightRow(
+//case class LHRForecastFlightRow(
+//                                 scheduledDate: SDateLike,
+//                                 flightCode: String = "",
+//                                 origin: String = "",
+//                                 internationalDomestic: String = "",
+//                                 totalPax: Int = 0,
+//                                 transferPax: Int = 0,
+//                                 terminal: String)
+
+case class LGWForecastFlightRow(
                                  scheduledDate: SDateLike,
                                  flightCode: String = "",
                                  origin: String = "",
                                  internationalDomestic: String = "",
-                                 totalPax: Int = 0,
-                                 transferPax: Int = 0,
-                                 terminal: String
-                               )
+                                 service: String = "",
+                                 airCraft: String = "",
+                                 knownOp: String = "",
+                                 totalPax: Int)
+
+)
+
+//Date
+// Time (UTC)
+// OpeFlightNo
+// Airport
+// Service
+// ArrDep
+// Aircraft
+// Known Op
+// Dom/Int
+// Sum of Pax
 
 object LHRForecastXLSExtractor {
 

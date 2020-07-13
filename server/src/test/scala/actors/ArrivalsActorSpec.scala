@@ -49,7 +49,7 @@ class ArrivalsActorSpec extends Specification {
   "Given two existing arrivals and one incoming which matches an existing arrival except with an update " +
   "When I ask for removals and updates " +
   "I should see one update and one removal for the arrival no longer in the incoming set" >> {
-    val updatedArrival1 = arrival1.copy(ActPax = Option(150))
+    val updatedArrival1 = arrival1.copy(actPax = Option(150))
 
     val existing = mutable.SortedMap[UniqueArrival, Arrival]() ++= arrivalsToKeysArrivals(List(arrival1, arrival2))
     val incoming = arrivalsToKeysArrivals(List(updatedArrival1)).toMap
@@ -73,7 +73,7 @@ class ArrivalsActorSpec extends Specification {
   "Given 2 existing arrivals and two incoming arrivals, one an update and one new" +
   "When I ask for removals and updates " +
   "I should see two updates (a new and 1 update) and one removal" >> {
-    val updatedArrival2 = arrival2.copy(ActPax = Option(325))
+    val updatedArrival2 = arrival2.copy(actPax = Option(325))
 
     val existing = mutable.SortedMap[UniqueArrival, Arrival]() ++= arrivalsToKeysArrivals(List(arrival1, arrival2))
     val incoming = arrivalsToKeysArrivals(List(updatedArrival2, arrival3)).toMap

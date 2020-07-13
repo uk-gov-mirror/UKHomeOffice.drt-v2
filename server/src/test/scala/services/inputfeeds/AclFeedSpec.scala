@@ -43,11 +43,11 @@ class AclFeedSpec extends CrunchTestLike {
         """.stripMargin
 
       val arrivals = arrivalsFromCsvContent(csvContent, regularTerminalMapping)
-      val expected = List(Arrival(Operator = Option(Operator("4U")), Status = ArrivalStatus("ACL Forecast"), Estimated = None, Actual = None,
-                                  EstimatedChox = None, ActualChox = None, Gate = None, Stand = None, MaxPax = Option(180), ActPax = Option(149),
-                                  TranPax = None, RunwayID = None, BaggageReclaimId = None, AirportID = PortCode("LHR"), Terminal = T2,
-                                  rawICAO = "4U0460", rawIATA = "4U0460", Origin = PortCode("CGN"), FeedSources = Set(shared.AclFeedSource),
-                                  Scheduled = 1507878600000L, PcpTime = None))
+      val expected = List(Arrival(operator = Option(Operator("4U")), status = ArrivalStatus("ACL Forecast"), estimated = None, actual = None,
+                                  estimatedChox = None, actualChox = None, gate = None, stand = None, maxPax = Option(180), actPax = Option(149),
+                                  tranPax = None, runwayID = None, baggageReclaimId = None, airportID = PortCode("LHR"), terminal = T2,
+                                  rawICAO = "4U0460", rawIATA = "4U0460", origin = PortCode("CGN"), feedSources = Set(shared.AclFeedSource),
+                                  scheduled = 1507878600000L, pcpTime = None))
 
       arrivals === expected
     }
@@ -91,27 +91,27 @@ class AclFeedSpec extends CrunchTestLike {
       val arrivals = arrivalsFromCsvContent(csvContent, regularTerminalMapping)
       val expected = List(
         Arrival(
-          Operator = Option(Operator("4U")),
-          Status = ArrivalStatus("ACL Forecast"),
-          Estimated = None,
-          Actual = None,
-          EstimatedChox = None,
-          ActualChox = None,
-          Gate = None,
-          Stand = None,
-          MaxPax = Option(0),
-          ActPax = Option(0),
-          TranPax = None,
-          RunwayID = None,
-          BaggageReclaimId = None,
-          AirportID = PortCode("LHR"),
-          Terminal = T2,
+          operator = Option(Operator("4U")),
+          status = ArrivalStatus("ACL Forecast"),
+          estimated = None,
+          actual = None,
+          estimatedChox = None,
+          actualChox = None,
+          gate = None,
+          stand = None,
+          maxPax = Option(0),
+          actPax = Option(0),
+          tranPax = None,
+          runwayID = None,
+          baggageReclaimId = None,
+          airportID = PortCode("LHR"),
+          terminal = T2,
           rawICAO = "4U0460",
           rawIATA = "4U0460",
-          Origin = PortCode("CGN"),
-          FeedSources = Set(shared.AclFeedSource),
-          Scheduled = 1507878600000L,
-          PcpTime = None))
+          origin = PortCode("CGN"),
+          feedSources = Set(shared.AclFeedSource),
+          scheduled = 1507878600000L,
+          pcpTime = None))
 
       arrivals === expected
     }
@@ -127,27 +127,27 @@ class AclFeedSpec extends CrunchTestLike {
       val arrivals = arrivalsFromCsvContent(csvContent, regularTerminalMapping)
       val expected = List(
         Arrival(
-          Operator = Option(Operator("4U")),
-          Status = ArrivalStatus("ACL Forecast"),
-          Estimated = None,
-          Actual = None,
-          EstimatedChox = None,
-          ActualChox = None,
-          Gate = None,
-          Stand = None,
-          MaxPax = Option(200),
-          ActPax = Option(0),
-          TranPax = None,
-          RunwayID = None,
-          BaggageReclaimId = None,
-          AirportID = PortCode("LHR"),
-          Terminal = T2,
+          operator = Option(Operator("4U")),
+          status = ArrivalStatus("ACL Forecast"),
+          estimated = None,
+          actual = None,
+          estimatedChox = None,
+          actualChox = None,
+          gate = None,
+          stand = None,
+          maxPax = Option(200),
+          actPax = Option(0),
+          tranPax = None,
+          runwayID = None,
+          baggageReclaimId = None,
+          airportID = PortCode("LHR"),
+          terminal = T2,
           rawICAO = "4U0460",
           rawIATA = "4U0460",
-          Origin = PortCode("CGN"),
-          FeedSources = Set(shared.AclFeedSource),
-          Scheduled = 1507878600000L,
-          PcpTime = None))
+          origin = PortCode("CGN"),
+          feedSources = Set(shared.AclFeedSource),
+          scheduled = 1507878600000L,
+          pcpTime = None))
 
       arrivals === expected
     }
@@ -398,7 +398,7 @@ class AclFeedSpec extends CrunchTestLike {
   }
 
   def voyageNumbersAndTerminals(csvContent: String, portCode: PortCode): Set[(VoyageNumber, Terminal)] = {
-    arrivalsFromCsvContent(csvContent, AclFeed.aclToPortMapping(portCode)).map(a => (a.VoyageNumber, a.Terminal)).toSet
+    arrivalsFromCsvContent(csvContent, AclFeed.aclToPortMapping(portCode)).map(a => (a.voyageNumber, a.terminal)).toSet
   }
 
   "ACL Flights " >> {
@@ -417,7 +417,7 @@ class AclFeedSpec extends CrunchTestLike {
 
       offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(aclFlight))
 
-      val expected = Set(arrival.copy(FeedSources = Set(AclFeedSource)))
+      val expected = Set(arrival.copy(feedSources = Set(AclFeedSource)))
 
       crunch.portStateTestProbe.fishForMessage(3 seconds) {
         case ps: PortState =>
@@ -446,7 +446,7 @@ class AclFeedSpec extends CrunchTestLike {
       offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(aclFlights))
       offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(liveFlights))
 
-      val expected = Set(liveFlight.copy(CarrierCode = aclFlight.CarrierCode, VoyageNumber = aclFlight.VoyageNumber, FeedSources = Set(AclFeedSource, LiveFeedSource)))
+      val expected = Set(liveFlight.copy(carrierCode = aclFlight.carrierCode, voyageNumber = aclFlight.voyageNumber, feedSources = Set(AclFeedSource, LiveFeedSource)))
 
       crunch.portStateTestProbe.fishForMessage(3 seconds) {
         case ps: PortState =>
@@ -477,7 +477,7 @@ class AclFeedSpec extends CrunchTestLike {
       offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(Flights(initialAcl.toList)))
       offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(Flights(newAcl.toList)))
 
-      val expected = initialLive.map(_.copy(FeedSources = Set(LiveFeedSource))) ++ newAcl.map(_.copy(FeedSources = Set(AclFeedSource)))
+      val expected = initialLive.map(_.copy(feedSources = Set(LiveFeedSource))) ++ newAcl.map(_.copy(feedSources = Set(AclFeedSource)))
 
       crunch.portStateTestProbe.fishForMessage(3 seconds) {
         case ps: PortState =>
@@ -509,7 +509,7 @@ class AclFeedSpec extends CrunchTestLike {
       offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(Flights(initialAcl.toList)))
       offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(Flights(newLive.toList)))
 
-      val expected = newLive.map(_.copy(CarrierCode = CarrierCode("BA"), VoyageNumber = VoyageNumber(1), FeedSources = Set(LiveFeedSource, AclFeedSource))) + initialAcl2.copy(FeedSources = Set(AclFeedSource))
+      val expected = newLive.map(_.copy(carrierCode = CarrierCode("BA"), voyageNumber = VoyageNumber(1), feedSources = Set(LiveFeedSource, AclFeedSource))) + initialAcl2.copy(feedSources = Set(AclFeedSource))
 
       crunch.portStateTestProbe.fishForMessage(3 seconds) {
         case ps: PortState =>
@@ -546,7 +546,7 @@ class AclFeedSpec extends CrunchTestLike {
 
       crunch.portStateTestProbe.fishForMessage(5 seconds) {
         case ps: PortState =>
-          val voyageNos = ps.flights.values.map(_.apiFlight.VoyageNumber).toSet
+          val voyageNos = ps.flights.values.map(_.apiFlight.voyageNumber).toSet
           voyageNos == expected
       }
 
@@ -572,7 +572,7 @@ class AclFeedSpec extends CrunchTestLike {
         case PortState(f, _, _) => f.values.map(_.apiFlight)
       }
 
-      val nonEmptyFlightsList = List(aclArrival.copy(FeedSources = Set(AclFeedSource)))
+      val nonEmptyFlightsList = List(aclArrival.copy(feedSources = Set(AclFeedSource)))
       val expected = List(nonEmptyFlightsList)
 
       portStateFlightLists.distinct === expected
@@ -591,8 +591,8 @@ class AclFeedSpec extends CrunchTestLike {
     val aclArrivals: List[Arrival] = arrivalsFromCsvContent(contentFromFileName(sftp, latestFile), regularTerminalMapping)
 
     val todayArrivals = aclArrivals
-      .filter(_.Scheduled < SDate("2017-10-05T23:00").millisSinceEpoch)
-      .groupBy(_.Terminal)
+      .filter(_.scheduled < SDate("2017-10-05T23:00").millisSinceEpoch)
+      .groupBy(_.terminal)
 
     todayArrivals.foreach {
       case (tn, _) =>

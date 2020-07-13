@@ -130,7 +130,7 @@ class ArrivalsGraphStage(name: String = "",
         case LiveBaseArrivals =>
           updateArrivalsSource(liveBaseArrivals, filteredArrivals)
           val missingTerminals = liveBaseArrivals.count {
-            case (_, a) if a.Terminal == InvalidTerminal => true
+            case (_, a) if a.terminal == InvalidTerminal => true
             case _ => false
           }
           log.info(s"Got $missingTerminals Cirium Arrivals with no terminal")
@@ -208,7 +208,7 @@ class ArrivalsGraphStage(name: String = "",
     def relevantFlights(arrivals: SortedMap[UniqueArrival, Arrival]): SortedMap[UniqueArrival, Arrival] = {
       val toRemove = arrivals.filter {
         case (_, f) if !isFlightRelevant(f) =>
-          log.debug(s"Filtering out irrelevant arrival: ${f.flightCode}, ${SDate(f.Scheduled).toISOString()}, ${f.Origin}")
+          log.debug(s"Filtering out irrelevant arrival: ${f.flightCode}, ${SDate(f.scheduled).toISOString()}, ${f.origin}")
           true
         case _ => false
       }.keys
@@ -219,8 +219,8 @@ class ArrivalsGraphStage(name: String = "",
     }
 
     def isFlightRelevant(flight: Arrival): Boolean = {
-      val isValidSuffix = !flight.FlightCodeSuffix.exists(fcs => fcs.suffix == "P" || fcs.suffix == "F")
-      validPortTerminals.contains(flight.Terminal) && !Ports.domesticPorts.contains(flight.Origin) && isValidSuffix
+      val isValidSuffix = !flight.flightCodeSuffix.exists(fcs => fcs.suffix == "P" || fcs.suffix == "F")
+      validPortTerminals.contains(flight.terminal) && !Ports.domesticPorts.contains(flight.origin) && isValidSuffix
     }
 
     def pushIfAvailable(arrivalsToPush: Option[ArrivalsDiff], outlet: Outlet[ArrivalsDiff]): Unit = {
@@ -290,13 +290,13 @@ class ArrivalsGraphStage(name: String = "",
       val key = UniqueArrival(baseArrival)
       val (pax, transPax) = bestPaxNos(key)
       bestArrival.copy(
-        CarrierCode = baseArrival.CarrierCode,
-        VoyageNumber = baseArrival.VoyageNumber,
-        ActPax = pax,
-        TranPax = transPax,
-        Status = bestStatus(key),
-        FeedSources = feedSources(key),
-        PcpTime = Option(pcpArrivalTime(bestArrival).millisSinceEpoch)
+        carrierCode = baseArrival.carrierCode,
+        voyageNumber = baseArrival.voyageNumber,
+        actPax = pax,
+        tranPax = transPax,
+        status = bestStatus(key),
+        feedSources = feedSources(key),
+        pcpTime = Option(pcpArrivalTime(bestArrival).millisSinceEpoch)
         )
     }
 
@@ -304,19 +304,19 @@ class ArrivalsGraphStage(name: String = "",
 
     def bestPaxNos(key: UniqueArrival): (Option[Int], Option[Int]) =
       (liveArrivals.get(key), forecastArrivals.get(key), forecastBaseArrivals.get(key)) match {
-        case (Some(live), _, _) if paxDefined(live) => (live.ActPax, live.TranPax)
-        case (_, Some(fcst), _) if paxDefined(fcst) => (fcst.ActPax, fcst.TranPax)
-        case (_, _, Some(base)) if paxDefined(base) => (base.ActPax, base.TranPax)
+        case (Some(live), _, _) if paxDefined(live) => (live.actPax, live.tranPax)
+        case (_, Some(fcst), _) if paxDefined(fcst) => (fcst.actPax, fcst.tranPax)
+        case (_, _, Some(base)) if paxDefined(base) => (base.actPax, base.tranPax)
         case _ => (None, None)
       }
 
     def bestStatus(key: UniqueArrival): ArrivalStatus =
       (liveArrivals.get(key), liveBaseArrivals.get(key), forecastArrivals.get(key), forecastBaseArrivals.get(key)) match {
-        case (Some(live), Some(liveBase), _, _) if live.Status.description == "UNK" => liveBase.Status
-        case (Some(live), _, _, _) => live.Status
-        case (_, Some(liveBase), _, _) => liveBase.Status
-        case (_, _, Some(forecast), _) => forecast.Status
-        case (_, _, _, Some(forecastBase)) => forecastBase.Status
+        case (Some(live), Some(liveBase), _, _) if live.status.description == "UNK" => liveBase.status
+        case (Some(live), _, _, _) => live.status
+        case (_, Some(liveBase), _, _) => liveBase.status
+        case (_, _, Some(forecast), _) => forecast.status
+        case (_, _, _, Some(forecastBase)) => forecastBase.status
         case _ => ArrivalStatus("Unknown")
       }
 
@@ -330,5 +330,5 @@ class ArrivalsGraphStage(name: String = "",
     }
   }
 
-  private def paxDefined(baseArrival: Arrival): Boolean = baseArrival.ActPax.isDefined
+  private def paxDefined(baseArrival: Arrival): Boolean = baseArrival.actPax.isDefined
 }

@@ -18,7 +18,7 @@ describe('Arrivals page filter', () => {
           "EstChoxDT": todayAtUtcString(16, 11),
           "ActDT": todayAtUtcString(16, 7),
           "ActChoxDT": todayAtUtcString(16, 45),
-          "ActPax": 300
+          "actPax": 300
         }
       )
       .asABorderForceOfficer()

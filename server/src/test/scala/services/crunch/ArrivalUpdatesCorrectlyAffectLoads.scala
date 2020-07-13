@@ -38,7 +38,7 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send an updated estimated time" >> {
       val updatedArrival = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:07").millisSinceEpoch)
+        sstimated = Option(SDate("2019-01-01T00:07").millisSinceEpoch)
       )
 
       offerAndCheckResult(Seq(updatedArrival))
@@ -47,8 +47,8 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send an updated act pax" >> {
       val updatedArrival = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:07").millisSinceEpoch),
-        ActPax = Option(105)
+        sstimated = Option(SDate("2019-01-01T00:07").millisSinceEpoch),
+        actPax = Option(105)
       )
 
       offerAndCheckResult(Seq(updatedArrival))
@@ -57,8 +57,8 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send an updated act pax & estimated time & manifest" >> {
       val updatedArrival = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:01").millisSinceEpoch),
-        ActPax = Option(76)
+        sstimated = Option(SDate("2019-01-01T00:01").millisSinceEpoch),
+        actPax = Option(76)
       )
       val voyageManifests = ManifestsFeedSuccess(DqManifests("", Set(
         manifestForArrival(updatedArrival, manifestPax(25, visa) ++
@@ -73,8 +73,8 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send another updated act pax & estimated time & manifest" >> {
       val updatedArrival = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:25").millisSinceEpoch),
-        ActPax = Option(35)
+        sstimated = Option(SDate("2019-01-01T00:25").millisSinceEpoch),
+        actPax = Option(35)
       )
       val voyageManifests = ManifestsFeedSuccess(DqManifests("", Set(
         manifestForArrival(updatedArrival,
@@ -92,8 +92,8 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send a second arrival with a manifest" >> {
       val updatedArrival = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:25").millisSinceEpoch),
-        ActPax = Option(211)
+        sstimated = Option(SDate("2019-01-01T00:25").millisSinceEpoch),
+        actPax = Option(211)
       )
       val voyageManifests = ManifestsFeedSuccess(DqManifests("", Set(
         manifestForArrival(updatedArrival,
@@ -110,12 +110,12 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
 
     "When I send a second arrival with a manifest" >> {
       val updatedArrivalOne = arrivalOne.copy(
-        Estimated = Option(SDate("2019-01-01T00:03").millisSinceEpoch),
-        ActPax = Option(401)
+        sstimated = Option(SDate("2019-01-01T00:03").millisSinceEpoch),
+        actPax = Option(401)
       )
       val updatedArrivalTwo = arrivalTwo.copy(
-        Estimated = Option(SDate("2019-01-01T00:03").millisSinceEpoch),
-        ActPax = Option(176)
+        sstimated = Option(SDate("2019-01-01T00:03").millisSinceEpoch),
+        actPax = Option(176)
       )
       val voyageManifests = ManifestsFeedSuccess(DqManifests("", Set(
         manifestForArrival(updatedArrivalOne, manifestPax(300, visa) ++ manifestPax(99, euPassport) ++ manifestPax(2, nonVisa)),
@@ -131,8 +131,8 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
   }
 
   private def manifestForArrival(updatedArrival: Arrival, paxInfos: List[PassengerInfoJson]): VoyageManifest = {
-    val schDateTime = SDate(updatedArrival.Scheduled)
-    VoyageManifest(EventTypes.CI, PortCode("STN"), updatedArrival.Origin, updatedArrival.VoyageNumber, updatedArrival.CarrierCode, ManifestDateOfArrival(schDateTime.toISODateOnly), ManifestTimeOfArrival(schDateTime.toHoursAndMinutes()), paxInfos)
+    val schDateTime = SDate(updatedArrival.scheduled)
+    VoyageManifest(EventTypes.CI, PortCode("STN"), updatedArrival.origin, updatedArrival.voyageNumber, updatedArrival.carrierCode, ManifestDateOfArrival(schDateTime.toISODateOnly), ManifestTimeOfArrival(schDateTime.toHoursAndMinutes()), paxInfos)
   }
 
   private def offerAndCheckResult(arrivals: Seq[Arrival], queues: Seq[Queue] = Seq()): Unit = {
@@ -150,7 +150,7 @@ class ArrivalUpdatesCorrectlyAffectLoads extends CrunchTestLike {
     val arrivalsExist = arrivals.foldLeft(true) { case (soFar, a) => soFar && flights.contains(a.unique) }
 
     val arrivalsPaxTotal = arrivals.map {
-      _.ActPax.getOrElse(-1)
+      _.actPax.getOrElse(-1)
     }.sum
 
     val (firstPaxLoadMinute, paxLoadTotal, queuesOk) = crunchMins match {

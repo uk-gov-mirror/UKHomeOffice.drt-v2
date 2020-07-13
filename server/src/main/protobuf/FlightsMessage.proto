@@ -8,29 +8,29 @@ message FlightStateSnapshotMessage {
 }
 
 message FlightMessage {
-    optional string Operator = 1;
-    optional string Gate = 2;
-    optional string Stand = 3;
-    optional string Status = 4;
-    optional int32 MaxPax = 5;
-    optional int32 ActPax = 6;
-    optional int32 TranPax = 7;
-    optional string RunwayID = 8;
-    optional string BaggageReclaimId = 9;
-    optional string AirportID = 11;
-    optional string Terminal = 12;
+    optional string operator = 1;
+    optional string gate = 2;
+    optional string stand = 3;
+    optional string status = 4;
+    optional int32 maxPax = 5;
+    optional int32 actPax = 6;
+    optional int32 tranPax = 7;
+    optional string runwayID = 8;
+    optional string baggageReclaimId = 9;
+    optional string airportID = 11;
+    optional string terminal = 12;
     optional string ICAO = 13;
     optional string IATA = 14;
-    optional string Origin = 15;
-    optional int64 PcpTime = 16;
-    optional int64 Scheduled = 17;
-    optional int64 Estimated = 18;
+    optional string origin = 15;
+    optional int64 pcpTime = 16;
+    optional int64 scheduled = 17;
+    optional int64 estimated = 18;
     optional int64 Touchdown = 19;
-    optional int64 EstimatedChox = 20;
-    optional int64 ActualChox = 21;
-    repeated string FeedSources = 23;
-    optional int64 CarrierScheduled = 24;
-    optional int32 ApiPax = 25;
+    optional int64 estimatedChox = 20;
+    optional int64 actualChox = 21;
+    repeated string feedSources = 23;
+    optional int64 carrierScheduled = 24;
+    optional int32 apiPax = 25;
 
     optional int32 FlightID__OLD = 10;
     optional int32 LastKnownPax__OLD = 22;

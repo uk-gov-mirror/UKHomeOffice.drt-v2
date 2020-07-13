@@ -66,27 +66,27 @@ object LhrForecastArrival {
       val actPax = paxTotal(fields)
       val transPax = paxTransit(fields)
       Arrival(
-        Operator = operator,
-        Status = "Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = Option(maxPaxField),
-        ActPax = Option(actPax),
-        TranPax = Option(transPax),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = "LHR",
-        Terminal = terminal(fields),
+        operator = operator,
+        status = "Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = Option(maxPaxField),
+        actPax = Option(actPax),
+        tranPax = Option(transPax),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = "LHR",
+        terminal = terminal(fields),
         rawIATA = flightCode(fields),
         rawICAO = flightCode(fields),
-        Origin = origin(fields),
-        Scheduled = scheduled(fields).millisSinceEpoch,
-        PcpTime = None,
-        FeedSources = Set(ForecastFeedSource)
+        origin = origin(fields),
+        scheduled = scheduled(fields).millisSinceEpoch,
+        pcpTime = None,
+        feedSources = Set(ForecastFeedSource)
       )
     } match {
       case Failure(t) =>

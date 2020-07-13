@@ -1,4 +1,4 @@
-Term,Flight No,Operator,From,Airport name,Scheduled,Estimated,Touchdown,Est Chocks,Act Chocks,Stand,Max pax,Act Pax,Conn pax
+Term,Flight No,operator,From,Airport name,scheduled,estimated,Touchdown,Est Chocks,Act Chocks,stand,Max pax,Act Pax,Conn pax
 2,UA958,United Airlines,ORD,Chicago,04:55 22/10/2016,04:19 22/10/2016,04:19 22/10/2016,04:24 22/10/2016,04:26 22/10/2016,231,183,117,18
 5,BA074,British Airways,LOS,Lagos,04:25 22/10/2016,04:23 22/10/2016,04:23 22/10/2016,04:32 22/10/2016,04:32 22/10/2016,535,226,228,76
 5,BA034,British Airways,KUL,Kuala Lumpur,04:25 22/10/2016,04:26 22/10/2016,04:26 22/10/2016,04:35 22/10/2016,04:34 22/10/2016,543,216,210,99

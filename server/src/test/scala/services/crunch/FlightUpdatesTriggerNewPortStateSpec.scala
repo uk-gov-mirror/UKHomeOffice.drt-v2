@@ -27,7 +27,7 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
 
         val flight = ArrivalGenerator.arrival(schDt = scheduled, iata = "BA0001", terminal = T1, actPax = Option(21))
         val inputFlightsBefore = Flights(List(flight))
-        val updatedArrival = flight.copy(ActPax = Some(50))
+        val updatedArrival = flight.copy(actPax = Some(50))
         val inputFlightsAfter = Flights(List(updatedArrival))
         val crunch = runCrunchGraph(TestConfig(
           now = () => SDate(scheduled),
@@ -43,7 +43,7 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsAfter))
 
         val expectedFlights = Set(ApiFlightWithSplits(
-          updatedArrival.copy(FeedSources = Set(LiveFeedSource)),
+          updatedArrival.copy(feedSources = Set(LiveFeedSource)),
           Set(Splits(Set(ApiPaxTypeAndQueueCount(EeaMachineReadable, Queues.EeaDesk, 100.0, None)), TerminalAverage, None, Percentage))))
 
         crunch.portStateTestProbe.fishForMessage(3 seconds) {
@@ -65,7 +65,7 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
 
         val flight = ArrivalGenerator.arrival(schDt = scheduled, iata = "BA0001", terminal = T1, actPax = Option(21))
         val inputFlightsBefore = Flights(List(flight))
-        val updatedArrival = flight.copy(ActPax = Some(50))
+        val updatedArrival = flight.copy(actPax = Some(50))
         val inputFlightsAfter = Flights(List(updatedArrival))
         val crunch = runCrunchGraph(TestConfig(
           now = () => SDate(scheduled),
@@ -82,7 +82,7 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsAfter))
 
         val expectedFlights = Set(ApiFlightWithSplits(
-          updatedArrival.copy(FeedSources = Set(LiveFeedSource)),
+          updatedArrival.copy(feedSources = Set(LiveFeedSource)),
           Set(Splits(Set(ApiPaxTypeAndQueueCount(EeaMachineReadable, Queues.EeaDesk, 100.0, None)), TerminalAverage, None, Percentage))))
 
         crunch.portStateTestProbe.fishForMessage(3 seconds) {

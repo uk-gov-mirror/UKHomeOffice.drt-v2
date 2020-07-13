@@ -20,7 +20,7 @@ case class TerminalFlightsSummary(flights: Seq[ApiFlightWithSplits],
 
   override def toCsv: String = {
     val uniqueApiFlightWithSplits: Seq[(ApiFlightWithSplits, Set[Arrival])] = uniqueArrivalsWithCodeShares(flights)
-    val csvData = uniqueApiFlightWithSplits.sortBy(_._1.apiFlight.PcpTime).map(fws =>
+    val csvData = uniqueApiFlightWithSplits.sortBy(_._1.apiFlight.pcpTime).map(fws =>
       flightWithSplitsToCsvRow(queueNames, fws._1)
     )
     asCSV(csvData) + lineEnding
@@ -40,22 +40,22 @@ object TerminalFlightsSummary {
                             millisToHoursAndMinutes: MillisSinceEpoch => String): List[String] = {
     List(arrival.flightCode,
       arrival.flightCode,
-      arrival.Origin.toString,
-      arrival.Gate.getOrElse("") + "/" + arrival.Stand.getOrElse(""),
-      arrival.Status.description,
-      millisToDateOnly(arrival.Scheduled),
-      millisToHoursAndMinutes(arrival.Scheduled),
-      arrival.Estimated.map(millisToHoursAndMinutes(_)).getOrElse(""),
-      arrival.Actual.map(millisToHoursAndMinutes(_)).getOrElse(""),
-      arrival.EstimatedChox.map(millisToHoursAndMinutes(_)).getOrElse(""),
-      arrival.ActualChox.map(millisToHoursAndMinutes(_)).getOrElse(""),
-      arrival.PcpTime.map(millisToHoursAndMinutes(_)).getOrElse(""),
-      arrival.ActPax.getOrElse("").toString)
+      arrival.origin.toString,
+      arrival.gate.getOrElse("") + "/" + arrival.stand.getOrElse(""),
+      arrival.status.description,
+      millisToDateOnly(arrival.scheduled),
+      millisToHoursAndMinutes(arrival.scheduled),
+      arrival.sstimated.map(millisToHoursAndMinutes(_)).getOrElse(""),
+      arrival.actual.map(millisToHoursAndMinutes(_)).getOrElse(""),
+      arrival.estimatedChox.map(millisToHoursAndMinutes(_)).getOrElse(""),
+      arrival.actualChox.map(millisToHoursAndMinutes(_)).getOrElse(""),
+      arrival.pcpTime.map(millisToHoursAndMinutes(_)).getOrElse(""),
+      arrival.actPax.getOrElse("").toString)
   }
 
   def arrivalAsRawCsvValuesWithTransfer(arrival: Arrival, millisToDateOnly: MillisSinceEpoch => String,
                                         millisToHoursAndMinutes: MillisSinceEpoch => String): List[String] =
-    arrivalAsRawCsvValues(arrival, millisToDateOnly, millisToHoursAndMinutes) :+ arrival.TranPax.getOrElse(0).toString
+    arrivalAsRawCsvValues(arrival, millisToDateOnly, millisToHoursAndMinutes) :+ arrival.tranPax.getOrElse(0).toString
 
   val generator: TerminalFlightsSummaryLikeGenerator =
     (flights: Seq[ApiFlightWithSplits],

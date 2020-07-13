@@ -88,8 +88,8 @@ object PcpArrival {
   def gateOrStandWalkTimeCalculator(gateWalkTimesProvider: GateOrStandWalkTime,
                                     standWalkTimesProvider: GateOrStandWalkTime,
                                     defaultWalkTimeMillis: MillisSinceEpoch)(flight: Arrival): MillisSinceEpoch = {
-    val walkTime = standWalkTimesProvider(flight.Stand.getOrElse(""), flight.Terminal).getOrElse(
-      gateWalkTimesProvider(flight.Gate.getOrElse(""), flight.Terminal).getOrElse(defaultWalkTimeMillis))
+    val walkTime = standWalkTimesProvider(flight.stand.getOrElse(""), flight.terminal).getOrElse(
+      gateWalkTimesProvider(flight.gate.getOrElse(""), flight.terminal).getOrElse(defaultWalkTimeMillis))
     log.debug(s"walkTimeForFlight ${Arrival.summaryString(flight)} is $walkTime millis ${walkTime / 60000} mins default is $defaultWalkTimeMillis")
     walkTime
   }
@@ -99,10 +99,10 @@ object PcpArrival {
 
     def addTimeToChox(s: Option[MillisSinceEpoch]): Option[MillisSinceEpoch] = parseMillis(s).map(_ + timeToChoxMillis)
 
-    parseMillis(flight.ActualChox)
-      .orElse(parseMillis(flight.EstimatedChox)
-        .orElse(addTimeToChox(flight.Actual)
-          .orElse(addTimeToChox(flight.Estimated)
-            .orElse(addTimeToChox(Option(flight.Scheduled))))))
+    parseMillis(flight.actualChox)
+      .orElse(parseMillis(flight.estimatedChox)
+        .orElse(addTimeToChox(flight.actual)
+          .orElse(addTimeToChox(flight.sstimated)
+            .orElse(addTimeToChox(Option(flight.scheduled))))))
   }
 }

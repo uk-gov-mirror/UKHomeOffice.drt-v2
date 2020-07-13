@@ -13,20 +13,20 @@ case class ArrivalDataSanitiser(
   def withSaneEstimates(arrival: Arrival): Arrival = withSaneEstimatedChox(withSaneEstimatedTouchDown(arrival))
 
   def withSaneEstimatedTouchDown(arrival: Arrival): Arrival =
-    (maybeEstThresholdMillis, arrival.Estimated) match {
-      case (Some(threshold), Some(est)) if (Math.abs(est - arrival.Scheduled) > threshold) =>
-        arrival.copy(Estimated = None)
+    (maybeEstThresholdMillis, arrival.sstimated) match {
+      case (Some(threshold), Some(est)) if (Math.abs(est - arrival.scheduled) > threshold) =>
+        arrival.copy(sstimated = None)
       case _ => arrival
     }
 
   def withSaneEstimatedChox(arrival: Arrival): Arrival =
-    (maybeTaxiThresholdMillis, maybeEstThresholdMillis, arrival.EstimatedChox, arrival.Estimated) match {
-      case (_, Some(threshold), Some(est), _) if (Math.abs(est - arrival.Scheduled) > threshold) =>
-        arrival.copy(EstimatedChox = None)
+    (maybeTaxiThresholdMillis, maybeEstThresholdMillis, arrival.estimatedChox, arrival.sstimated) match {
+      case (_, Some(threshold), Some(est), _) if (Math.abs(est - arrival.scheduled) > threshold) =>
+        arrival.copy(estimatedChox = None)
       case (_, _, Some(estChox), Some(est)) if estChox <= est =>
-        arrival.copy(EstimatedChox = None)
+        arrival.copy(estimatedChox = None)
       case (Some(taxiThreshold), _, Some(estChox), Some(est)) if est + taxiThreshold < estChox =>
-        arrival.copy(EstimatedChox = None)
+        arrival.copy(estimatedChox = None)
       case _ => arrival
     }
 }

@@ -16,22 +16,22 @@ describe('Viewing the port dashboard page', () => {
       "IATA": "TS0124",
       "SchDT": todayAtString(10, 35),
       "ActChoxDT": currentTimeString(),
-      "ActPax": 0,
-      "Status": "Cancelled"
+      "actPax": 0,
+      "status": "Cancelled"
     })
     .addFlight({
       "ICAO": "TS0123",
       "IATA": "TS0123",
       "SchDT": todayAtString(10, 30),
       "ActChoxDT": currentTimeString(),
-      "ActPax": 300
+      "actPax": 300
     })
     .addFlight({
       "ICAO": "TS0122",
       "IATA": "TS0122",
       "SchDT": todayAtString(10, 40),
       "ActChoxDT": currentTimeString(),
-      "ActPax": 300
+      "actPax": 300
     })
       .asABorderForceOfficer()
       .navigateHome()

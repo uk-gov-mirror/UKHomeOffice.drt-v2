@@ -85,31 +85,31 @@ class LGWForecastFeed(boxConfigFilePath: String, userId: String, ukBfGalForecast
     }
 
     Arrival(
-      Operator = None,
-      Status = PORT_FORECAST,
-      Estimated = None,
-      Actual = None,
-      EstimatedChox = None,
-      ActualChox = None,
-      Gate = None,
-      Stand = None,
-      MaxPax = Option(fields(MAX_PAX)).map(_.toInt),
-      ActPax = Option(fields(ACTUAL_PAX)).map(_.toInt),
-      TranPax = Option(fields(TRANSFER_PAX)).map(_.toInt),
-      RunwayID = None,
-      BaggageReclaimId = None,
-      AirportID = LGW,
-      Terminal = fields(5) match {
+      operator = None,
+      status = PORT_FORECAST,
+      estimated = None,
+      actual = None,
+      estimatedChox = None,
+      actualChox = None,
+      gate = None,
+      stand = None,
+      maxPax = Option(fields(MAX_PAX)).map(_.toInt),
+      actPax = Option(fields(ACTUAL_PAX)).map(_.toInt),
+      tranPax = Option(fields(TRANSFER_PAX)).map(_.toInt),
+      runwayID = None,
+      baggageReclaimId = None,
+      airportID = LGW,
+      terminal = fields(5) match {
         case "South" => S
         case "North" => N
         case unknown => throw new Exception(s"Unknown Terminal in Gatwick Forecast feed $unknown.")
       },
       rawICAO = fields(FLIGHT_NUMBER),
       rawIATA = fields(FLIGHT_NUMBER),
-      Origin = fields(AIRPORT_CODE),
-      Scheduled = SDate(dateAsISOStringWithoutZone(fields(DATE_TIME)), Crunch.europeLondonTimeZone).millisSinceEpoch,
-      PcpTime = None,
-      FeedSources = Set(ForecastFeedSource)
+      origin = fields(AIRPORT_CODE),
+      scheduled = SDate(dateAsISOStringWithoutZone(fields(DATE_TIME)), Crunch.europeLondonTimeZone).millisSinceEpoch,
+      pcpTime = None,
+      feedSources = Set(ForecastFeedSource)
     )
   } match {
     case Success(arrival) => Some(arrival)

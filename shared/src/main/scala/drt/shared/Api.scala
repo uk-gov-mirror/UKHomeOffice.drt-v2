@@ -241,7 +241,7 @@ case class UniqueArrival(number: Int, terminal: Terminal, scheduled: MillisSince
 object UniqueArrival {
   implicit val rw: ReadWriter[UniqueArrival] = macroRW
 
-  def apply(arrival: Arrival): UniqueArrival = UniqueArrival(arrival.VoyageNumber.numeric, arrival.Terminal, arrival.Scheduled)
+  def apply(arrival: Arrival): UniqueArrival = UniqueArrival(arrival.voyageNumber.numeric, arrival.terminal, arrival.scheduled)
 
   def apply(number: Int,
             terminalName: String,
@@ -265,9 +265,9 @@ case class CodeShareKeyOrderedBySchedule(scheduled: Long,
 }
 
 object CodeShareKeyOrderedBySchedule {
-  def apply(arrival: Arrival): CodeShareKeyOrderedBySchedule = CodeShareKeyOrderedBySchedule(arrival.Scheduled, arrival.Terminal, arrival.Origin)
+  def apply(arrival: Arrival): CodeShareKeyOrderedBySchedule = CodeShareKeyOrderedBySchedule(arrival.scheduled, arrival.terminal, arrival.origin)
 
-  def apply(fws: ApiFlightWithSplits): CodeShareKeyOrderedBySchedule = CodeShareKeyOrderedBySchedule(fws.apiFlight.Scheduled, fws.apiFlight.Terminal, fws.apiFlight.Origin)
+  def apply(fws: ApiFlightWithSplits): CodeShareKeyOrderedBySchedule = CodeShareKeyOrderedBySchedule(fws.apiFlight.scheduled, fws.apiFlight.terminal, fws.apiFlight.origin)
 
   def apply(scheduled: Long,
             terminalName: String,
@@ -417,7 +417,7 @@ case class ArrivalKey(origin: PortCode,
 }
 
 object ArrivalKey {
-  def apply(arrival: Arrival): ArrivalKey = ArrivalKey(arrival.Origin, arrival.VoyageNumber, arrival.Scheduled)
+  def apply(arrival: Arrival): ArrivalKey = ArrivalKey(arrival.origin, arrival.voyageNumber, arrival.scheduled)
 
   def atTime: MillisSinceEpoch => ArrivalKey = (time: MillisSinceEpoch) => ArrivalKey(PortCode(""), VoyageNumber(0), time)
 }
@@ -600,7 +600,7 @@ object FlightsApi {
 
     def forTerminal(terminal: Terminal): FlightsWithSplits = {
       val inTerminal = flights.filter {
-        case (_, fws) => fws.apiFlight.Terminal == terminal
+        case (_, fws) => fws.apiFlight.terminal == terminal
       }
       FlightsWithSplits(inTerminal)
     }
@@ -674,7 +674,7 @@ object FlightsApi {
       PortStateDiff(removals, updatedFlights, flightMinuteUpdates, Seq(), Seq())
     }
 
-    lazy val terminals: Set[Terminal] = flightsToUpdate.map(_.apiFlight.Terminal).toSet ++ arrivalsToRemove.map(_.Terminal).toSet
+    lazy val terminals: Set[Terminal] = flightsToUpdate.map(_.apiFlight.terminal).toSet ++ arrivalsToRemove.map(_.terminal).toSet
   }
 
 }

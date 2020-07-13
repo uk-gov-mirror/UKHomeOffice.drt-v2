@@ -148,7 +148,7 @@ object RunnableCrunch {
           forecastBaseArrivalsSourceSync.out.map {
             case ArrivalsFeedSuccess(Flights(as), ca) =>
               val maxScheduledMillis = forecastMaxMillis()
-              ArrivalsFeedSuccess(Flights(as.filter(_.Scheduled < maxScheduledMillis)), ca)
+              ArrivalsFeedSuccess(Flights(as.filter(_.scheduled < maxScheduledMillis)), ca)
             case failure => failure
           } ~> forecastBaseArrivalsFanOut
 

@@ -21,7 +21,7 @@ case class TerminalFlightsWithActualApiSummary(flights: Seq[ApiFlightWithSplits]
 
   override def toCsv: String = {
     val uniqueApiFlightWithSplits: Seq[(ApiFlightWithSplits, Set[Arrival])] = uniqueArrivalsWithCodeShares(flights)
-    val csvData = uniqueApiFlightWithSplits.sortBy(_._1.apiFlight.PcpTime).map(fws => {
+    val csvData = uniqueApiFlightWithSplits.sortBy(_._1.apiFlight.pcpTime).map(fws => {
       flightWithSplitsToCsvRow(queueNames, fws._1) ::: actualAPISplitsForFlightInHeadingOrder(fws._1, actualApiHeadings).toList
     })
     asCSV(csvData) + lineEnding

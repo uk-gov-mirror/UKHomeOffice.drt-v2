@@ -6,10 +6,10 @@ object CodeShares {
   def uniqueArrivalsWithCodeShares[GenFlight](apiFlightFromGenFlight: (GenFlight) => Arrival)
                                              (flights: Seq[GenFlight]): List[(GenFlight, Set[Arrival])] = {
     val grouped = flights.groupBy(f =>
-      (apiFlightFromGenFlight(f).Scheduled, apiFlightFromGenFlight(f).Terminal, apiFlightFromGenFlight(f).Origin)
+      (apiFlightFromGenFlight(f).scheduled, apiFlightFromGenFlight(f).terminal, apiFlightFromGenFlight(f).origin)
     )
     grouped.values.map(flights => {
-      val mainFlight: GenFlight = flights.sortBy(f => apiFlightFromGenFlight(f).ActPax).reverse.head
+      val mainFlight: GenFlight = flights.sortBy(f => apiFlightFromGenFlight(f).actPax).reverse.head
       val shares: Set[Arrival] = flights
         .filter(_ != mainFlight)
         .toSet

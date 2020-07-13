@@ -120,7 +120,7 @@ class FlightsExportSpec extends CrunchTestLike {
 
   "Given a range of dates, and some mock summary actors containing data for those dates" >> {
     def persistedSummaries(queues: Seq[Queue], from: SDateLike) = TerminalFlightsSummary(someFlights.map { fws =>
-      val arrival = fws.apiFlight.copy(Scheduled = from.millisSinceEpoch)
+      val arrival = fws.apiFlight.copy(scheduled = from.millisSinceEpoch)
       fws.copy(apiFlight = arrival)
     }, millisToLocalIsoDateOnly, millisToLocalHoursAndMinutes, pcpPaxFn)
 

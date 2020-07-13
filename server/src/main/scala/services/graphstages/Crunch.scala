@@ -150,8 +150,8 @@ object Crunch {
     val differences: Set[ApiFlightWithSplits] = updatedFlights -- existingFlights
     val latestPcpTimes = differences
       .toList
-      .sortBy(_.apiFlight.PcpTime)
-      .flatMap(_.apiFlight.PcpTime)
+      .sortBy(_.apiFlight.pcpTime)
+      .flatMap(_.apiFlight.pcpTime)
 
     if (latestPcpTimes.nonEmpty) {
       Option((SDate(latestPcpTimes.head), SDate(latestPcpTimes.reverse.head))) match {
@@ -287,9 +287,9 @@ object Crunch {
   }
 
   def arrivalDaysAffected(crunchOffsetMinutes: Int, paxOffPerMinute: Int)(arrival: Arrival): Set[String] = {
-    arrival.PcpTime.toSet.flatMap { pcpTime: MillisSinceEpoch =>
+    arrival.pcpTime.toSet.flatMap { pcpTime: MillisSinceEpoch =>
       val first = SDate(pcpTime)
-      val minutesOfPaxArrivals: Int = (arrival.ActPax.getOrElse(0).toDouble / paxOffPerMinute).ceil.toInt - 1
+      val minutesOfPaxArrivals: Int = (arrival.actPax.getOrElse(0).toDouble / paxOffPerMinute).ceil.toInt - 1
       val last = first.addMinutes(minutesOfPaxArrivals)
       List(first, last).map(_.addMinutes(-1 * crunchOffsetMinutes).toISODateOnly).toSet
     }

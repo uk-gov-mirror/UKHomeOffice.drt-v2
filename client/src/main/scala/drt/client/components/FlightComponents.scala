@@ -25,24 +25,24 @@ object FlightComponents {
 
 
   def paxComponentTitle(flight: Arrival): String = {
-    val max: String = flight.MaxPax.filter(_ > 0).map(_.toString).getOrElse("n/a")
-    val portDirectPax: Int = flight.ActPax.getOrElse(0) - flight.TranPax.getOrElse(0)
-    val apiPax = flight.ApiPax match {
+    val max: String = flight.maxPax.filter(_ > 0).map(_.toString).getOrElse("n/a")
+    val portDirectPax: Int = flight.actPax.getOrElse(0) - flight.tranPax.getOrElse(0)
+    val apiPax = flight.apiPax match {
       case Some(api) =>
         s"\nAPI: $api"
       case _ => ""
     }
-    s"""|Pax: $portDirectPax (${flight.ActPax.getOrElse(0)} - ${flight.TranPax.getOrElse(0)} transfer)
+    s"""|Pax: $portDirectPax (${flight.actPax.getOrElse(0)} - ${flight.tranPax.getOrElse(0)} transfer)
         |Max: $max $apiPax""".stripMargin
   }
 
   def paxTransferComponent(flight: Arrival) = <.div(
     ^.className := "right",
-    s"${flight.TranPax.getOrElse("-")}"
+    s"${flight.tranPax.getOrElse("-")}"
   )
 
   def maxCapacityLine(maxFlightPax: Int, flight: Arrival): TagMod = {
-    flight.MaxPax.filter(_ > 0).map { maxPaxMillis =>
+    flight.maxPax.filter(_ > 0).map { maxPaxMillis =>
       <.div(^.className := "pax-capacity", ^.width := paxBarWidth(maxFlightPax, maxPaxMillis))
     }.getOrElse {
       VdomArray.empty()

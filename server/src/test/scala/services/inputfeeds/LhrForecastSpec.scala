@@ -24,11 +24,11 @@ class LhrForecastSpec extends Specification {
 
     val arrival = LhrForecastArrivals(arrivalLines).head
 
-    val expected = Arrival(Operator = Option(Operator("BA")), Status = ArrivalStatus("Forecast"), Estimated = None, Actual = None,
-      EstimatedChox = None, ActualChox = None, Gate = None, Stand = None, MaxPax = Option(337),
-      ActPax = Option(333), TranPax = Option(142), RunwayID = None, BaggageReclaimId = None, AirportID = PortCode("LHR"), Terminal = T3,
-      rawICAO = "BA0058", rawIATA = "BA0058", Origin = PortCode("CPT"), FeedSources = Set(ForecastFeedSource),
-      Scheduled = SDate("2018-02-22T04:45:00").millisSinceEpoch, PcpTime = None)
+    val expected = Arrival(operator = Option(Operator("BA")), status = ArrivalStatus("Forecast"), estimated = None, actual = None,
+      estimatedChox = None, actualChox = None, gate = None, stand = None, maxPax = Option(337),
+      actPax = Option(333), tranPax = Option(142), runwayID = None, baggageReclaimId = None, airportID = PortCode("LHR"), terminal = T3,
+      rawICAO = "BA0058", rawIATA = "BA0058", origin = PortCode("CPT"), feedSources = Set(ForecastFeedSource),
+      scheduled = SDate("2018-02-22T04:45:00").millisSinceEpoch, pcpTime = None)
 
     arrival === expected
   }
@@ -43,7 +43,7 @@ class LhrForecastSpec extends Specification {
     val arrivalLines = csvContent.split("\n").drop(1)
 
     val arrival: Arrival = LhrForecastArrivals(arrivalLines).head
-    val actMaxTran = (arrival.ActPax, arrival.MaxPax, arrival.TranPax)
+    val actMaxTran = (arrival.actPax, arrival.maxPax, arrival.tranPax)
 
     val expected = (Some(0),Some(0),Some(0) )
 

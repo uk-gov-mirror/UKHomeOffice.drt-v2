@@ -53,7 +53,7 @@ class ArrivalSplitsGraphStage(name: String = "",
           purgeExpired(flightsByFlightId, ArrivalKey.atTime, now, expireAfterMillis.toInt)
 
           flightsByFlightId.foreach { case (arrivalKey, fws) =>
-            val csKey = CodeShareKeyOrderedByDupes[ArrivalKey](fws.apiFlight.Scheduled, fws.apiFlight.Terminal, fws.apiFlight.Origin, Set())
+            val csKey = CodeShareKeyOrderedByDupes[ArrivalKey](fws.apiFlight.scheduled, fws.apiFlight.terminal, fws.apiFlight.origin, Set())
             val existingEntry: Set[ArrivalKey] = codeShares.getOrElse(csKey, Set())
             val updatedArrivalKeys = existingEntry + arrivalKey
             codeShares += (csKey.copy(arrivalKeys = updatedArrivalKeys) -> updatedArrivalKeys)
@@ -130,8 +130,8 @@ class ArrivalSplitsGraphStage(name: String = "",
       val flightWithAvailableApiData = liveApiSplits match {
         case Some(splits) =>
           flight.copy(
-            FeedSources = flight.FeedSources + ApiFeedSource,
-            ApiPax = Option(Math.round(splits.totalExcludingTransferPax).toInt)
+            feedSources = flight.feedSources + ApiFeedSource,
+            apiPax = Option(Math.round(splits.totalExcludingTransferPax).toInt)
           )
         case _ => flight
       }
@@ -191,7 +191,7 @@ class ArrivalSplitsGraphStage(name: String = "",
           val shares = codeShareArrivalKeys
             .map(arrivalKey => flightsByFlightId.get(arrivalKey))
             .collect { case Some(fws) => fws }
-            .toSeq.sortBy(_.apiFlight.ActPax.getOrElse(0)).reverse
+            .toSeq.sortBy(_.apiFlight.actPax.getOrElse(0)).reverse
           val toRemove = shares.drop(1)
           val keysToRemove = toRemove.map(fws => ArrivalKey(fws.apiFlight))
           removalsSoFar ++ keysToRemove
@@ -220,7 +220,7 @@ class ArrivalSplitsGraphStage(name: String = "",
     }
 
     def initialSplits(updatedFlight: Arrival, key: ArrivalKey): Set[Splits] = {
-      val terminalDefault = splitsCalculator.terminalDefaultSplits(updatedFlight.Terminal)
+      val terminalDefault = splitsCalculator.terminalDefaultSplits(updatedFlight.terminal)
       if (manifestBuffer.contains(key)) {
         val splits = terminalDefault + splitsFromManifest(updatedFlight, manifestBuffer(key))
         manifestBuffer -= key
@@ -273,7 +273,7 @@ class ArrivalSplitsGraphStage(name: String = "",
 
     def updateCodeSharesFromDiff(arrivalsDiff: ArrivalsDiff): Unit = arrivalsDiff.toUpdate
       .foreach { case (_, arrival) =>
-        val csKey = CodeShareKeyOrderedByDupes[ArrivalKey](arrival.Scheduled, arrival.Terminal, arrival.Origin, Set())
+        val csKey = CodeShareKeyOrderedByDupes[ArrivalKey](arrival.scheduled, arrival.terminal, arrival.origin, Set())
         val existingEntry: Set[ArrivalKey] = codeShares.getOrElse(csKey, Set())
         val updatedArrivalKeys = existingEntry + ArrivalKey(arrival)
         codeShares += (csKey.copy(arrivalKeys = updatedArrivalKeys) -> updatedArrivalKeys)
@@ -285,7 +285,7 @@ class ArrivalSplitsGraphStage(name: String = "",
   }
 
   def splitsFromManifest(arrival: Arrival, manifest: BestAvailableManifest): Splits = {
-    splitsCalculator.bestSplitsForArrival(manifest.copy(carrierCode = arrival.CarrierCode), arrival)
+    splitsCalculator.bestSplitsForArrival(manifest.copy(carrierCode = arrival.carrierCode), arrival)
   }
 
   def nowMillis: Option[MillisSinceEpoch] = Option(now().millisSinceEpoch)

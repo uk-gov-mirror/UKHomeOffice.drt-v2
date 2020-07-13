@@ -78,7 +78,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
     probe.fishForMessage(10 seconds) {
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
-          case (_, a) => a.Estimated == liveEstimated && a.Actual == liveBaseActual
+          case (_, a) => a.sstimated == liveEstimated && a.actual == liveBaseActual
         }
     }
 
@@ -97,7 +97,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
     probe.fishForMessage(2 seconds) {
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
-          case (_, a) => a.Status.description == "Scheduled"
+          case (_, a) => a.status.description == "Scheduled"
         }
     }
 
@@ -119,7 +119,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
           case (_, a) =>
-            a.Estimated.isEmpty
+            a.sstimated.isEmpty
         }
     }
 
@@ -142,7 +142,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
         toUpdate.exists {
           case (_, a) =>
 
-            a.Estimated == Option(lateEstimatedTime.millisSinceEpoch)
+            a.sstimated == Option(lateEstimatedTime.millisSinceEpoch)
         }
     }
 
@@ -166,7 +166,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
           case (_, a) =>
-            a.EstimatedChox.isEmpty
+            a.estimatedChox.isEmpty
         }
     }
 
@@ -190,7 +190,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
           case (_, a) =>
-            a.EstimatedChox.isEmpty
+            a.estimatedChox.isEmpty
         }
     }
 
@@ -222,7 +222,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
     probe.fishForMessage(2 seconds) {
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
-          case (_, a) => a.Estimated == baseLiveEstimated
+          case (_, a) => a.sstimated == baseLiveEstimated
         }
     }
     success
@@ -270,7 +270,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
     probe.fishForMessage(2 seconds) {
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
-          case (_, a) => a.PcpTime == baseLiveEstimated
+          case (_, a) => a.pcpTime == baseLiveEstimated
         }
     }
     success
@@ -288,7 +288,7 @@ class ArrivalsGraphStageLiveBaseArrivalsSpec extends CrunchTestLike with AfterEa
     probe.fishForMessage(2 seconds) {
       case ArrivalsDiff(toUpdate, _) =>
         toUpdate.exists {
-          case (_, a) => a.PcpTime == baseLiveEstimated
+          case (_, a) => a.pcpTime == baseLiveEstimated
         }
     }
     success

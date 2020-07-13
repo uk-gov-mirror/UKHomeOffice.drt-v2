@@ -28,7 +28,7 @@ object BigSummaryBoxTests extends TestSuite {
 
             "Then we can get a number of flights arriving in that period" - {
               val countOfFlights = rootModel.portStatePot.map(_.flights.values.count(f => {
-                val flightDt = SDate(f.apiFlight.Scheduled)
+                val flightDt = SDate(f.apiFlight.scheduled)
                 now.millisSinceEpoch <= flightDt.millisSinceEpoch && flightDt.millisSinceEpoch <= nowPlus3Hours.millisSinceEpoch
               }))
               assert(countOfFlights == Ready(0))

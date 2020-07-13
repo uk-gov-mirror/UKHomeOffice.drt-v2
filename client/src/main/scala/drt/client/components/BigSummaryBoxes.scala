@@ -30,9 +30,9 @@ object BigSummaryBoxes {
 
   def bestTime(f: ApiFlightWithSplits): MillisSinceEpoch = {
     val bestTime = {
-      val flightDt = SDate(f.apiFlight.Scheduled)
+      val flightDt = SDate(f.apiFlight.scheduled)
 
-      f.apiFlight.PcpTime.getOrElse(flightDt.millisSinceEpoch)
+      f.apiFlight.pcpTime.getOrElse(flightDt.millisSinceEpoch)
     }
     bestTime
   }
@@ -87,10 +87,10 @@ object BigSummaryBoxes {
   }
 
   def flightsAtTerminal(flightsPcp: Seq[ApiFlightWithSplits], ourTerminal: Terminal): Seq[ApiFlightWithSplits] = {
-    flightsPcp.filter(f => f.apiFlight.Terminal == ourTerminal)
+    flightsPcp.filter(f => f.apiFlight.terminal == ourTerminal)
   }
 
-  def sumActPax(flights: Seq[ApiFlightWithSplits]): Int = flights.flatMap(_.apiFlight.ActPax).sum
+  def sumActPax(flights: Seq[ApiFlightWithSplits]): Int = flights.flatMap(_.apiFlight.actPax).sum
 
   def sumBestPax(bestFlightSplitPax: ApiFlightWithSplits => Double)(flights: Seq[ApiFlightWithSplits]): Double = flights.map(bestFlightSplitPax).sum
 

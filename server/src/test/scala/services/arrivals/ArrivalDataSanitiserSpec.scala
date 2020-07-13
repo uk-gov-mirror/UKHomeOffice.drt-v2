@@ -46,7 +46,7 @@ class ArrivalDataSanitiserSpec extends Specification {
     val sanitiser = ArrivalDataSanitiser(Option(4), None)
     val saneArrival = sanitiser.withSaneEstimates(arrivalWithIrrationalEstimation)
 
-    saneArrival.Estimated === None
+    saneArrival.sstimated === None
   }
 
   "Given a base live arrival with an estimated chox time that is outside the threshold " +
@@ -55,7 +55,7 @@ class ArrivalDataSanitiserSpec extends Specification {
     val sanitiser = ArrivalDataSanitiser(Option(4), None)
     val saneArrival = sanitiser.withSaneEstimates(arrivalWithIrrationalEstimation)
 
-    saneArrival.EstimatedChox === None
+    saneArrival.estimatedChox === None
   }
 
   "Given a base live arrival with an estimated chox time that is before the estimated arrival time " +
@@ -67,7 +67,7 @@ class ArrivalDataSanitiserSpec extends Specification {
     val sanitiser = ArrivalDataSanitiser(Option(4), None)
     val saneArrival = sanitiser.withSaneEstimates(arrivalWithIrrationalEstimation)
 
-    saneArrival.EstimatedChox === None
+    saneArrival.estimatedChox === None
   }
 
   "Given a base live arrival with an estimated chox time that is outside the taxi threshold " +
@@ -79,7 +79,7 @@ class ArrivalDataSanitiserSpec extends Specification {
     val sanitiser = ArrivalDataSanitiser(Option(4), Option(20))
     val saneArrival = sanitiser.withSaneEstimates(arrivalWithIrrationalEstimation)
 
-    saneArrival.EstimatedChox === None
+    saneArrival.estimatedChox === None
   }
 
   "Given a base live arrival with an estimated chox time that is the same as the estimated touch down time " +
@@ -92,6 +92,6 @@ class ArrivalDataSanitiserSpec extends Specification {
     val sanitiser = ArrivalDataSanitiser(Option(4), Option(20))
     val saneArrival = sanitiser.withSaneEstimates(arrivalWithIrrationalEstimation)
 
-    saneArrival.EstimatedChox === None
+    saneArrival.estimatedChox === None
   }
 }

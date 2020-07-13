@@ -13,7 +13,7 @@ describe('Viewing the terminal dashboard page', () => {
       .addFlight({
         "SchDT": todayAtString(14, 10),
         "ActChoxDT": todayAtString(14, 10),
-        "ActPax": 51
+        "actPax": 51
       })
       .asABorderForceOfficer()
       .navigateHome()
@@ -55,14 +55,14 @@ describe('Viewing the terminal dashboard page', () => {
         "IATA": "TS0123",
         "SchDT": todayAtString(10, 30),
         "ActChoxDT": todayAtString(14, 15),
-        "ActPax": 300
+        "actPax": 300
       })
       .addFlight({
         "ICAO": "TS0124",
         "IATA": "TS0124",
         "SchDT": todayAtString(14, 10),
         "ActChoxDT": todayAtString(14, 30),
-        "ActPax": 51
+        "actPax": 51
       })
       .asABorderForceOfficer()
       .navigateHome()

@@ -172,27 +172,27 @@ object MagFeed {
   private def iata(magArrival: MagArrival) = f"${magArrival.operatingAirline.iata}${magArrival.flightNumber.trackNumber.map(_.toInt).getOrElse(0)}%04d"
 
   def toArrival(ma: MagArrival): Arrival = Arrival(
-    Operator = ma.operatingAirline.iata,
-    Status = if (ma.onBlockTime.actual.isDefined) "On Chocks" else if (ma.touchDownTime.actual.isDefined) "Landed" else ma.flightStatus,
-    Estimated = ma.arrival.estimated.map(str => SDate(str).millisSinceEpoch),
-    Actual = ma.arrival.actual.map(str => SDate(str).millisSinceEpoch),
-    EstimatedChox = ma.onBlockTime.estimated.map(str => SDate(str).millisSinceEpoch),
-    ActualChox = ma.onBlockTime.actual.map(str => SDate(str).millisSinceEpoch),
-    Gate = ma.gate.map(_.name.replace("Gate ", "")),
-    Stand = ma.stand.flatMap(_.name.map(_.replace("Stand ", ""))),
-    MaxPax = ma.passenger.maximum,
-    ActPax = ma.passenger.count,
-    TranPax = ma.passenger.transferCount,
-    RunwayID = None,
-    BaggageReclaimId = None,
-    AirportID = ma.arrivalAirport.iata,
-    Terminal = Terminals.Terminal(ma.arrival.terminal.getOrElse("")),
+    operator = ma.operatingAirline.iata,
+    status = if (ma.onBlockTime.actual.isDefined) "On Chocks" else if (ma.touchDownTime.actual.isDefined) "Landed" else ma.flightStatus,
+    estimated = ma.arrival.estimated.map(str => SDate(str).millisSinceEpoch),
+    actual = ma.arrival.actual.map(str => SDate(str).millisSinceEpoch),
+    estimatedChox = ma.onBlockTime.estimated.map(str => SDate(str).millisSinceEpoch),
+    actualChox = ma.onBlockTime.actual.map(str => SDate(str).millisSinceEpoch),
+    gate = ma.gate.map(_.name.replace("Gate ", "")),
+    stand = ma.stand.flatMap(_.name.map(_.replace("Stand ", ""))),
+    maxPax = ma.passenger.maximum,
+    actPax = ma.passenger.count,
+    tranPax = ma.passenger.transferCount,
+    runwayID = None,
+    baggageReclaimId = None,
+    airportID = ma.arrivalAirport.iata,
+    terminal = Terminals.Terminal(ma.arrival.terminal.getOrElse("")),
     rawICAO = icao(ma),
     rawIATA = iata(ma),
-    Origin = ma.departureAirport.iata,
-    Scheduled = SDate(ma.arrival.scheduled).millisSinceEpoch,
-    PcpTime = None,
-    FeedSources = Set(LiveFeedSource)
+    origin = ma.departureAirport.iata,
+    scheduled = SDate(ma.arrival.scheduled).millisSinceEpoch,
+    pcpTime = None,
+    feedSources = Set(LiveFeedSource)
     )
 
   case class IataIcao(iata: String, icao: String)

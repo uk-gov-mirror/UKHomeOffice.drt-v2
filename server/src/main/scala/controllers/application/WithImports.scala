@@ -165,10 +165,10 @@ trait WithImports {
 
   def applyWeighting(arrival: Arrival, passengerWeighting: Double): Arrival = {
     val arrival1 = arrival.copy(
-      ActPax = arrival.ActPax.map(p => {
+      actPax = arrival.actPax.map(p => {
         p * passengerWeighting
       }.toInt),
-      TranPax = arrival.TranPax.map(p => {
+      tranPax = arrival.tranPax.map(p => {
         p * passengerWeighting
       }.toInt)
     )

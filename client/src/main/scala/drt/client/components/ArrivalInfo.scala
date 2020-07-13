@@ -68,19 +68,19 @@ object FeedSourceRow {
       val feedSource = props.feedSourceArrival.feedSource
       val arrival = props.feedSourceArrival.arrival
 
-      val paxTotal: String = arrival.ActPax.map(_.toString).getOrElse("-")
-      val paxTrans: String = arrival.TranPax.map(_.toString).getOrElse("-")
+      val paxTotal: String = arrival.actPax.map(_.toString).getOrElse("-")
+      val paxTrans: String = arrival.tranPax.map(_.toString).getOrElse("-")
       val flightFields = List[TagMod](
         <.td(feedSource.name),
         <.td(arrival.flightCode),
-        <.td(arrival.Origin.toString),
-        <.td(s"${arrival.Gate.getOrElse("")}/${arrival.Stand.getOrElse("")}"),
-        <.td(arrival.Status.description),
-        <.td(localDateTimeWithPopup(Option(arrival.Scheduled))),
-        <.td(localDateTimeWithPopup(arrival.Estimated)),
-        <.td(localDateTimeWithPopup(arrival.Actual)),
-        <.td(localDateTimeWithPopup(arrival.EstimatedChox)),
-        <.td(localDateTimeWithPopup(arrival.ActualChox)),
+        <.td(arrival.origin.toString),
+        <.td(s"${arrival.gate.getOrElse("")}/${arrival.stand.getOrElse("")}"),
+        <.td(arrival.status.description),
+        <.td(localDateTimeWithPopup(Option(arrival.scheduled))),
+        <.td(localDateTimeWithPopup(arrival.sstimated)),
+        <.td(localDateTimeWithPopup(arrival.actual)),
+        <.td(localDateTimeWithPopup(arrival.estimatedChox)),
+        <.td(localDateTimeWithPopup(arrival.actualChox)),
         <.td(paxTotal),
         <.td(paxTrans),
       )

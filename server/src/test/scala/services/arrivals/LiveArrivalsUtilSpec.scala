@@ -48,10 +48,10 @@ class LiveArrivalsUtilSpec extends Specification {
     val liveArrival = arrival(gate = None)
 
     val expected = liveArrival.copy(
-      Estimated = baseArrival.Estimated,
-      EstimatedChox = baseArrival.EstimatedChox,
-      Actual = baseArrival.Actual,
-      ActualChox = baseArrival.ActualChox
+      sstimated = baseArrival.sstimated,
+      estimatedChox = baseArrival.estimatedChox,
+      actual = baseArrival.actual,
+      actualChox = baseArrival.actualChox
     )
 
     val result = LiveArrivalsUtil.mergePortFeedWithBase(liveArrival, baseArrival)
@@ -84,7 +84,7 @@ class LiveArrivalsUtilSpec extends Specification {
     val baseArrival = arrival(gate = Option("Gate"))
     val liveArrival = arrival(status = ArrivalStatus("Test"))
 
-    val expected = liveArrival.copy(Gate = baseArrival.Gate)
+    val expected = liveArrival.copy(gate = baseArrival.gate)
 
     val result = LiveArrivalsUtil.mergePortFeedWithBase(liveArrival, baseArrival)
 
@@ -106,7 +106,7 @@ class LiveArrivalsUtilSpec extends Specification {
     val baseArrival = arrival(status = ArrivalStatus("Landed"))
     val liveArrival = arrival(status = ArrivalStatus("UNK"))
 
-    val expected = liveArrival.copy(Status = baseArrival.Status)
+    val expected = liveArrival.copy(status = baseArrival.status)
 
     val result = LiveArrivalsUtil.mergePortFeedWithBase(liveArrival, baseArrival)
 

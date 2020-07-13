@@ -75,7 +75,7 @@ class GlaFeedSpec extends CrunchTestLike {
     mockFeed.tickingSource.to(Sink.actorRef(probe.ref, StreamCompleted)).run()
 
     probe.fishForMessage(1 seconds) {
-      case s: ArrivalsFeedSuccess if s.arrivals.flights.head.Scheduled == SDate("2019-11-13T12:34:00Z").millisSinceEpoch => true
+      case s: ArrivalsFeedSuccess if s.arrivals.flights.head.scheduled == SDate("2019-11-13T12:34:00Z").millisSinceEpoch => true
       case _ => false
     }
 
@@ -92,7 +92,7 @@ class GlaFeedSpec extends CrunchTestLike {
     mockFeed.tickingSource.to(Sink.actorRef(probe.ref, StreamCompleted)).run()
 
     probe.fishForMessage(1 seconds) {
-      case ArrivalsFeedSuccess(Flights(a), _) if a.size == 1 && !a.exists(_.Scheduled == SDate(dsd).millisSinceEpoch) => true
+      case ArrivalsFeedSuccess(Flights(a), _) if a.size == 1 && !a.exists(_.scheduled == SDate(dsd).millisSinceEpoch) => true
       case _ => false
     }
 
@@ -125,28 +125,28 @@ class GlaFeedSpec extends CrunchTestLike {
     val mockFeed = mockFeedWithResponse(firstJsonExample)
 
     val expected = Arrival(
-      Operator = None,
-      Status = ArrivalStatus("Flight is on schedule"),
-      Estimated = Some(SDate("2019-11-13T13:32:00Z").millisSinceEpoch),
-      Actual = Some(SDate("2019-11-13T13:31:00Z").millisSinceEpoch),
-      EstimatedChox = Some(SDate("2019-11-13T12:33:00Z").millisSinceEpoch),
-      ActualChox = Some(SDate("2019-11-13T13:30:00Z").millisSinceEpoch),
-      Gate = Some("G"),
-      Stand = Some("ST"),
-      MaxPax = Some(50),
-      ActPax = Some(20),
-      TranPax = None,
-      RunwayID = Some("3"),
-      BaggageReclaimId = Some("2"),
-      AirportID = PortCode("GLA"),
-      Terminal = T1,
+      operator = None,
+      status = ArrivalStatus("Flight is on schedule"),
+      estimated = Some(SDate("2019-11-13T13:32:00Z").millisSinceEpoch),
+      actual = Some(SDate("2019-11-13T13:31:00Z").millisSinceEpoch),
+      estimatedChox = Some(SDate("2019-11-13T12:33:00Z").millisSinceEpoch),
+      actualChox = Some(SDate("2019-11-13T13:30:00Z").millisSinceEpoch),
+      gate = Some("G"),
+      stand = Some("ST"),
+      maxPax = Some(50),
+      actPax = Some(20),
+      tranPax = None,
+      runwayID = Some("3"),
+      baggageReclaimId = Some("2"),
+      airportID = PortCode("GLA"),
+      terminal = T1,
       rawICAO = "TST234",
       rawIATA = "TS234",
-      Origin = PortCode("TST"),
-      Scheduled = SDate("2019-11-13T12:34:00Z").millisSinceEpoch,
-      PcpTime = None,
-      FeedSources = Set(LiveFeedSource),
-      CarrierScheduled = None
+      origin = PortCode("TST"),
+      scheduled = SDate("2019-11-13T12:34:00Z").millisSinceEpoch,
+      pcpTime = None,
+      feedSources = Set(LiveFeedSource),
+      carrierScheduled = None
     )
 
     Await.result(mockFeed.requestArrivals(), 1 second) match {
@@ -185,28 +185,28 @@ class GlaFeedSpec extends CrunchTestLike {
     val mockFeed = mockFeedWithResponse(secondJsonExample)
 
     val expected = Arrival(
-      Operator = None,
-      Status = ArrivalStatus("Flight is cancelled"),
-      Estimated = None,
-      Actual = Some(SDate("2019-11-14T14:41:00Z").millisSinceEpoch),
-      EstimatedChox = Some(SDate("2019-11-14T12:44:00Z").millisSinceEpoch),
-      ActualChox = Some(SDate("2019-11-14T14:40:00Z").millisSinceEpoch),
-      Gate = Some("GATE"),
-      Stand = Some("STAND"),
-      MaxPax = Some(75),
-      ActPax = Some(55),
-      TranPax = None,
-      RunwayID = Some("4"),
-      BaggageReclaimId = Some("2"),
-      AirportID = PortCode("GLA"),
-      Terminal = T1,
+      operator = None,
+      status = ArrivalStatus("Flight is cancelled"),
+      estimated = None,
+      actual = Some(SDate("2019-11-14T14:41:00Z").millisSinceEpoch),
+      estimatedChox = Some(SDate("2019-11-14T12:44:00Z").millisSinceEpoch),
+      actualChox = Some(SDate("2019-11-14T14:40:00Z").millisSinceEpoch),
+      gate = Some("GATE"),
+      stand = Some("STAND"),
+      maxPax = Some(75),
+      actPax = Some(55),
+      tranPax = None,
+      runwayID = Some("4"),
+      baggageReclaimId = Some("2"),
+      airportID = PortCode("GLA"),
+      terminal = T1,
       rawICAO = "TTT244",
       rawIATA = "TT244",
-      Origin = PortCode("TTT"),
-      Scheduled = SDate("2019-11-14T12:44:00Z").millisSinceEpoch,
-      PcpTime = None,
-      FeedSources = Set(LiveFeedSource),
-      CarrierScheduled = None
+      origin = PortCode("TTT"),
+      scheduled = SDate("2019-11-14T12:44:00Z").millisSinceEpoch,
+      pcpTime = None,
+      feedSources = Set(LiveFeedSource),
+      carrierScheduled = None
     )
 
     Await.result(mockFeed.requestArrivals(), 1 second) match {
@@ -220,7 +220,7 @@ class GlaFeedSpec extends CrunchTestLike {
 
     Await.result(mockFeed.requestArrivals(), 1 second) match {
       case ArrivalsFeedSuccess(Flights(arrival :: Nil), _) =>
-        (arrival.ActPax, arrival.MaxPax) === (Some(0), Some(0))
+        (arrival.actPax, arrival.maxPax) === (Some(0), Some(0))
     }
   }
 
@@ -283,28 +283,28 @@ class GlaFeedSpec extends CrunchTestLike {
     val mockFeed = mockFeedWithResponse(requiredFieldsOnlyJson)
 
     val expected = Arrival(
-      Operator = None,
-      Status = ArrivalStatus("Flight is cancelled"),
-      Estimated = None,
-      Actual = None,
-      EstimatedChox = None,
-      ActualChox = None,
-      Gate = None,
-      Stand = None,
-      MaxPax = None,
-      ActPax = None,
-      TranPax = None,
-      RunwayID = None,
-      BaggageReclaimId = None,
-      AirportID = PortCode("GLA"),
-      Terminal = T1,
+      operator = None,
+      status = ArrivalStatus("Flight is cancelled"),
+      estimated = None,
+      actual = None,
+      estimatedChox = None,
+      actualChox = None,
+      gate = None,
+      stand = None,
+      maxPax = None,
+      actPax = None,
+      tranPax = None,
+      runwayID = None,
+      baggageReclaimId = None,
+      airportID = PortCode("GLA"),
+      terminal = T1,
       rawICAO = "TTT244",
       rawIATA = "TT244",
-      Origin = PortCode("TTT"),
-      Scheduled = SDate("2019-11-14T12:44:00Z").millisSinceEpoch,
-      PcpTime = None,
-      FeedSources = Set(LiveFeedSource),
-      CarrierScheduled = None
+      origin = PortCode("TTT"),
+      scheduled = SDate("2019-11-14T12:44:00Z").millisSinceEpoch,
+      pcpTime = None,
+      feedSources = Set(LiveFeedSource),
+      carrierScheduled = None
     )
 
     Await.result(mockFeed.requestArrivals(), 1 second) match {

@@ -123,7 +123,7 @@ describe('Arrivals page', () => {
       .addFlight({
         "SchDT": todayAtUtcString(0, 55),
         "ActChoxDT": todayAtUtcString(0, 55),
-        "ActPax": 2,
+        "actPax": 2,
       })
       .asABorderForceOfficer()
       .waitForFlightToAppear("TS0123")
@@ -147,8 +147,8 @@ describe('Arrivals page', () => {
         "IATA": "TS0123",
         "SchDT": todayAtUtcString(0, 55),
         "ActChoxDT": todayAtUtcString(0, 55),
-        "ActPax": 0,
-        "MaxPax": 0,
+        "actPax": 0,
+        "maxPax": 0,
       })
       .asABorderForceOfficer()
       .waitForFlightToAppear("TS0123")
@@ -188,8 +188,8 @@ describe('Arrivals page', () => {
     cy
       .addFlight({
         "SchDT": todayAtUtcString(0, 55),
-        "ActPax": 0,
-        "MaxPax": 0,
+        "actPax": 0,
+        "maxPax": 0,
       })
       .asABorderForceOfficer()
       .waitForFlightToAppear("TS0123")
@@ -213,8 +213,8 @@ describe('Arrivals page', () => {
     cy
       .addFlight({
         "SchDT": todayAtUtcString(0, 55),
-        "ActPax": 0,
-        "MaxPax": 0,
+        "actPax": 0,
+        "maxPax": 0,
       })
       .asABorderForceOfficer()
       .waitForFlightToAppear("TS0123")

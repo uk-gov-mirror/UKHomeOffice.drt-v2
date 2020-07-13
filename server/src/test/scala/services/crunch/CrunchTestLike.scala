@@ -88,13 +88,13 @@ object TestDefaults {
       ),
     desksByTerminal = Map(T1 -> 40, T2 -> 40)
     )
-  val pcpForFlightFromSch: Arrival => MilliDate = (a: Arrival) => MilliDate(SDate(a.Scheduled).millisSinceEpoch)
+  val pcpForFlightFromSch: Arrival => MilliDate = (a: Arrival) => MilliDate(SDate(a.scheduled).millisSinceEpoch)
   val pcpForFlightFromBest: Arrival => MilliDate = (a: Arrival) => {
-    if (a.ActualChox.isDefined) MilliDate(SDate(a.ActualChox.get).millisSinceEpoch)
-    else if (a.EstimatedChox.isDefined) MilliDate(SDate(a.EstimatedChox.get).millisSinceEpoch)
-    else if (a.Actual.isDefined) MilliDate(SDate(a.Actual.get).millisSinceEpoch)
-    else if (a.Estimated.isDefined) MilliDate(SDate(a.Estimated.get).millisSinceEpoch)
-    else MilliDate(SDate(a.Scheduled).millisSinceEpoch)
+    if (a.actualChox.isDefined) MilliDate(SDate(a.actualChox.get).millisSinceEpoch)
+    else if (a.estimatedChox.isDefined) MilliDate(SDate(a.estimatedChox.get).millisSinceEpoch)
+    else if (a.actual.isDefined) MilliDate(SDate(a.actual.get).millisSinceEpoch)
+    else if (a.sstimated.isDefined) MilliDate(SDate(a.sstimated.get).millisSinceEpoch)
+    else MilliDate(SDate(a.scheduled).millisSinceEpoch)
   }
   def testProbe(name: String)(implicit system: ActorSystem): TestProbe = TestProbe(name = name)
   val pcpPaxFn: Arrival => Int = PcpPax.bestPaxEstimateWithApi

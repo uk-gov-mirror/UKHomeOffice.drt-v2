@@ -11,28 +11,28 @@ class FlightMessageConversionSpec extends Specification {
   import drt.server.feeds.Implicits._
 
   val arrival = Arrival(
-    Operator = Option(Operator("BA")),
-    Status = "landed",
-    Estimated = Option(2L),
-    Actual = Option(3L),
-    EstimatedChox = Option(4L),
-    ActualChox = Option(5L),
-    Gate = Option("G1"),
-    Stand = Option("S1"),
-    MaxPax = Option(350),
-    ActPax = Option(122),
-    TranPax = Option(10),
-    RunwayID = Option("R1"),
-    BaggageReclaimId = Option("B1"),
-    AirportID = PortCode("LHR"),
-    Terminal = T1,
+    operator = Option(Operator("BA")),
+    status = "landed",
+    estimated = Option(2L),
+    actual = Option(3L),
+    estimatedChox = Option(4L),
+    actualChox = Option(5L),
+    gate = Option("G1"),
+    stand = Option("S1"),
+    maxPax = Option(350),
+    actPax = Option(122),
+    tranPax = Option(10),
+    runwayID = Option("R1"),
+    baggageReclaimId = Option("B1"),
+    airportID = PortCode("LHR"),
+    terminal = T1,
     rawICAO = "BAA1111",
     rawIATA = "BA1111",
-    Origin = PortCode("JFK"),
-    Scheduled = 1L,
-    PcpTime = Option(10L),
-    FeedSources = Set(AclFeedSource, LiveFeedSource),
-    CarrierScheduled = Option(4L)
+    origin = PortCode("JFK"),
+    scheduled = 1L,
+    pcpTime = Option(10L),
+    feedSources = Set(AclFeedSource, LiveFeedSource),
+    carrierScheduled = Option(4L)
     )
 
   "Given an Arrival with no suffix" >> {
@@ -46,7 +46,7 @@ class FlightMessageConversionSpec extends Specification {
   }
 
   "Given an Arrival with a suffix" >> {
-    val arrivalWithSuffix = arrival.copy(FlightCodeSuffix = Option(FlightCodeSuffix("P")))
+    val arrivalWithSuffix = arrival.copy(flightCodeSuffix = Option(FlightCodeSuffix("P")))
     "When I convert it to a protobuf message and then back to an Arrival" >> {
       val arrivalMessage = FlightMessageConversion.apiFlightToFlightMessage(arrivalWithSuffix)
       val restoredArrival = FlightMessageConversion.flightMessageToApiFlight(arrivalMessage)
@@ -57,7 +57,7 @@ class FlightMessageConversionSpec extends Specification {
   }
 
   "Given an arrival with 0 Passengers" >> {
-    val arrivalWith0Pax = arrival.copy(ActPax = Option(0), TranPax = Option(0), MaxPax = Option(0))
+    val arrivalWith0Pax = arrival.copy(actPax = Option(0), tranPax = Option(0), maxPax = Option(0))
     "When I convert it to a protobuf message and then back to an Arrival" >> {
       val arrivalMessage = FlightMessageConversion.apiFlightToFlightMessage(arrivalWith0Pax)
       val restoredArrival = FlightMessageConversion.flightMessageToApiFlight(arrivalMessage)

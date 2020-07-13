@@ -15,19 +15,19 @@
             <ns0:OperationalStatus CodeContext="9750" RepeatIndex="1">LAN</ns0:OperationalStatus>
             <ns0:ServiceType>P</ns0:ServiceType>
             <ns0:CabinClass RepeatIndex="1" Class="F">
-                <ns0:PaxCount Qualifier="70A" Usage="Actual" DestinationType="Local">0</ns0:PaxCount>
+                <ns0:PaxCount Qualifier="70A" Usage="actual" DestinationType="Local">0</ns0:PaxCount>
             </ns0:CabinClass>
             <ns0:CabinClass RepeatIndex="2" Class="C">
-                <ns0:PaxCount Qualifier="70A" Usage="Actual" DestinationType="Local">0</ns0:PaxCount>
+                <ns0:PaxCount Qualifier="70A" Usage="actual" DestinationType="Local">0</ns0:PaxCount>
             </ns0:CabinClass>
             <ns0:CabinClass RepeatIndex="3" Class="Y">
-                <ns0:PaxCount Qualifier="70A" Usage="Actual" DestinationType="Local">0</ns0:PaxCount>
+                <ns0:PaxCount Qualifier="70A" Usage="actual" DestinationType="Local">0</ns0:PaxCount>
             </ns0:CabinClass>
             <ns0:CabinClass RepeatIndex="4" Class="V">
-                <ns0:PaxCount Qualifier="70A" Usage="Actual" DestinationType="Local">0</ns0:PaxCount>
+                <ns0:PaxCount Qualifier="70A" Usage="actual" DestinationType="Local">0</ns0:PaxCount>
             </ns0:CabinClass>
             <ns0:CabinClass RepeatIndex="5">
-                <ns0:PaxCount Qualifier="70A" Usage="Actual" DestinationType="Local">0</ns0:PaxCount>
+                <ns0:PaxCount Qualifier="70A" Usage="actual" DestinationType="Local">0</ns0:PaxCount>
                 <ns0:SeatCapacity>0</ns0:SeatCapacity>
             </ns0:CabinClass>
             <ns0:AssociatedFlightLegAircraft>

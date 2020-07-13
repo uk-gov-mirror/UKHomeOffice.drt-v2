@@ -64,27 +64,27 @@ class TestController @Inject()(val config: Configuration) extends InjectedContro
           val pcpTime: Long = org.joda.time.DateTime.parse(flight.SchDT).plusMinutes(walkTimeMinutes).getMillis
           val actPax = Some(flight.ActPax).filter(_ != 0)
           val arrival = Arrival(
-            Operator = flight.Operator,
-            Status = flight.Status,
-            Estimated = Some(SDate(flight.EstDT).millisSinceEpoch),
-            Actual = Some(SDate(flight.ActDT).millisSinceEpoch),
-            EstimatedChox = Some(SDate(flight.EstChoxDT).millisSinceEpoch),
-            ActualChox = Some(SDate(flight.ActChoxDT).millisSinceEpoch),
-            Gate = Some(flight.Gate),
-            Stand = Some(flight.Stand),
-            MaxPax = Some(flight.MaxPax).filter(_ != 0),
-            ActPax = actPax,
-            TranPax = if (actPax.isEmpty) None else Some(flight.TranPax),
-            RunwayID = Some(flight.RunwayID),
-            BaggageReclaimId = Some(flight.BaggageReclaimId),
-            AirportID = PortCode(flight.AirportID),
-            Terminal = Terminal(flight.Terminal),
+            operator = flight.Operator,
+            status = flight.Status,
+            estimated = Some(SDate(flight.EstDT).millisSinceEpoch),
+            actual = Some(SDate(flight.ActDT).millisSinceEpoch),
+            estimatedChox = Some(SDate(flight.EstChoxDT).millisSinceEpoch),
+            actualChox = Some(SDate(flight.ActChoxDT).millisSinceEpoch),
+            gate = Some(flight.Gate),
+            stand = Some(flight.Stand),
+            maxPax = Some(flight.MaxPax).filter(_ != 0),
+            actPax = actPax,
+            tranPax = if (actPax.isEmpty) None else Some(flight.TranPax),
+            runwayID = Some(flight.RunwayID),
+            baggageReclaimId = Some(flight.BaggageReclaimId),
+            airportID = PortCode(flight.AirportID),
+            terminal = Terminal(flight.Terminal),
             rawICAO = flight.ICAO,
             rawIATA = flight.IATA,
-            Origin = PortCode(flight.Origin),
-            PcpTime = Some(pcpTime),
-            FeedSources = Set(LiveFeedSource),
-            Scheduled = SDate(flight.SchDT).millisSinceEpoch
+            origin = PortCode(flight.Origin),
+            pcpTime = Some(pcpTime),
+            feedSources = Set(LiveFeedSource),
+            scheduled = SDate(flight.SchDT).millisSinceEpoch
             )
           saveArrival(arrival).map(_ => Created)
         case None =>

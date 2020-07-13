@@ -93,27 +93,27 @@ class BHXLegacyFeedSpec extends CrunchTestLike with Mockito {
       import drt.server.feeds.Implicits._
 
       arrivals.head mustEqual Arrival(
-        Operator = None,
-        Status = "Arrived",
-        Estimated = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
-        Actual = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
-        EstimatedChox = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
-        ActualChox = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
-        Gate = Some("44"),
-        Stand = Some("57R"),
-        MaxPax = Some(80),
-        ActPax = Some(40),
-        TranPax = Some(35),
-        RunwayID = Some("R1"),
-        BaggageReclaimId = Some("7A"),
-        AirportID = PortCode("BHX"),
-        Terminal = T1,
+        operator = None,
+        status = "Arrived",
+        estimated = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
+        actual = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
+        estimatedChox = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
+        actualChox = Some(SDate("2012-06-02T06:46:00Z", DateTimeZone.UTC).millisSinceEpoch),
+        gate = Some("44"),
+        stand = Some("57R"),
+        maxPax = Some(80),
+        actPax = Some(40),
+        tranPax = Some(35),
+        runwayID = Some("R1"),
+        baggageReclaimId = Some("7A"),
+        airportID = PortCode("BHX"),
+        terminal = T1,
         rawICAO = "AF1164",
         rawIATA = "AF1164",
-        Origin = PortCode("CPH"),
-        Scheduled = 1338619560000L,
-        PcpTime = None,
-        FeedSources = Set(LiveFeedSource)
+        origin = PortCode("CPH"),
+        scheduled = 1338619560000L,
+        pcpTime = None,
+        feedSources = Set(LiveFeedSource)
       )
     }
 
@@ -126,27 +126,27 @@ class BHXLegacyFeedSpec extends CrunchTestLike with Mockito {
       import drt.server.feeds.Implicits._
 
       arrivals.head mustEqual Arrival(
-        Operator = None,
-        Status = "Port Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = Some(80),
-        ActPax = Some(40),
-        TranPax = Some(35),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = PortCode("BHX"),
-        Terminal = T1,
+        operator = None,
+        status = "Port Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = Some(80),
+        actPax = Some(40),
+        tranPax = Some(35),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = PortCode("BHX"),
+        terminal = T1,
         rawICAO = "AF1164",
         rawIATA = "AF1164",
-        Origin = PortCode("CPH"),
-        Scheduled = 1338623160000L, // BHX Forecast is incorrect. This should be 1338619613123L or 2012-06-02T06:46:53.123Z
-        PcpTime = None,
-        FeedSources = Set(ForecastFeedSource),
+        origin = PortCode("CPH"),
+        scheduled = 1338623160000L, // BHX Forecast is incorrect. This should be 1338619613123L or 2012-06-02T06:46:53.123Z
+        pcpTime = None,
+        feedSources = Set(ForecastFeedSource),
       )
     }
 

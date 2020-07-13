@@ -22,10 +22,10 @@ case class AggregatedArrival(code: String, scheduled: MillisSinceEpoch, origin: 
 object AggregatedArrival {
   def apply(arrival: Arrival, destination: String): AggregatedArrival = AggregatedArrival(
     arrival.flightCode,
-    arrival.Scheduled,
-    arrival.Origin.toString,
+    arrival.scheduled,
+    arrival.origin.toString,
     destination,
-    terminalName = arrival.Terminal.toString
+    terminalName = arrival.terminal.toString
   )
 }
 
@@ -71,14 +71,14 @@ case class ArrivalTable(portCode: PortCode, tables: Tables) extends ArrivalTable
       arrival.destination === portCode.toString
 
   def arrivalRow(f: shared.api.Arrival): tables.ArrivalRow = {
-    val sch = new Timestamp(f.Scheduled)
-    val est = f.Estimated.map(new Timestamp(_))
-    val act = f.Actual.map(new Timestamp(_))
-    val estChox = f.EstimatedChox.map(new Timestamp(_))
-    val actChox = f.ActualChox.map(new Timestamp(_))
-    val pcp = new Timestamp(f.PcpTime.getOrElse(f.Scheduled))
-    val pcpPax = f.ActPax.map(ap => ap - f.TranPax.getOrElse(0))
+    val sch = new Timestamp(f.scheduled)
+    val est = f.sstimated.map(new Timestamp(_))
+    val act = f.actual.map(new Timestamp(_))
+    val estChox = f.estimatedChox.map(new Timestamp(_))
+    val actChox = f.actualChox.map(new Timestamp(_))
+    val pcp = new Timestamp(f.pcpTime.getOrElse(f.scheduled))
+    val pcpPax = f.actPax.map(ap => ap - f.tranPax.getOrElse(0))
 
-    ArrivalRow(f.flightCode, f.VoyageNumber.numeric, portCode.iata, f.Origin.toString, f.Terminal.toString, f.Gate, f.Stand, f.Status.description, sch, est, act, estChox, actChox, pcp, f.ActPax, pcpPax)
+    ArrivalRow(f.flightCode, f.voyageNumber.numeric, portCode.iata, f.origin.toString, f.terminal.toString, f.gate, f.stand, f.status.description, sch, est, act, estChox, actChox, pcp, f.actPax, pcpPax)
   }
 }

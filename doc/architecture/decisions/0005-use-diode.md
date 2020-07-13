@@ -2,7 +2,7 @@
 
 Date: 31/03/2017
 
-## Status
+## status
 
 Accepted
 

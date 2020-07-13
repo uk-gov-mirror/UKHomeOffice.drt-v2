@@ -41,16 +41,16 @@ class LHRFeedSpec extends CrunchTestLike {
       flights.toList === List(
         List(
           Arrival(
-            Operator = Option(Operator("Qatar Airways")),
-            Status = ArrivalStatus("UNK"),
-            Estimated = Option(SDate("2017-03-09T21:32:00.000Z").millisSinceEpoch),
-            Actual = Option(SDate("2017-03-09T21:33:00.000Z").millisSinceEpoch),
-            EstimatedChox = Option(SDate("2017-03-09T21:43:00.000Z").millisSinceEpoch),
-            ActualChox = Option(SDate("2017-03-09T21:45:00.000Z").millisSinceEpoch),
-            Gate = None, Stand = Option("10"), MaxPax = Option(795), ActPax = Option(142), TranPax = Option(1), RunwayID = None, BaggageReclaimId = None,
-            AirportID = PortCode("LHR"), Terminal = T4, rawICAO = "QR005", rawIATA = "QR005", Origin = PortCode("DOH"),
-            Scheduled = SDate("2017-03-09T22:00:00.000Z").millisSinceEpoch,
-            PcpTime = Option(SDate("2017-03-09T22:04:00.000Z").millisSinceEpoch), FeedSources = Set(LiveFeedSource)
+            operator = Option(Operator("Qatar Airways")),
+            status = ArrivalStatus("UNK"),
+            estimated = Option(SDate("2017-03-09T21:32:00.000Z").millisSinceEpoch),
+            actual = Option(SDate("2017-03-09T21:33:00.000Z").millisSinceEpoch),
+            estimatedChox = Option(SDate("2017-03-09T21:43:00.000Z").millisSinceEpoch),
+            actualChox = Option(SDate("2017-03-09T21:45:00.000Z").millisSinceEpoch),
+            gate = None, stand = Option("10"), maxPax = Option(795), actPax = Option(142), tranPax = Option(1), runwayID = None, baggageReclaimId = None,
+            airportID = PortCode("LHR"), terminal = T4, rawICAO = "QR005", rawIATA = "QR005", origin = PortCode("DOH"),
+            scheduled = SDate("2017-03-09T22:00:00.000Z").millisSinceEpoch,
+            pcpTime = Option(SDate("2017-03-09T22:04:00.000Z").millisSinceEpoch), feedSources = Set(LiveFeedSource)
           )
         )
       )
@@ -77,27 +77,27 @@ class LHRFeedSpec extends CrunchTestLike {
       flights.toList === List(
         List(
           Arrival(
-            Operator = Option(Operator("Qatar Airways")),
-            Status = ArrivalStatus("UNK"),
-            Estimated = Option(SDate("2017-03-09T21:32:00.000Z").millisSinceEpoch),
-            Actual = Option(SDate("2017-03-09T21:33:00.000Z").millisSinceEpoch),
-            EstimatedChox = Option(SDate("2017-03-09T21:43:00.000Z").millisSinceEpoch),
-            ActualChox = Option(SDate("2017-03-09T21:45:00.000Z").millisSinceEpoch),
-            Gate = None,
-            Stand = Option("10"),
-            MaxPax = Option(0),
-            ActPax = Option(0),
-            TranPax = Option(0),
-            RunwayID = None,
-            BaggageReclaimId = None,
-            AirportID = PortCode("LHR"),
-            Terminal = T4,
+            operator = Option(Operator("Qatar Airways")),
+            status = ArrivalStatus("UNK"),
+            estimated = Option(SDate("2017-03-09T21:32:00.000Z").millisSinceEpoch),
+            actual = Option(SDate("2017-03-09T21:33:00.000Z").millisSinceEpoch),
+            estimatedChox = Option(SDate("2017-03-09T21:43:00.000Z").millisSinceEpoch),
+            actualChox = Option(SDate("2017-03-09T21:45:00.000Z").millisSinceEpoch),
+            gate = None,
+            stand = Option("10"),
+            maxPax = Option(0),
+            actPax = Option(0),
+            tranPax = Option(0),
+            runwayID = None,
+            baggageReclaimId = None,
+            airportID = PortCode("LHR"),
+            terminal = T4,
             rawICAO = "QR005",
             rawIATA = "QR005",
-            Origin = PortCode("DOH"),
-            Scheduled = SDate("2017-03-09T22:00:00.000Z").millisSinceEpoch,
-            PcpTime = Option(SDate("2017-03-09T22:04:00.000Z").millisSinceEpoch),
-            FeedSources = Set(LiveFeedSource)
+            origin = PortCode("DOH"),
+            scheduled = SDate("2017-03-09T22:00:00.000Z").millisSinceEpoch,
+            pcpTime = Option(SDate("2017-03-09T22:04:00.000Z").millisSinceEpoch),
+            feedSources = Set(LiveFeedSource)
           )
         )
       )

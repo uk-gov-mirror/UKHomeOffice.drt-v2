@@ -26,5 +26,5 @@ case class SplitsCalculator(queueAllocator: PaxTypeQueueAllocation,
   }
 
   def bestSplitsForArrival(manifest: BestAvailableManifest, arrival: Arrival): Splits = adjustments
-    .adjust(queueAllocator.toSplits(arrival.Terminal, manifest))
+    .adjust(queueAllocator.toSplits(arrival.terminal, manifest))
 }

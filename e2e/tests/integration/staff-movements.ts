@@ -29,7 +29,7 @@ describe('Staff movements', () => {
   describe('When adding staff movements on the desks and queues page', () => {
     it("Should update the available staff when 1 staff member is added for 1 hour, and record the correct reason and " +
       "it should appear in the export", () => {
-        const movementsCSV = "Terminal,Reason,Time,Staff Change,Made by" + "\n" +
+        const movementsCSV = "terminal,Reason,Time,Staff Change,Made by" + "\n" +
           "T1,Other start," + midnightThisMorning().format("YYYY-MM-DD") + " 00:00,1,\"Unknown\"" + "\n" +
           "T1,Other end," + midnightThisMorning().format("YYYY-MM-DD") + " 01:00,-1,\"Unknown\""
         cy

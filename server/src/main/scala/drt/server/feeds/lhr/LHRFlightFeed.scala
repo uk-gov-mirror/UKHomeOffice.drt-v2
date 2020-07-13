@@ -98,27 +98,27 @@ case class LHRFlightFeed(csvRecords: Iterator[Int => String]) {
       val schDtIso = flight.scheduled.toDateTimeISO.toString()
 
       Arrival(
-        Operator = flight.operator,
-        Status = "UNK",
-        Estimated = flight.estimated.map(_.toDate.getTime),
-        Actual = flight.touchdown.map(_.toDate.getTime),
-        EstimatedChox = flight.estChox.map(_.toDate.getTime),
-        ActualChox = flight.actChox.map(_.toDate.getTime),
-        Gate = None,
-        Stand = flight.stand,
-        MaxPax = flight.maxPax,
-        ActPax = flight.actPax,
-        TranPax = if (flight.actPax.isEmpty) None else flight.connPax,
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = "LHR",
-        Terminal = flight.term,
+        operator = flight.operator,
+        status = "UNK",
+        estimated = flight.estimated.map(_.toDate.getTime),
+        actual = flight.touchdown.map(_.toDate.getTime),
+        estimatedChox = flight.estChox.map(_.toDate.getTime),
+        actualChox = flight.actChox.map(_.toDate.getTime),
+        gate = None,
+        stand = flight.stand,
+        maxPax = flight.maxPax,
+        actPax = flight.actPax,
+        tranPax = if (flight.actPax.isEmpty) None else flight.connPax,
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = "LHR",
+        terminal = flight.term,
         rawICAO = flight.flightCode,
         rawIATA = flight.flightCode,
-        Origin = flight.from,
-        PcpTime = if (pcpTime == 0) None else Some(pcpTime),
-        FeedSources = Set(LiveFeedSource),
-        Scheduled = SDate(schDtIso).millisSinceEpoch)
+        origin = flight.from,
+        pcpTime = if (pcpTime == 0) None else Some(pcpTime),
+        feedSources = Set(LiveFeedSource),
+        scheduled = SDate(schDtIso).millisSinceEpoch)
     }).toList
 }
 

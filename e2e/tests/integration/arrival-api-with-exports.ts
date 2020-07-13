@@ -31,16 +31,16 @@ describe('Arrivals CSV Export', () => {
   const estChoxTimeLocal = estChoxTime.tz("Europe/London").format("HH:mm");
   const actChoxTimeLocal = actChoxTime.tz("Europe/London").format("HH:mm");
   const pcpTimeLocal = actChoxTime.add(13, "minutes").tz("Europe/London").format("HH:mm");
-  const headersWithoutActApi = "IATA,ICAO,Origin,Gate/Stand,Status," +
-    "Scheduled Date,Scheduled Time,Est Arrival,Act Arrival,Est Chox,Act Chox,Est PCP," +
+  const headersWithoutActApi = "IATA,ICAO,origin,gate/stand,status," +
+    "scheduled Date,scheduled Time,Est Arrival,Act Arrival,Est Chox,Act Chox,Est PCP," +
     "Total Pax,PCP Pax," +
     "API e-Gates,API EEA,API Non-EEA,API Fast Track," +
     "Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track," +
-    "Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track";
-  const actApiHeaders = "API Actual - B5JSSK to Desk,API Actual - B5JSSK to eGates" +
-  ",API Actual - EEA (Machine Readable),API Actual - EEA (Non Machine Readable)," +
-  "API Actual - Fast Track (Non Visa),API Actual - Fast Track (Visa),API Actual " +
-  "- Non EEA (Non Visa),API Actual - Non EEA (Visa),API Actual - Transfer,API Actual - eGates";
+    "terminal Average e-Gates,terminal Average EEA,terminal Average Non-EEA,terminal Average Fast Track";
+  const actApiHeaders = "API actual - B5JSSK to Desk,API actual - B5JSSK to eGates" +
+  ",API actual - EEA (Machine Readable),API actual - EEA (Non Machine Readable)," +
+  "API actual - Fast Track (Non Visa),API actual - Fast Track (Visa),API actual " +
+  "- Non EEA (Non Visa),API actual - Non EEA (Visa),API actual - Transfer,API actual - eGates";
   const headersWithActApi = headersWithoutActApi + "," + actApiHeaders;
   const totalPax = "51";
   const eGatePax = "25";

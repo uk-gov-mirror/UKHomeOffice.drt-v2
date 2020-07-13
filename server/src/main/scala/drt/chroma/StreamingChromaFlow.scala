@@ -49,27 +49,27 @@ object StreamingChromaFlow {
       val estChox = Try(SDate(flight.EstChoxDT).millisSinceEpoch).getOrElse(0L)
       val actChox = Try(SDate(flight.ActChoxDT).millisSinceEpoch).getOrElse(0L)
       Arrival(
-        Operator = if (flight.Operator.isEmpty) None else Option(Operator(flight.Operator)),
-        Status = flight.Status,
-        Estimated = if (est == 0) None else Option(est),
-        Actual = if (act == 0) None else Option(act),
-        EstimatedChox = if (estChox == 0) None else Option(estChox),
-        ActualChox = if (actChox == 0) None else Option(actChox),
-        Gate = if (StringUtils.isEmpty(flight.Gate)) None else Option(flight.Gate),
-        Stand = if (StringUtils.isEmpty(flight.Stand)) None else Option(flight.Stand),
-        MaxPax = if (flight.MaxPax == 0) None else Option(flight.MaxPax),
-        ActPax = if (flight.ActPax == 0) None else Option(flight.ActPax),
-        TranPax = if (flight.ActPax == 0) None else Option(flight.TranPax),
-        RunwayID = if (StringUtils.isEmpty(flight.RunwayID)) None else Option(flight.RunwayID),
-        BaggageReclaimId = if (StringUtils.isEmpty(flight.BaggageReclaimId)) None else Option(flight.BaggageReclaimId),
-        AirportID = flight.AirportID,
-        Terminal = Terminal(flight.Terminal),
+        operator = if (flight.Operator.isEmpty) None else Option(Operator(flight.Operator)),
+        status = flight.Status,
+        estimated = if (est == 0) None else Option(est),
+        actual = if (act == 0) None else Option(act),
+        estimatedChox = if (estChox == 0) None else Option(estChox),
+        actualChox = if (actChox == 0) None else Option(actChox),
+        gate = if (StringUtils.isEmpty(flight.Gate)) None else Option(flight.Gate),
+        stand = if (StringUtils.isEmpty(flight.Stand)) None else Option(flight.Stand),
+        maxPax = if (flight.MaxPax == 0) None else Option(flight.MaxPax),
+        actPax = if (flight.ActPax == 0) None else Option(flight.ActPax),
+        tranPax = if (flight.ActPax == 0) None else Option(flight.TranPax),
+        runwayID = if (StringUtils.isEmpty(flight.RunwayID)) None else Option(flight.RunwayID),
+        baggageReclaimId = if (StringUtils.isEmpty(flight.BaggageReclaimId)) None else Option(flight.BaggageReclaimId),
+        airportID = flight.AirportID,
+        terminal = Terminal(flight.Terminal),
         rawICAO = flight.ICAO,
         rawIATA = flight.IATA,
-        Origin = flight.Origin,
-        PcpTime = Some(pcpTime),
-        Scheduled = SDate(flight.SchDT).millisSinceEpoch,
-        FeedSources = Set(LiveFeedSource)
+        origin = flight.Origin,
+        pcpTime = Some(pcpTime),
+        scheduled = SDate(flight.SchDT).millisSinceEpoch,
+        feedSources = Set(LiveFeedSource)
       )
     }).toList
   }
@@ -79,27 +79,27 @@ object StreamingChromaFlow {
       val walkTimeMinutes = 4
       val pcpTime: Long = org.joda.time.DateTime.parse(flight.SchDT).plusMinutes(walkTimeMinutes).getMillis
       Arrival(
-        Operator = None,
-        Status = "Port Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = None,
-        ActPax = if (flight.EstPax == 0) None else Option(flight.EstPax),
-        TranPax = if (flight.EstPax == 0) None else Option(flight.EstTranPax),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = flight.AirportID,
-        Terminal = Terminal(flight.Terminal),
+        operator = None,
+        status = "Port Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = None,
+        actPax = if (flight.EstPax == 0) None else Option(flight.EstPax),
+        tranPax = if (flight.EstPax == 0) None else Option(flight.EstTranPax),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = flight.AirportID,
+        terminal = Terminal(flight.Terminal),
         rawICAO = flight.ICAO,
         rawIATA = flight.IATA,
-        Origin = flight.Origin,
-        PcpTime = Option(pcpTime),
-        FeedSources = Set(ForecastFeedSource),
-        Scheduled = SDate(flight.SchDT).millisSinceEpoch
+        origin = flight.Origin,
+        pcpTime = Option(pcpTime),
+        feedSources = Set(ForecastFeedSource),
+        scheduled = SDate(flight.SchDT).millisSinceEpoch
       )
     }).toList
   }

@@ -22,16 +22,16 @@ object WorkloadCalculator {
                        ): SplitMinutes = {
     val uniqueFlights: Iterable[ApiFlightWithSplits] = flights
       .flights.toMap.values.toList
-      .sortBy(_.apiFlight.ActPax.getOrElse(0))
+      .sortBy(_.apiFlight.actPax.getOrElse(0))
       .map { fws => (CodeShareKeyOrderedBySchedule(fws), fws) }
       .toMap.values
 
     val minutes = new SplitMinutes
 
     uniqueFlights
-      .filter(fws => !fws.apiFlight.isCancelled && defaultProcTimes.contains(fws.apiFlight.Terminal))
+      .filter(fws => !fws.apiFlight.isCancelled && defaultProcTimes.contains(fws.apiFlight.terminal))
       .foreach { incoming =>
-        val procTimes = defaultProcTimes(incoming.apiFlight.Terminal)
+        val procTimes = defaultProcTimes(incoming.apiFlight.terminal)
         val flightMinutes = flightToFlightSplitMinutes(
           incoming,
           procTimes,
@@ -75,7 +75,7 @@ object WorkloadCalculator {
 
       val totalPaxWithNationality = splitsWithoutTransit.toList.flatMap(_.nationalities.map(_.values.sum)).sum
 
-      val startMinute: Long = PcpArrival.timeToNearestMinute(flight.PcpTime.getOrElse(0))
+      val startMinute: Long = PcpArrival.timeToNearestMinute(flight.pcpTime.getOrElse(0))
       minutesForHours(startMinute, 1)
         .zip(paxDeparturesPerMinutes(totalPax.toInt, paxOffFlowRate))
         .flatMap {
@@ -136,6 +136,6 @@ object WorkloadCalculator {
       case _ =>
         defaultWorkload
     }
-    FlightSplitMinute(CodeShareKeyOrderedBySchedule(arrival), apiSplitRatio.passengerType, arrival.Terminal, apiSplitRatio.queueType, splitPaxInMinute, splitWorkLoadInMinute, minuteMillis)
+    FlightSplitMinute(CodeShareKeyOrderedBySchedule(arrival), apiSplitRatio.passengerType, arrival.terminal, apiSplitRatio.queueType, splitPaxInMinute, splitWorkLoadInMinute, minuteMillis)
   }
 }

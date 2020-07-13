@@ -43,27 +43,27 @@ object LHRForecastFeed {
   def lhrFieldsToArrival(flightRow: LHRForecastFlightRow): Try[Arrival] = {
     Try {
       Arrival(
-        Operator = None,
-        Status = "Port Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = None,
-        ActPax = if (flightRow.totalPax == 0) None else Option(flightRow.totalPax),
-        TranPax = if (flightRow.totalPax == 0) None else Option(flightRow.transferPax),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = "LHR",
-        Terminal = Terminal(flightRow.terminal),
+        operator = None,
+        status = "Port Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = None,
+        actPax = if (flightRow.totalPax == 0) None else Option(flightRow.totalPax),
+        tranPax = if (flightRow.totalPax == 0) None else Option(flightRow.transferPax),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = "LHR",
+        terminal = Terminal(flightRow.terminal),
         rawICAO = flightRow.flightCode.replace(" ", ""),
         rawIATA = flightRow.flightCode.replace(" ", ""),
-        Origin = flightRow.origin,
-        Scheduled = flightRow.scheduledDate.millisSinceEpoch,
-        PcpTime = None,
-        FeedSources = Set(ForecastFeedSource)
+        origin = flightRow.origin,
+        scheduled = flightRow.scheduledDate.millisSinceEpoch,
+        pcpTime = None,
+        feedSources = Set(ForecastFeedSource)
       )
     }
   }

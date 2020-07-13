@@ -119,7 +119,7 @@ class ArrivalSplitsStageSpec extends CrunchTestLike {
 
     val expectedSplits = Set(terminalAverage, apiSplits)
     val expected = Seq(ApiFlightWithSplits(
-      arrival.copy(FeedSources = Set(LiveFeedSource, ApiFeedSource), ApiPax = Option(2)),
+      arrival.copy(feedSources = Set(LiveFeedSource, ApiFeedSource), apiPax = Option(2)),
       expectedSplits,
       None
     ))

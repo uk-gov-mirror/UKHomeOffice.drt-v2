@@ -99,7 +99,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
       actRunwayArrival,
       estGateArrivalTime,
       actGateArrivalTime
-    ).copy(CarrierScheduled = Option(SDate(publishedArrivalTime).millisSinceEpoch))
+    ).copy(carrierScheduled = Option(SDate(publishedArrivalTime).millisSinceEpoch))
 
     val result = CiriumFeed.toArrival(ciriumArrival, PortCode("LHR"))
 
@@ -226,7 +226,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
     ciriumFeed.tickingSource(250 milliseconds).to(Sink.actorRef(probe.ref, StreamCompleted)).run()
 
     probe.fishForMessage(2 seconds) {
-      case s: ArrivalsFeedSuccess if s.arrivals.flights.head.Scheduled == SDate("2019-07-15T11:05:00.000Z").millisSinceEpoch => true
+      case s: ArrivalsFeedSuccess if s.arrivals.flights.head.scheduled == SDate("2019-07-15T11:05:00.000Z").millisSinceEpoch => true
       case _ => false
     }
 
@@ -242,7 +242,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
     ciriumFeed.tickingSource(100 milliseconds).to(Sink.actorRef(probe.ref, StreamCompleted)).run()
 
     probe.fishForMessage(2 seconds) {
-      case s: ArrivalsFeedSuccess if s.arrivals.flights.nonEmpty && s.arrivals.flights.head.Scheduled == SDate("2019-07-15T11:05:00.000Z").millisSinceEpoch => true
+      case s: ArrivalsFeedSuccess if s.arrivals.flights.nonEmpty && s.arrivals.flights.head.scheduled == SDate("2019-07-15T11:05:00.000Z").millisSinceEpoch => true
       case _ => false
     }
 
@@ -261,7 +261,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
       )
 
     val arrival = CiriumFeed.toArrival(ciriumFlight, PortCode("STN"))
-    val result = arrival.EstimatedChox
+    val result = arrival.estimatedChox
     val expected = Option(SDate(estimatedRunwayArrivalTime).addMinutes(5).millisSinceEpoch)
 
     result === expected
@@ -279,7 +279,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
       )
 
     val arrival = CiriumFeed.toArrival(ciriumFlight, PortCode("STN"))
-    val result = arrival.EstimatedChox
+    val result = arrival.estimatedChox
     val expected = Option(SDate(actualRunwayTime).addMinutes(5).millisSinceEpoch)
 
     result === expected
@@ -297,7 +297,7 @@ class CiriumFeedSpec extends CrunchTestLike with Mockito {
       )
 
     val arrival = CiriumFeed.toArrival(ciriumFlight, PortCode("STN"))
-    val result = arrival.Estimated
+    val result = arrival.sstimated
     val expected = Option(SDate(estimatedChoxTime).addMinutes(-5).millisSinceEpoch)
 
     result === expected

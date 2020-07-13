@@ -51,27 +51,27 @@ class LGWForecastFeedSpec extends Specification with Mockito {
       val arrivals: List[Arrival] = feed.getArrivalsFromData("aFile.csv", exampleData)
       arrivals.length mustEqual 1
       arrivals.head mustEqual Arrival(
-        Operator = None,
-        Status = "Port Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = Option(174),
-        ActPax = Option(134),
-        TranPax = Some(0),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = PortCode("LGW"),
-        Terminal = S,
+        operator = None,
+        status = "Port Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = Option(174),
+        actPax = Option(134),
+        tranPax = Some(0),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = PortCode("LGW"),
+        terminal = S,
         rawICAO = "3O0101",
         rawIATA = "3O0101",
-        Origin = PortCode("TNG"),
-        Scheduled = SDate("2018-05-19T10:05:00Z").millisSinceEpoch,
-        PcpTime = None,
-        FeedSources = Set(ForecastFeedSource)
+        origin = PortCode("TNG"),
+        scheduled = SDate("2018-05-19T10:05:00Z").millisSinceEpoch,
+        pcpTime = None,
+        feedSources = Set(ForecastFeedSource)
       )
     }
 
@@ -84,27 +84,27 @@ class LGWForecastFeedSpec extends Specification with Mockito {
       val arrivals: List[Arrival] = feed.getArrivalsFromData("aFile.csv", exampleDataWith0Pax)
       arrivals.length mustEqual 1
       arrivals.head mustEqual Arrival(
-        Operator = None,
-        Status = "Port Forecast",
-        Estimated = None,
-        Actual = None,
-        EstimatedChox = None,
-        ActualChox = None,
-        Gate = None,
-        Stand = None,
-        MaxPax = Option(0),
-        ActPax = Option(0),
-        TranPax = Some(0),
-        RunwayID = None,
-        BaggageReclaimId = None,
-        AirportID = PortCode("LGW"),
-        Terminal = S,
+        operator = None,
+        status = "Port Forecast",
+        estimated = None,
+        actual = None,
+        estimatedChox = None,
+        actualChox = None,
+        gate = None,
+        stand = None,
+        maxPax = Option(0),
+        actPax = Option(0),
+        tranPax = Some(0),
+        runwayID = None,
+        baggageReclaimId = None,
+        airportID = PortCode("LGW"),
+        terminal = S,
         rawICAO = "3O0101",
         rawIATA = "3O0101",
-        Origin = PortCode("TNG"),
-        Scheduled = SDate("2018-05-19T10:05:00Z").millisSinceEpoch,
-        PcpTime = None,
-        FeedSources = Set(ForecastFeedSource)
+        origin = PortCode("TNG"),
+        scheduled = SDate("2018-05-19T10:05:00Z").millisSinceEpoch,
+        pcpTime = None,
+        feedSources = Set(ForecastFeedSource)
       )
     }
 

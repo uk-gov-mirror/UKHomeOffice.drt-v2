@@ -7,7 +7,7 @@ and inspect local variables etc. just like in a real IDE debugger. See the docum
 
 Play Scala.js plugin will automatically copy the source maps into correct location.
 
-## Actual debugging
+## actual debugging
 
 When running the application, you can access the sources through the developer tools window as shown below.
 

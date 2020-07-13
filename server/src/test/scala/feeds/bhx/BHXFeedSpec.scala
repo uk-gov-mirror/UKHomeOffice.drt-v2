@@ -415,7 +415,7 @@ class BHXFeedSpec extends CrunchTestLike {
       .result(client.initialFlights, 1 second).asInstanceOf[ArrivalsFeedSuccess].arrivals
 
     val actMax = result match {
-      case Flights(f :: tail) => (f.ActPax, f.MaxPax)
+      case Flights(f :: tail) => (f.actPax, f.maxPax)
     }
 
     val expected = (Some(0), Some(0))

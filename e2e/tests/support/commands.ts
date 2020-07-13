@@ -99,25 +99,25 @@ Cypress.Commands.add('asABorderForceOfficerWithRoles', (roles = []) => {
 
 Cypress.Commands.add('addFlight', (params) => {
   const defaults = {
-    "Operator": "TestAir",
-    "Status": "On Chox",
+    "operator": "TestAir",
+    "status": "On Chox",
     "EstDT": todayAtString(12, 0),
     "ActDT": todayAtString(12, 0),
     "EstChoxDT": todayAtString(12, 0),
     "ActChoxDT": todayAtString(12, 0),
-    "Gate": "46",
-    "Stand": "44R",
-    "MaxPax": 78,
-    "ActPax": 51,
-    "TranPax": 0,
-    "RunwayID": "05L",
+    "gate": "46",
+    "stand": "44R",
+    "maxPax": 78,
+    "actPax": 51,
+    "tranPax": 0,
+    "runwayID": "05L",
     "FlightID": 100,
-    "BaggageReclaimId": "05",
-    "AirportID": "MAN",
-    "Terminal": "T1",
+    "baggageReclaimId": "05",
+    "airportID": "MAN",
+    "terminal": "T1",
     "ICAO": "TS123",
     "IATA": "TS123",
-    "Origin": "AMS",
+    "origin": "AMS",
     "SchDT": todayAtString(12, 0)
   };
 

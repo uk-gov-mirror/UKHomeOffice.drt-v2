@@ -51,7 +51,7 @@ case class PortState(flights: ISortedMap[UniqueArrival, ApiFlightWithSplits],
     }
 
   def flightsRangeWithTerminals(roundedStart: SDateLike, roundedEnd: SDateLike, portQueues: IMap[Terminal, Seq[Queue]]): ISortedMap[UniqueArrival, ApiFlightWithSplits] = flightsRange(roundedStart, roundedEnd)
-    .filter { case (_, fws) => portQueues.contains(fws.apiFlight.Terminal) }
+    .filter { case (_, fws) => portQueues.contains(fws.apiFlight.terminal) }
 
   def crunchMinuteRange(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch): ISortedMap[TQM, CrunchMinute] = crunchMinutes
     .range(TQM.atTime(startMillis), TQM.atTime(endMillis))
@@ -262,7 +262,7 @@ class PortStateMutable {
     staffMinutes.rangeAtTerminals(start, end, terminals)
 
   def updates(sinceEpoch: MillisSinceEpoch, start: MillisSinceEpoch, end: MillisSinceEpoch): Option[PortStateUpdates] = {
-    val updatedFlights = flights.updatesSince(sinceEpoch).filter(fws => start <= fws.apiFlight.PcpTime.getOrElse(0L) && fws.apiFlight.PcpTime.getOrElse(0L) < end)
+    val updatedFlights = flights.updatesSince(sinceEpoch).filter(fws => start <= fws.apiFlight.pcpTime.getOrElse(0L) && fws.apiFlight.pcpTime.getOrElse(0L) < end)
     val updatedCrunch: Set[CrunchMinute] = crunchMinutes.updatesSince(sinceEpoch).filter(m => start <= m.minute && m.minute < end)
     val updatedStaff = staffMinutes.updatesSince(sinceEpoch).filter(m => start <= m.minute && m.minute < end)
 

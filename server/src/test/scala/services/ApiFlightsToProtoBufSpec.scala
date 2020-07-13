@@ -12,28 +12,28 @@ class ApiFlightsToProtoBufSpec extends Specification {
   "apiFlightToFlightMessage" should {
     "take a single Arrival and return a FlightMessage representing it" in {
       val apiFlight = Arrival(
-        Operator = Option(Operator("Op")),
-        Status = ArrivalStatus("scheduled"),
-        Estimated = Option(SDate("2016-01-01T13:05:00Z").millisSinceEpoch),
-        Actual = Option(SDate("2016-01-01T13:10:00Z").millisSinceEpoch),
-        EstimatedChox = Option(SDate("2016-01-01T13:15:00Z").millisSinceEpoch),
-        ActualChox = Option(SDate("2016-01-01T13:20:00Z").millisSinceEpoch),
-        Gate = Option("10"),
-        Stand = Option("10A"),
-        MaxPax = Option(200),
-        ActPax = Option(150),
-        TranPax = Option(10),
-        RunwayID = Option("1"),
-        BaggageReclaimId = Option("A"),
-        AirportID = PortCode("LHR"),
-        Terminal = T2,
+        operator = Option(Operator("Op")),
+        status = ArrivalStatus("scheduled"),
+        estimated = Option(SDate("2016-01-01T13:05:00Z").millisSinceEpoch),
+        actual = Option(SDate("2016-01-01T13:10:00Z").millisSinceEpoch),
+        estimatedChox = Option(SDate("2016-01-01T13:15:00Z").millisSinceEpoch),
+        actualChox = Option(SDate("2016-01-01T13:20:00Z").millisSinceEpoch),
+        gate = Option("10"),
+        stand = Option("10A"),
+        maxPax = Option(200),
+        actPax = Option(150),
+        tranPax = Option(10),
+        runwayID = Option("1"),
+        baggageReclaimId = Option("A"),
+        airportID = PortCode("LHR"),
+        terminal = T2,
         rawICAO = "BAA0001",
         rawIATA = "BA0001",
-        Origin = PortCode("JFK"),
-        PcpTime = Option(1451655000000L), // 2016-01-01 13:30:00 UTC
-        Scheduled = SDate("2016-01-01T13:00:00Z").millisSinceEpoch,
-        FeedSources = Set(ApiFeedSource),
-        CarrierScheduled = Option(100L)
+        origin = PortCode("JFK"),
+        pcpTime = Option(1451655000000L), // 2016-01-01 13:30:00 UTC
+        scheduled = SDate("2016-01-01T13:00:00Z").millisSinceEpoch,
+        feedSources = Set(ApiFeedSource),
+        carrierScheduled = Option(100L)
       )
       val flightMessage = apiFlightToFlightMessage(apiFlight)
 

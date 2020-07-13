@@ -41,27 +41,27 @@ trait BHXLiveArrivals extends BHXArrivals {
     val transPax = flightRecord.getTransits
 
     Arrival(
-      Operator = None,
-      Status = flightRecord.getFlightStatus,
-      Estimated = convertToUTC(flightRecord.getEstimatedTime).map(SDate(_).millisSinceEpoch),
-      Actual = convertToUTC(flightRecord.getTouchdownTime).map(SDate(_).millisSinceEpoch),
-      EstimatedChox = convertToUTC(flightRecord.getEstimatedChoxTime).map(SDate(_).millisSinceEpoch),
-      ActualChox = convertToUTC(flightRecord.getChoxTime).map(SDate(_).millisSinceEpoch),
-      Gate = if (StringUtils.isEmpty(flightRecord.getGate)) None else Option(flightRecord.getGate),
-      Stand = if (StringUtils.isEmpty(flightRecord.getStand)) None else Option(flightRecord.getStand),
-      MaxPax = if (flightRecord.getCapacity == 0) None else Option(flightRecord.getCapacity),
-      ActPax = if (actPax == 0) None else Option(actPax),
-      TranPax = if (actPax == 0) None else Option(transPax),
-      RunwayID = if (StringUtils.isEmpty(flightRecord.getRunway)) None else Option(flightRecord.getRunway),
-      BaggageReclaimId = Option(flightRecord.getBelt),
-      AirportID = "BHX",
-      Terminal = Terminal(s"T${flightRecord.getTerminal}"),
+      operator = None,
+      status = flightRecord.getFlightStatus,
+      estimated = convertToUTC(flightRecord.getEstimatedTime).map(SDate(_).millisSinceEpoch),
+      actual = convertToUTC(flightRecord.getTouchdownTime).map(SDate(_).millisSinceEpoch),
+      estimatedChox = convertToUTC(flightRecord.getEstimatedChoxTime).map(SDate(_).millisSinceEpoch),
+      actualChox = convertToUTC(flightRecord.getChoxTime).map(SDate(_).millisSinceEpoch),
+      gate = if (StringUtils.isEmpty(flightRecord.getGate)) None else Option(flightRecord.getGate),
+      stand = if (StringUtils.isEmpty(flightRecord.getStand)) None else Option(flightRecord.getStand),
+      maxPax = if (flightRecord.getCapacity == 0) None else Option(flightRecord.getCapacity),
+      actPax = if (actPax == 0) None else Option(actPax),
+      tranPax = if (actPax == 0) None else Option(transPax),
+      runwayID = if (StringUtils.isEmpty(flightRecord.getRunway)) None else Option(flightRecord.getRunway),
+      baggageReclaimId = Option(flightRecord.getBelt),
+      airportID = "BHX",
+      terminal = Terminal(s"T${flightRecord.getTerminal}"),
       rawICAO = flightRecord.getFlightNumber,
       rawIATA = flightRecord.getFlightNumber,
-      Origin = PortCode(flightRecord.getOrigin),
-      Scheduled = convertToUTC(flightRecord.getScheduledTime).map(SDate(_).millisSinceEpoch).getOrElse(0),
-      PcpTime = None,
-      FeedSources = Set(LiveFeedSource)
+      origin = PortCode(flightRecord.getOrigin),
+      scheduled = convertToUTC(flightRecord.getScheduledTime).map(SDate(_).millisSinceEpoch).getOrElse(0),
+      pcpTime = None,
+      feedSources = Set(LiveFeedSource)
     )
   }
 }
@@ -73,27 +73,27 @@ trait BHXForecastArrivals extends BHXArrivals {
     val actPax = flightRecord.getPassengers
     val transPax = flightRecord.getTransits
     Arrival(
-      Operator = None,
-      Status = "Port Forecast",
-      Estimated = None,
-      Actual = None,
-      EstimatedChox = None,
-      ActualChox = None,
-      Gate = None,
-      Stand = None,
-      MaxPax = if (maxPax == 0) None else Option(maxPax),
-      ActPax = if (actPax == 0) None else Option(actPax),
-      TranPax = if (actPax == 0) None else Option(transPax),
-      RunwayID = None,
-      BaggageReclaimId = None,
-      AirportID = "BHX",
-      Terminal = Terminal(s"T${flightRecord.getTerminal}"),
+      operator = None,
+      status = "Port Forecast",
+      estimated = None,
+      actual = None,
+      estimatedChox = None,
+      actualChox = None,
+      gate = None,
+      stand = None,
+      maxPax = if (maxPax == 0) None else Option(maxPax),
+      actPax = if (actPax == 0) None else Option(actPax),
+      tranPax = if (actPax == 0) None else Option(transPax),
+      runwayID = None,
+      baggageReclaimId = None,
+      airportID = "BHX",
+      terminal = Terminal(s"T${flightRecord.getTerminal}"),
       rawICAO = flightRecord.getFlightNumber,
       rawIATA = flightRecord.getFlightNumber,
-      Origin = flightRecord.getOrigin,
-      Scheduled = SDate(convertToUTCPlusOneHour(flightRecord.getScheduledTime)).millisSinceEpoch,
-      PcpTime = None,
-      FeedSources = Set(ForecastFeedSource)
+      origin = flightRecord.getOrigin,
+      scheduled = SDate(convertToUTCPlusOneHour(flightRecord.getScheduledTime)).millisSinceEpoch,
+      pcpTime = None,
+      feedSources = Set(ForecastFeedSource)
     )
   }
 }

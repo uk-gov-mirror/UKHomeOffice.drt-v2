@@ -279,7 +279,7 @@ class PortStateSpec extends CrunchTestLike {
 
         offerAndWait(crunch.baseArrivalsInput, ArrivalsFeedSuccess(Flights(Seq(newArrival))))
 
-        val expected = newArrival.copy(FeedSources = Set(AclFeedSource))
+        val expected = newArrival.copy(feedSources = Set(AclFeedSource))
 
         crunch.portStateTestProbe.fishForMessage(5 seconds) {
           case PortState(flights, _, _) =>

@@ -49,7 +49,7 @@ describe('Multi day export', () => {
       .addFlight({
         "SchDT": todayAtUtcString(0, 55),
         "ActChoxDT": todayAtUtcString(1, 2),
-        "ActPax": 51
+        "actPax": 51
       })
       .asABorderForceOfficer()
       .navigateHome()

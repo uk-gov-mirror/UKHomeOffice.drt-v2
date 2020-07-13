@@ -44,7 +44,7 @@ class PortStateUpdatesHandler[M](getCurrentViewMode: () => ViewMode,
         case (Ready(existingState), _) =>
           val newState = updateStateFromUpdates(viewMode.dayStart.millisSinceEpoch, crunchUpdates, existingState)
           val scheduledUpdateRequest = Effect(Future(SchedulePortStateUpdateRequest(viewMode)))
-          val newOriginCodes = crunchUpdates.flights.map(_.apiFlight.Origin) -- existingState.flights.map { case (_, fws) => fws.apiFlight.Origin }
+          val newOriginCodes = crunchUpdates.flights.map(_.apiFlight.origin) -- existingState.flights.map { case (_, fws) => fws.apiFlight.origin }
           val effects = if (newOriginCodes.nonEmpty) scheduledUpdateRequest + Effect(Future(GetAirportInfos(newOriginCodes))) else scheduledUpdateRequest
 
           updated((Ready(newState), crunchUpdates.latest), effects)
@@ -103,8 +103,8 @@ class PortStateUpdatesHandler[M](getCurrentViewMode: () => ViewMode,
   def updateAndTrimFlights(crunchUpdates: PortStateUpdates, existingState: PortState, keepFromMillis: MillisSinceEpoch): SortedMap[UniqueArrival, ApiFlightWithSplits] = {
     val thirtyMinutesMillis = 30 * 60000
     val relevantFlights = existingState.flights
-      .filter { case (_, fws) => fws.apiFlight.PcpTime.isDefined }
-      .filter { case (_, fws) => keepFromMillis - thirtyMinutesMillis <= fws.apiFlight.PcpTime.getOrElse(0L) }
+      .filter { case (_, fws) => fws.apiFlight.pcpTime.isDefined }
+      .filter { case (_, fws) => keepFromMillis - thirtyMinutesMillis <= fws.apiFlight.pcpTime.getOrElse(0L) }
 
     crunchUpdates.flights.foldLeft(relevantFlights) {
       case (soFar, newFlight) =>

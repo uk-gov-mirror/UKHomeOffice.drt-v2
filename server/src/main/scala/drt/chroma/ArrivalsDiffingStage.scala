@@ -61,7 +61,7 @@ final class ArrivalsDiffingStage(initialKnownArrivals: mutable.SortedMap[UniqueA
     def processFeedResponse(arrivalsFeedResponse: ArrivalsFeedResponse): Option[ArrivalsFeedResponse] = arrivalsFeedResponse match {
       case afs@ArrivalsFeedSuccess(latestArrivals, _) =>
         val maxScheduledMillis = forecastMaxMillis()
-        val incomingArrivals: Seq[(UniqueArrival, Arrival)] = latestArrivals.flights.filter(_.Scheduled <= maxScheduledMillis).map(a => (UniqueArrival(a), a))
+        val incomingArrivals: Seq[(UniqueArrival, Arrival)] = latestArrivals.flights.filter(_.scheduled <= maxScheduledMillis).map(a => (UniqueArrival(a), a))
         val newUpdates: Seq[(UniqueArrival, Arrival)] = filterArrivalsWithUpdates(knownArrivals, incomingArrivals)
         if (newUpdates.nonEmpty) log.info(s"Got ${newUpdates.size} new arrival updates")
         knownArrivals.clear
@@ -86,6 +86,6 @@ final class ArrivalsDiffingStage(initialKnownArrivals: mutable.SortedMap[UniqueA
       }
 
     def unchangedExistingActChox(arrival: Arrival, existingArrival: Arrival): Boolean =
-      existingArrival.ActualChox.isDefined && arrival.ActualChox == existingArrival.ActualChox
+      existingArrival.actualChox.isDefined && arrival.actualChox == existingArrival.actualChox
   }
 }

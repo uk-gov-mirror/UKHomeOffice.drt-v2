@@ -27,7 +27,7 @@ case class ChromaLiveFeed(chromaFetcher: ChromaFetcher[ChromaLiveFlight]) {
     )
 
     def ediBaggageTerminalHack(csf: Arrival): Arrival = {
-      if (csf.BaggageReclaimId.getOrElse("") == "7") csf.copy(Terminal = ArrivalsHall2) else csf
+      if (csf.baggageReclaimId.getOrElse("") == "7") csf.copy(terminal = ArrivalsHall2) else csf
     }
   }
 
@@ -42,8 +42,8 @@ case class ChromaLiveFeed(chromaFetcher: ChromaFetcher[ChromaLiveFlight]) {
 
   def correctEdiTerminals(afs: ArrivalsFeedSuccess): Seq[Arrival] = afs.arrivals.flights
     .map(EdiChroma.ediBaggageTerminalHack(_))
-    .map(csf => EdiChroma.ediMapTerminals.get(csf.Terminal) match {
-      case Some(renamedTerminal) => csf.copy(Terminal = renamedTerminal)
+    .map(csf => EdiChroma.ediMapTerminals.get(csf.terminal) match {
+      case Some(renamedTerminal) => csf.copy(terminal = renamedTerminal)
       case None => csf
     })
 
