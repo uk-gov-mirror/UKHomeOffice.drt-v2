@@ -183,7 +183,6 @@ object TerminalContentComponent {
                     FlightsWithSplitsTable.Props(
                       flightsForTerminal,
                       queueOrder,
-                      props.airportConfig.hasEstChox,
                       props.arrivalSources,
                       props.loggedInUser.hasRole(ArrivalSource),
                       props.viewMode,

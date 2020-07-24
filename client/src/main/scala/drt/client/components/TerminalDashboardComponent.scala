@@ -80,12 +80,11 @@ object TerminalDashboardComponent {
                     FlightsWithSplitsTable.Props(
                       ps.flights.filter { case (ua, _) => ua.terminal == p.terminalPageTabLoc.terminal }.values.toList,
                       p.airportConfig.queueTypeSplitOrder(p.terminalPageTabLoc.terminal),
-                      p.airportConfig.hasEstChox,
                       None,
-                      false,
+                      hasArrivalSourcesAccess = false,
                       ViewLive,
                       PcpPax.bestPaxEstimateWithApi,
-                      p.airportConfig.hasTransfer
+                      hasTransfer = p.airportConfig.hasTransfer
                     )
                   ))),
               p.router.link(closeArrivalsPopupLink)(^.className := "close-arrivals-popup btn btn-default", "close")

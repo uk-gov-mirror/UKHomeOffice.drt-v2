@@ -24,7 +24,7 @@ object FlightsWithSplitsTable {
   type BestPaxForArrivalF = Arrival => Int
 
   case class Props(flightsWithSplits: List[ApiFlightWithSplits],
-                   queueOrder: Seq[Queue], hasEstChox: Boolean,
+                   queueOrder: Seq[Queue],
                    arrivalSources: Option[(UniqueArrival, Pot[List[Option[FeedSourceArrival]]])],
                    hasArrivalSourcesAccess: Boolean,
                    viewMode: ViewMode,
@@ -84,7 +84,6 @@ object FlightsWithSplitsTable {
                     pcpPaxFn = props.pcpPaxFn,
                     splitsGraphComponent = splitsGraphComponent,
                     splitsQueueOrder = props.queueOrder,
-                    hasEstChox = props.hasEstChox,
                     props.hasArrivalSourcesAccess,
                     props.viewMode,
                     props.hasTransfer
@@ -162,7 +161,6 @@ object FlightTableRow {
                    pcpPaxFn: Arrival => Int,
                    splitsGraphComponent: SplitsGraphComponentFn = (_: SplitsGraph.Props) => <.div(),
                    splitsQueueOrder: Seq[Queue],
-                   hasEstChox: Boolean,
                    hasArrivalSourcesAccess: Boolean,
                    viewMode: ViewMode,
                    hasTransfer: Boolean
