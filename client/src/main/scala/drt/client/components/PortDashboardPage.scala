@@ -12,6 +12,10 @@ import japgolly.scalajs.react.component.Scala.Component
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, CtorType, ReactEventFromInput, ScalaComponent}
+import d3v4._
+
+import scala.scalajs.js._
+
 
 object PortDashboardPage {
 
@@ -65,6 +69,7 @@ object PortDashboardPage {
                       s"${p.start.prettyTime()}-${p.end.prettyTime()}", ^.onClick ==> switchDashboardPeriod(index)
                     )
                   }.toTagMod)),
+              <.div(^.id := "graphic"),
               terminals.map { terminalName =>
                 <.div(
                   <.h3(s"Terminal $terminalName"),
@@ -116,6 +121,54 @@ object PortDashboardPage {
     })
     .componentDidMount(p => Callback {
       GoogleEventTracker.sendPageView(s"dashboard${p.props.dashboardPage.period.map(period => s"/$period").getOrElse("")}")
+    })
+    .componentDidMount(_ => Callback {
+
+      val data = Map[String, Int](
+        "Apples" -> 20,
+        "Bananas" -> 12,
+        "Grapes" -> 19,
+        "Lemons" -> 5,
+        "Limes" -> 16,
+        "Oranges" -> 26,
+        "Pears" -> 30)
+
+      object margin {
+        val top = 15
+        val right = 25
+        val bottom = 15
+        val left = 60
+      }
+      val width = 960 - margin.left - margin.right
+      val height = 500 - margin.top - margin.bottom
+
+      val svg = d3.select("#graphic").append("svg").attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+      var x: d3scale.LinearScale = d3.scaleLinear().range(Array(0d, width.toDouble)).domain(Array(0, 30))
+      var y: d3scale.OrdinalScale = d3.scaleOrdinal(Array.apply(data.keys.toSeq:_*)).domain(Array(data.keys.toSeq:_*))//.rangeRoundBands(Array(height, 0), .1).domain(data.keys);
+//      var yAxis = d3.svg.axis()
+//        .scale(y)
+//        no tick marks
+//        .tickSize(0)
+//        .orient("left");
+      var bars = svg.selectAll(".bar")
+        .data(Array.apply(data.values.toSeq:_*))
+        .enter()
+        .append("g")
+
+      bars.append("rect")
+        .attr("class", "bar")
+//        .attr("y", (d: data) {
+//          return y(d.name);
+//        })
+        .attr("height", y.rangeBand())
+        .attr("x", 0)
+        .attr("width", function (d) {
+          return x(d.value);
+        });
     })
     .build
 

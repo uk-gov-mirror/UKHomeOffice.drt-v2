@@ -81,6 +81,7 @@ object Settings {
     val akkaHttp = "10.1.9"
     val slick = "3.3.2"
     val censorinus = "2.1.13"
+    val scalaJsD3 = "master-SNAPSHOT"
   }
 
   import versions._
@@ -200,7 +201,8 @@ object Settings {
     "com.lihaoyi" %%% "pprint" % pprint,
     "com.lihaoyi" %%% "utest" % uTest % Test,
     "com.lihaoyi" %%% "upickle" % uPickle,
-    "ru.pavkin" %%% "scala-js-momentjs" % scalaJsMomentJs
+    "ru.pavkin" %%% "scala-js-momentjs" % scalaJsMomentJs,
+    "com.github.fdietze" %%% "scala-js-d3v4" % scalaJsD3
   ))
 
   /** Dependencies for external JS libs that are bundled into a single .js file according to dependency order
