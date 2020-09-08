@@ -24,6 +24,8 @@ object Actions {
 
   case object GetLoggedInUser extends Action
 
+  case object RedirectToRequestAccess extends Action
+
   case object GetUserDashboardState extends Action
 
   case object GetShouldReload extends Action
@@ -152,9 +154,9 @@ object Actions {
 
   case class UpdateStaffAdjustmentDialogueState(maybeNewState: Option[StaffAdjustmentDialogueState]) extends Action
 
-  case class FileUploadStatus(fileUploadState:FileUploadState) extends Action
+  case class FileUploadStatus(fileUploadState: FileUploadState) extends Action
 
-  case class ForecastFileUploadAction(portCode: String, formData:FormData) extends Action
+  case class ForecastFileUploadAction(portCode: String, formData: FormData) extends Action
 
   case class ResetFileUpload() extends Action
 

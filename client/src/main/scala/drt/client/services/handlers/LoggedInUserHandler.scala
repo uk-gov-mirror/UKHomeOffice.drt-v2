@@ -35,6 +35,10 @@ class LoggedInUserHandler[M](modelRW: ModelRW[M, Pot[LoggedInUser]]) extends Log
 
   protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    case RedirectToRequestAccess =>
+      dom.document.location.replace(drtCentralUrl)
+      noChange
+
     case GetLoggedInUser =>
       log.info(s"Getting logged in user")
       val url = SPAMain.absoluteUrl("data/user")
@@ -49,5 +53,9 @@ class LoggedInUserHandler[M](modelRW: ModelRW[M, Pot[LoggedInUser]]) extends Log
       )))
     case SetLoggedInUser(loggedInUser) =>
       updated(Ready(loggedInUser))
+  }
+
+  private def drtCentralUrl = {
+    dom.document.URL.toLowerCase.replaceFirst("://[a-z]{3}.", "")
   }
 }

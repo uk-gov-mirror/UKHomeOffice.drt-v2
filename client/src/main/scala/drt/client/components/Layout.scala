@@ -4,9 +4,10 @@ import diode.UseValueEq
 import diode.data.Pot
 import drt.auth.LoggedInUser
 import drt.client.SPAMain._
+import drt.client.actions.Actions.RedirectToRequestAccess
 import drt.client.services.SPACircuit
 import japgolly.scalajs.react.component.Scala.Component
-import japgolly.scalajs.react.extra.router.{Resolution, RouterCtl}
+import japgolly.scalajs.react.extra.router._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{CtorType, _}
 
@@ -51,7 +52,10 @@ object Layout {
                         .renderReady(displayDialog => PortRestrictionsModalAlert(displayDialog, loggedInUser)))
                   })
 
-                } else <.div(RestrictedAccessByPortPage(loggedInUser, props.ctl))
+                } else {
+                  SPACircuit.dispatch(RedirectToRequestAccess)
+                  <.div(RestrictedAccessByPortPage(loggedInUser, props.ctl))
+                }
               })
             }))
         )

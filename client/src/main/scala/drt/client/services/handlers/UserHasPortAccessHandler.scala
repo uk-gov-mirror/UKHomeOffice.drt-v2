@@ -22,17 +22,18 @@ class UserHasPortAccessHandler[M](modelRW: ModelRW[M, Pot[Boolean]]) extends Log
 
       val eventualRequest: Future[XMLHttpRequest] = dom.ext.Ajax.get(url = url)
       effectOnly(Effect(eventualRequest.map(r => {
-
         SetUserHasPortAccess(r.status == 200)
       }).recover {
         case e: AjaxException if e.xhr.status == 401 =>
-
           SetUserHasPortAccess(false)
         case _ => RetryActionAfter(GetUserHasPortAccess, PollDelay.recoveryDelay)
       }))
 
     case SetUserHasPortAccess(hasAccess) =>
-      updated(Ready(hasAccess))
+      if (!hasAccess)
+        updated(Ready(hasAccess), Effect(Future(RedirectToRequestAccess)))
+      else
+        updated(Ready(hasAccess))
 
   }
 }
