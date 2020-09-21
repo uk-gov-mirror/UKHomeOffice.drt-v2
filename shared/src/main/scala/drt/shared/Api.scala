@@ -4,6 +4,7 @@ import java.util.UUID
 
 import drt.auth.LoggedInUser
 import drt.shared.CrunchApi._
+import drt.shared.DateLike.UtcDateLike
 import drt.shared.EventTypes.{CI, DC, InvalidEventType}
 import drt.shared.KeyCloakApi.{KeyCloakGroup, KeyCloakUser}
 import drt.shared.MilliTimes.{oneDayMillis, oneMinuteMillis}
@@ -15,7 +16,6 @@ import ujson.Js.Value
 import upickle.Js
 import upickle.default._
 
-import scala.collection.immutable
 import scala.collection.immutable.{Map => IMap, SortedMap => ISortedMap}
 import scala.concurrent.Future
 import scala.util.matching.Regex
@@ -541,7 +541,7 @@ trait SDateLike {
 
   def toLocalDate: LocalDate
 
-  def toUtcDate: UtcDate
+//  def toUtcDate: UtcDate
 
   def toISODateOnly: String = f"${getFullYear()}-${getMonth()}%02d-${getDate()}%02d"
 
@@ -724,12 +724,11 @@ object FlightsApi {
     def ++(other: FlightsWithSplitsDiff): FlightsWithSplitsDiff =
       FlightsWithSplitsDiff(flightsToUpdate ++ other.flightsToUpdate, arrivalsToRemove ++ other.arrivalsToRemove)
 
-    def window(startMillis: MillisSinceEpoch, endMillis: MillisSinceEpoch) = {
-
+    def window(utcDate: UtcDateLike): FlightsWithSplitsDiff = {
       FlightsWithSplitsDiff(flightsToUpdate.filter(fws =>
-        startMillis <= fws.apiFlight.Scheduled && fws.apiFlight.Scheduled <= endMillis
+        utcDate.firstMinuteMillis <= fws.apiFlight.Scheduled && fws.apiFlight.Scheduled <= utcDate.lastMinuteMillis
       ), arrivalsToRemove.filter(ua =>
-        startMillis <= ua.scheduled && ua.scheduled <= endMillis
+        utcDate.firstMinuteMillis <= ua.scheduled && ua.scheduled <= utcDate.lastMinuteMillis
       ))
     }
   }

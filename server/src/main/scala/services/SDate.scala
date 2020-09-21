@@ -1,7 +1,7 @@
 package services
 
 import drt.shared.CrunchApi.MillisSinceEpoch
-import drt.shared.{LocalDate, MilliDate, SDateLike, UtcDate}
+import drt.shared.{LocalDate, MilliDate, SDateLike}
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
@@ -73,11 +73,6 @@ object SDate {
     }
 
     def toLocalDate: LocalDate = LocalDate(toLocal.getFullYear(), toLocal.getMonth(), toLocal.getDate())
-
-    def toUtcDate: UtcDate = {
-      val utcLastMidnight = getUtcLastMidnight
-      UtcDate(utcLastMidnight.getFullYear(), utcLastMidnight.getMonth(), utcLastMidnight.getDate())
-    }
   }
 
   def millisToLocalIsoDateOnly(timeZone: DateTimeZone): MillisSinceEpoch => String = (millis: MillisSinceEpoch) => SDate(millis, timeZone).toISODateOnly
@@ -125,6 +120,9 @@ object SDate {
   def now(): JodaSDate = JodaSDate(new DateTime(DateTimeZone.UTC))
 
   def now(dtz: DateTimeZone): JodaSDate = JodaSDate(new DateTime(dtz))
+
+  def apply(y: Int, m: Int, d: Int, timeZone: DateTimeZone): SDateLike =
+    implicits.jodaToSDate(new DateTime(y, m, d, 0, 0, timeZone))
 
   def apply(y: Int, m: Int, d: Int, h: Int, mm: Int): SDateLike =
     implicits.jodaToSDate(new DateTime(y, m, d, h, mm, DateTimeZone.UTC))

@@ -4,7 +4,7 @@ import actors.ArrivalGenerator
 import drt.shared.FlightsApi.FlightsWithSplitsDiff
 import drt.shared.{ApiFlightWithSplits, SDateLike}
 import org.specs2.mutable.Specification
-import services.SDate
+import services.{SDate, UtcDate}
 
 class FlightsWithSplitsDiffSpec extends Specification {
 
@@ -43,7 +43,7 @@ class FlightsWithSplitsDiffSpec extends Specification {
       List(arrivalForDate(date).unique)
     )
 
-    val result = diff.window(date.millisSinceEpoch, date.addDays(1).millisSinceEpoch)
+    val result = diff.window(UtcDate(date))
 
     result === diff
   }
@@ -65,7 +65,7 @@ class FlightsWithSplitsDiffSpec extends Specification {
       List()
     )
 
-    val result = diff.window(filterDate.millisSinceEpoch, filterDate.addDays(1).millisSinceEpoch)
+    val result = diff.window(UtcDate(filterDate))
 
     result === expected
   }
@@ -97,10 +97,7 @@ class FlightsWithSplitsDiffSpec extends Specification {
       )
     )
 
-    val result = diff.window(
-      filterDate.millisSinceEpoch,
-      filterDate.addDays(1).addMillis(-1).millisSinceEpoch
-    )
+    val result = diff.window(UtcDate(filterDate))
 
     result === expected
   }

@@ -12,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scalapb.GeneratedMessage
 import server.protobuf.messages.CrunchState.{FlightWithSplitsMessage, FlightsWithSplitsDiffMessage, FlightsWithSplitsMessage}
 import server.protobuf.messages.FlightsMessage.UniqueArrivalMessage
-import services.SDate
+import services.{SDate, UtcDate}
 
 
 object TerminalDayFlightActor {
@@ -44,7 +44,6 @@ class TerminalDayFlightActor(
 
   override def persistenceId: String = f"terminal-flights-${terminal.toString.toLowerCase}-$year-$month%02d-$day%02d"
 
-
   override val snapshotBytesThreshold: Int = Sizes.oneMegaByte
   private val maxSnapshotInterval = 250
   override val maybeSnapshotInterval: Option[Int] = Option(maxSnapshotInterval)
@@ -72,7 +71,7 @@ class TerminalDayFlightActor(
 
   def updateAndPersistDiff(diff: FlightsWithSplitsDiff): Unit = {
 
-    val (updatedState, minutesToUpdate) = diff.applyTo(state, now().millisSinceEpoch)
+    val (updatedState, minutesToUpdate) = diff.window(UtcDate(year, month, day)).applyTo(state, now().millisSinceEpoch)
     state = updatedState
 
     val replyToAndMessage = Option(sender(), minutesToUpdate)

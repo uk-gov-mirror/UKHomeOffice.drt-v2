@@ -30,19 +30,16 @@ class TerminalDayFlightsActorSpec extends CrunchTestLike {
   val myNow: () => SDateLike = () => date
 
   "Given a terminal-day flight actor for a day which does not have any data" >> {
-    val terminalDayActor: ActorRef = actorForTerminalAndDate(terminal, date)
-
-
     "When I send a flight to persist which lies within the day, and then ask for its state I should see the flight" >> {
       val arrival = flightWithSplitsForDay(date)
       val flightsWithSplits = FlightsWithSplitsDiff(List(arrival), List())
 
       val terminalDayActor: ActorRef = actorForTerminalAndDate(terminal, date)
 
-      val eventual = sendFlightsToDay(flightsWithSplits, terminalDayActor)
+      val eventual = updateWaitAndQuery(flightsWithSplits, terminalDayActor)
       val result = Await.result(eventual, 1 second)
 
-      result === FlightsWithSplits(List((arrival.unique, arrival)).toMap)
+      result === FlightsWithSplits(Map(arrival.unique -> arrival))
     }
 
     "When I send a flight which lies outside the day, and then ask for its state I should see None" >> {
@@ -52,28 +49,28 @@ class TerminalDayFlightsActorSpec extends CrunchTestLike {
 
       val terminalDayActor: ActorRef = actorForTerminalAndDate(terminal, date)
 
-      val eventual = sendFlightsToDay(flightsWithSplits, terminalDayActor)
+      val eventual = updateWaitAndQuery(flightsWithSplits, terminalDayActor)
       val result = Await.result(eventual, 1 second)
 
-      result === FlightsWithSplits(List())
+      result === FlightsWithSplits(Map())
     }
-//
-//    "When I send flights to persist which lie both inside and outside the day, and then ask for its state I should see only the flights inside the actor's day" >> {
-//      val otherDate = SDate("2020-01-02T00:00")
-//      val inside = flightWithSplitsForDay(date)
-//      val outside = flightWithSplitsForDay(otherDate)
-//      val crunchMinutes = MinutesContainer(Set(inside, outside))
-//      val terminalDayActor: ActorRef = actorForTerminalAndDate(terminal, date)
-//
-//      val eventual = sendFlightsToDay(crunchMinutes, terminalDayActor)
-//      val result = Await.result(eventual, 1 second)
-//
-//      result === Option(MinutesContainer(Set(inside.copy(lastUpdated = Option(date.millisSinceEpoch)))))
-//    }
+    //
+    //    "When I send flights to persist which lie both inside and outside the day, and then ask for its state I should see only the flights inside the actor's day" >> {
+    //      val otherDate = SDate("2020-01-02T00:00")
+    //      val inside = flightWithSplitsForDay(date)
+    //      val outside = flightWithSplitsForDay(otherDate)
+    //      val crunchMinutes = MinutesContainer(Set(inside, outside))
+    //      val terminalDayActor: ActorRef = actorForTerminalAndDate(terminal, date)
+    //
+    //      val eventual = updateWaitAndQuery(crunchMinutes, terminalDayActor)
+    //      val result = Await.result(eventual, 1 second)
+    //
+    //      result === Option(MinutesContainer(Set(inside.copy(lastUpdated = Option(date.millisSinceEpoch)))))
+    //    }
   }
 
-  private def sendFlightsToDay(flights: FlightsWithSplitsDiff,
-                               actor: ActorRef): Future[FlightsWithSplits] = {
+  private def updateWaitAndQuery(flights: FlightsWithSplitsDiff,
+                                      actor: ActorRef): Future[FlightsWithSplits] = {
     actor.ask(flights).flatMap { _ =>
       actor.ask(GetState).mapTo[FlightsWithSplits]
     }
