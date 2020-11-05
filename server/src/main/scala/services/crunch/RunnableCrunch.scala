@@ -199,16 +199,19 @@ object RunnableCrunch {
           arrivals.out ~> arrivalsFanOut ~> arrivalSplits.in0
                           arrivalsFanOut.map { _.toUpdate.values.toList } ~> manifestRequestsSink
 
+//          arrivalSplits.out ~> flightsWithSplitsSink
           arrivalSplits.out ~> arrivalSplitsFanOut
                                arrivalSplitsFanOut ~> flightsWithSplitsSink
                                arrivalSplitsFanOut
-                                 .map(_.arrivalsToRemove.map(ua => RemoveFlight(ua)).toList)
+//                                 .map(_.arrivalsToRemove.map(ua => RemoveFlight(ua)).toList)
+                                 .map(_ => List())
                                  .conflateWithSeed(List(_)) { case (acc, incoming) =>
                                     log.info(s"${acc.length + incoming.length} conflated arrivals for removal sink")
                                     acc :+ incoming }
                                  .mapConcat(_.flatten) ~> arrivalRemovalsSink
                                arrivalSplitsFanOut
-                                 .map(_.flightsToUpdate.map(_.apiFlight))
+//                                 .map(_.flightsToUpdate.map(_.apiFlight))
+                                 .map(_ => List())
                                  .conflateWithSeed(List(_)) { case (acc, incoming) =>
                                     log.info(s"${acc.length + incoming.length} conflated arrivals for update sink")
                                     acc :+ incoming }
