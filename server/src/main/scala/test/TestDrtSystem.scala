@@ -2,27 +2,30 @@ package test
 
 import actors._
 import actors.acking.AckingReceiver.Ack
-import actors.queues.ManifestRouterActor
+import actors.queues.DateRange
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable, Props, Status}
 import akka.pattern.ask
 import akka.persistence.inmemory.extension.{InMemoryJournalStorage, InMemorySnapshotStorage, StorageExtension}
 import akka.stream.scaladsl.Source
 import akka.stream.{ActorMaterializer, KillSwitch}
 import akka.util.Timeout
-import uk.gov.homeoffice.drt.auth.Roles.Role
 import drt.shared.CrunchApi.MillisSinceEpoch
+import drt.shared.FlightsApi.Flights
 import drt.shared.api.Arrival
 import drt.shared.{AirportConfig, MilliTimes, PortCode}
 import graphs.SinkToSourceBridge
 import manifests.passengers.BestAvailableManifest
+import passengersplits.parsing.VoyageManifestParser.VoyageManifests
 import play.api.Configuration
 import play.api.mvc.{Headers, Session}
-import server.feeds.ArrivalsFeedResponse
+import server.feeds.{ArrivalsFeedResponse, ArrivalsFeedSuccess}
 import services.SDate
 import test.TestActors.{TestStaffMovementsActor, _}
-import test.feeds.test.{CSVFixtures, TestArrivalsActor, TestFixtureFeed, TestManifestsActor}
+import test.feeds.test.{CSVFixtures, MockManifest, TestArrivalsActor, TestFixtureFeed, TestManifestsActor}
 import test.roles.TestUserRoleProvider
+import uk.gov.homeoffice.drt.auth.Roles.Role
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
@@ -120,13 +123,17 @@ case class TestDrtSystem(config: Configuration, airportConfig: AirportConfig)
   config.getOptional[String]("test.live_fixture_csv").foreach { file =>
     implicit val timeout: Timeout = Timeout(250 milliseconds)
     log.info(s"Loading fixtures from $file")
-    val testActor = system.actorSelection(s"akka://${airportConfig.portCode.iata.toLowerCase}-drt-actor-system/user/TestActor-LiveArrivals").resolveOne()
+
     system.scheduler.schedule(1 second, 1 day)({
-      val day = SDate.now().toISODateOnly
-      CSVFixtures.csvPathToArrivalsOnDate(day, file).collect {
-        case Success(arrival) =>
-          testActor.map(_ ! arrival)
-      }
+      val startDay = SDate.now()
+      DateRange.utcDateRange(startDay, startDay.addDays(30)).map (day =>{
+        CSVFixtures.csvPathToArrivalsOnDate(day.toISOString, file)
+          .collect {
+            case Success(arrival) =>
+              testArrivalActor.ask(arrival)
+//              testManifestsActor.ask(MockManifest.manifestForArrival(arrival))
+          }
+      })
     })
   }
 

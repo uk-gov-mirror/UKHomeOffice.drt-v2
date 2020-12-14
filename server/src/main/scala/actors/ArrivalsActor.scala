@@ -215,7 +215,8 @@ abstract class ArrivalsActor(now: () => SDateLike,
 
   def persistArrivalUpdates(removals: Set[UniqueArrival], updatedArrivals: Iterable[Arrival]): Unit = {
     val updateMessages = updatedArrivals.map(apiFlightToFlightMessage).toSeq
-    val removalMessages = removals.map(ua => UniqueArrivalMessage(Option(ua.number), Option(ua.terminal.toString), Option(ua.scheduled))).toSeq
+    val removalMessages = removals
+      .map(ua => UniqueArrivalMessage(Option(ua.number), Option(ua.terminal.toString), Option(ua.scheduled))).toSeq
     val diffMessage = FlightsDiffMessage(
       createdAt = Option(SDate.now().millisSinceEpoch),
       removals = removalMessages,

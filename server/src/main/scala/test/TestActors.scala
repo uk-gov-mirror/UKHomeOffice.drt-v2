@@ -186,7 +186,6 @@ object TestActors {
       case ResetData =>
         Future
           .sequence(terminalDaysUpdated.map { case (t, d) =>
-            println(s"\n\n**Sending ResetData to $t / ${SDate(d).toISOString()}")
             resetData(t, d)
           })
           .map { _ =>
