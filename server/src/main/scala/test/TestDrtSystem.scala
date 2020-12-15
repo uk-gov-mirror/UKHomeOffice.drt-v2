@@ -10,7 +10,6 @@ import akka.stream.scaladsl.Source
 import akka.stream.{ActorMaterializer, KillSwitch}
 import akka.util.Timeout
 import drt.shared.CrunchApi.MillisSinceEpoch
-import drt.shared.FlightsApi.Flights
 import drt.shared.api.Arrival
 import drt.shared.{AirportConfig, MilliTimes, PortCode}
 import graphs.SinkToSourceBridge
@@ -18,16 +17,15 @@ import manifests.passengers.BestAvailableManifest
 import passengersplits.parsing.VoyageManifestParser.VoyageManifests
 import play.api.Configuration
 import play.api.mvc.{Headers, Session}
-import server.feeds.{ArrivalsFeedResponse, ArrivalsFeedSuccess}
+import server.feeds.ArrivalsFeedResponse
 import services.SDate
 import test.TestActors.{TestStaffMovementsActor, _}
-import test.feeds.test.{CSVFixtures, MockManifest, TestArrivalsActor, TestFixtureFeed, TestManifestsActor}
+import test.feeds.test._
 import test.roles.TestUserRoleProvider
 import uk.gov.homeoffice.drt.auth.Roles.Role
 
-import scala.collection.immutable
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import scala.language.postfixOps
 import scala.util.Success
 
@@ -126,13 +124,17 @@ case class TestDrtSystem(config: Configuration, airportConfig: AirportConfig)
 
     system.scheduler.schedule(1 second, 1 day)({
       val startDay = SDate.now()
-      DateRange.utcDateRange(startDay, startDay.addDays(30)).map (day =>{
-        CSVFixtures.csvPathToArrivalsOnDate(day.toISOString, file)
+      DateRange.utcDateRange(startDay, startDay.addDays(30)).map(day => {
+        val arrivals = CSVFixtures.csvPathToArrivalsOnDate(day.toISOString, file)
           .collect {
-            case Success(arrival) =>
-              testArrivalActor.ask(arrival)
-//              testManifestsActor.ask(MockManifest.manifestForArrival(arrival))
+            case Success(arrival) => arrival
           }
+        arrivals.map(testArrivalActor.ask)
+
+        val manifests = arrivals.map(a => {
+          MockManifest.manifestForArrival(a)
+        })
+        Await.ready(testManifestsActor.ask(VoyageManifests(manifests.toSet)), 5 seconds)
       })
     })
   }
