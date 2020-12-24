@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package server.protobuf.messages;
+
+import "FlightsMessage.proto";
+
+message BestAvailableManifestsMessage {
+    optional int64 createdAt = 1;
+    repeated BestAvailableManifestMessage manifests = 2;
+}
+
+message BestAvailableManifestMessage {
+    optional string splitSource = 1;
+    optional string arrivalPortCode = 2;
+    optional string departurePortCode = 3;
+    optional int32 voyageNumber = 4;
+    optional string carrierCode = 5;
+    optional int64 scheduled = 6;
+    repeated ManifestPassengerProfileMessage passengerList = 7;
+}
+
+message ManifestPassengerProfileMessage {
+    optional string documentType = 1;
+    optional int32 age = 2;
+    optional bool inTransit = 3;
+    optional string nationality = 4;
+}

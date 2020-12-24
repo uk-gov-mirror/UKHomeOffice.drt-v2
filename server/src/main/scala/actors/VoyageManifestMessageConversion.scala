@@ -8,7 +8,7 @@ import services.SDate
 
 import scala.util.Try
 
-object ManifestMessageConversion {
+object VoyageManifestMessageConversion {
 
   def passengerInfoFromMessage(m: PassengerInfoJsonMessage): PassengerInfoJson = PassengerInfoJson(
     DocumentType = m.documentType.map(DocumentType(_)),

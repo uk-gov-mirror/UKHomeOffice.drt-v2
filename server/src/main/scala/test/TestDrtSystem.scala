@@ -2,6 +2,7 @@ package test
 
 import actors._
 import actors.acking.AckingReceiver.Ack
+import actors.queues.HistoricManifestRouterActor
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Cancellable, Props, Status}
 import akka.pattern.ask
 import akka.persistence.inmemory.extension.{InMemoryJournalStorage, InMemorySnapshotStorage, StorageExtension}
@@ -42,6 +43,9 @@ case class TestDrtSystem(config: Configuration, airportConfig: AirportConfig)
 
   val manifestLookups: ManifestLookups = ManifestLookups(system)
   override val voyageManifestsActor: ActorRef = system.actorOf(Props(new TestVoyageManifestsActor(manifestLookups.manifestsByDayLookup, manifestLookups.updateManifests)), name = "voyage-manifests-router-actor")
+
+  val historicManifestLookups: HistoricManifestLookups = HistoricManifestLookups(system)
+  override val historicManifestsActor: ActorRef = system.actorOf(HistoricManifestRouterActor.props(historicManifestLookups.manifestsByDayLookup, historicManifestLookups.updateManifests), name = "historic-voyage-manifests-router-actor")
 
   override val shiftsActor: ActorRef = system.actorOf(Props(new TestShiftsActor(now, timeBeforeThisMonth(now))))
   override val fixedPointsActor: ActorRef = system.actorOf(Props(new TestFixedPointsActor(now)))

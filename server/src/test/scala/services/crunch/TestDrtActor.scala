@@ -5,7 +5,7 @@ import actors.Sizes.oneMegaByte
 import actors._
 import actors.daily.PassengersActor
 import actors.queues.QueueLikeActor.UpdatedMillis
-import actors.queues.{CrunchQueueActor, DeploymentQueueActor, ManifestRouterActor}
+import actors.queues.{CrunchQueueActor, DeploymentQueueActor, HistoricManifestRouterActor, ManifestRouterActor}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.stream.Supervision.Stop
 import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
@@ -70,6 +70,10 @@ class TestDrtActor extends Actor {
       val snapshotInterval = 1
       val manifestLookups = ManifestLookups(system)
       val manifestsActor: ActorRef = system.actorOf(ManifestRouterActor.props(manifestLookups.manifestsByDayLookup, manifestLookups.updateManifests))
+
+      val historicManifestLookups = HistoricManifestLookups(system)
+      val historicManifestsActor: ActorRef = system.actorOf(HistoricManifestRouterActor.props(historicManifestLookups.manifestsByDayLookup, historicManifestLookups.updateManifests))
+
       val crunchQueueActor = system.actorOf(Props(new CrunchQueueActor(tc.now, journalType, tc.airportConfig.crunchOffsetMinutes)))
       val deploymentQueueActor = system.actorOf(Props(new DeploymentQueueActor(tc.now, tc.airportConfig.crunchOffsetMinutes)))
 
@@ -162,6 +166,7 @@ class TestDrtActor extends Actor {
         now = tc.now,
         manifestsLiveSource = manifestsSource,
         manifestResponsesSource = manifestResponsesSource,
+        historicManifestsActor = historicManifestsActor,
         voyageManifestsActor = manifestsActor,
         manifestRequestsSink = manifestRequestsSink,
         simulator = tc.simulator,

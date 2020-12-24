@@ -6,7 +6,7 @@ import passengersplits.core.PassengerTypeCalculatorValues.DocumentType
 import passengersplits.parsing.VoyageManifestParser._
 import server.protobuf.messages.VoyageManifest.PassengerInfoJsonMessage
 
-class ManifestMessageConversionSpec extends Specification {
+class VoyageManifestMessageConversionSpec extends Specification {
 
   "Given a VoyageManifest if I serialise it and de-serialise it it should be the same" >> {
     val manifest = VoyageManifests(Set(VoyageManifest(
@@ -30,9 +30,9 @@ class ManifestMessageConversionSpec extends Specification {
       )))
     ))
 
-    val serialised = ManifestMessageConversion.voyageManifestsToMessage(manifest)
+    val serialised = VoyageManifestMessageConversion.voyageManifestsToMessage(manifest)
 
-    val result = ManifestMessageConversion.voyageManifestsFromMessage(serialised)
+    val result = VoyageManifestMessageConversion.voyageManifestsFromMessage(serialised)
 
     result === manifest
   }
@@ -63,7 +63,7 @@ class ManifestMessageConversionSpec extends Specification {
     )
 
 
-    val result = ManifestMessageConversion.passengerInfoFromMessage(passengerMessage)
+    val result = VoyageManifestMessageConversion.passengerInfoFromMessage(passengerMessage)
 
     result === expected
   }

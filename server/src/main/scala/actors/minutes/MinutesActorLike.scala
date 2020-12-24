@@ -14,6 +14,7 @@ import drt.shared.FlightsApi.{FlightsWithSplits, FlightsWithSplitsDiff}
 import drt.shared.Terminals.Terminal
 import drt.shared.dates.UtcDate
 import drt.shared.{SDateLike, Terminals, WithTimeAccessor}
+import manifests.passengers.BestAvailableManifests
 import org.slf4j.{Logger, LoggerFactory}
 import passengersplits.parsing.VoyageManifestParser.VoyageManifests
 import server.protobuf.messages.CrunchState.FlightsWithSplitsDiffMessage
@@ -29,6 +30,7 @@ object MinutesActorLike {
   type MinutesLookup[A, B <: WithTimeAccessor] = (Terminals.Terminal, SDateLike, Option[MillisSinceEpoch]) => Future[Option[MinutesContainer[A, B]]]
   type FlightsLookup = (Terminals.Terminal, UtcDate, Option[MillisSinceEpoch]) => Future[FlightsWithSplits]
   type ManifestLookup = (UtcDate, Option[MillisSinceEpoch]) => Future[VoyageManifests]
+  type HistoricManifestLookup = (UtcDate, Option[MillisSinceEpoch]) => Future[BestAvailableManifests]
 
   type MinutesUpdate[A, B <: WithTimeAccessor] = (Terminals.Terminal, SDateLike, MinutesContainer[A, B]) => Future[MinutesContainer[A, B]]
   type CrunchMinutesMigrationUpdate = (String, UtcDate, CrunchMinutesMessageMigration) => Future[Any]
@@ -36,6 +38,7 @@ object MinutesActorLike {
   type FlightsUpdate = (Terminals.Terminal, UtcDate, FlightsWithSplitsDiff) => Future[Seq[MillisSinceEpoch]]
   type FlightsMigrationUpdate = (String, UtcDate, FlightsWithSplitsDiffMessage) => Future[Any]
   type ManifestsUpdate = (UtcDate, VoyageManifests) => Future[Any]
+  type HistoricManifestsUpdate = (UtcDate, BestAvailableManifests) => Future[Any]
 
   case object ProcessNextUpdateRequest
 

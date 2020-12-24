@@ -2,7 +2,7 @@ package actors
 
 import actors.PartitionedPortStateActor.{flightUpdatesProps, queueUpdatesProps, staffUpdatesProps}
 import actors.daily.{FlightUpdatesSupervisor, QueueUpdatesSupervisor, StaffUpdatesSupervisor}
-import actors.queues.{ApiFeedState, CrunchQueueActor, DeploymentQueueActor, ManifestRouterActor}
+import actors.queues.{ApiFeedState, CrunchQueueActor, DeploymentQueueActor, HistoricManifestRouterActor, ManifestRouterActor}
 import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
 import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
@@ -59,6 +59,9 @@ case class ProdDrtSystem(config: Configuration, airportConfig: AirportConfig)
 
   val manifestLookups: ManifestLookups = ManifestLookups(system)
   override val voyageManifestsActor: ActorRef = system.actorOf(ManifestRouterActor.props(manifestLookups.manifestsByDayLookup, manifestLookups.updateManifests), name = "voyage-manifests-router-actor")
+
+  val historicManifestLookups: HistoricManifestLookups = HistoricManifestLookups(system)
+  override val historicManifestsActor: ActorRef = system.actorOf(HistoricManifestRouterActor.props(historicManifestLookups.manifestsByDayLookup, historicManifestLookups.updateManifests), name = "historic-voyage-manifests-router-actor")
 
   override val aggregatedArrivalsActor: ActorRef = system.actorOf(Props(new AggregatedArrivalsActor(ArrivalTable(airportConfig.portCode, PostgresTables))), name = "aggregated-arrivals-actor")
 

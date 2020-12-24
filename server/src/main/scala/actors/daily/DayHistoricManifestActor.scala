@@ -1,34 +1,33 @@
 package actors.daily
 
+import actors._
 import actors.acking.AckingReceiver.Ack
-import actors.{GetState, VoyageManifestMessageConversion, RecoveryActorLike, Sizes}
 import akka.actor.Props
 import akka.persistence.{Recovery, SaveSnapshotSuccess, SnapshotSelectionCriteria}
-import drt.shared.{ArrivalKey, SDateLike}
+import drt.shared.ArrivalKey
 import drt.shared.CrunchApi.MillisSinceEpoch
-import drt.shared.Terminals.Terminal
 import drt.shared.dates.UtcDate
+import manifests.passengers.{BestAvailableManifest, BestAvailableManifests}
 import org.slf4j.{Logger, LoggerFactory}
-import passengersplits.parsing.VoyageManifestParser.{VoyageManifest, VoyageManifests}
 import scalapb.GeneratedMessage
+import server.protobuf.messages.BestAvailableManifest.BestAvailableManifestsMessage
 import server.protobuf.messages.VoyageManifest.VoyageManifestsMessage
 import services.SDate
 
-object DayManifestActor {
+object DayHistoricManifestActor {
   def props(date: UtcDate): Props =
-    Props(new DayManifestActor(date.year, date.month, date.day, None))
+    Props(new DayHistoricManifestActor(date.year, date.month, date.day, None))
 
   def propsPointInTime(date: UtcDate, pointInTime: MillisSinceEpoch): Props =
-    Props(new DayManifestActor(date.year, date.month, date.day, Option(pointInTime)))
+    Props(new DayHistoricManifestActor(date.year, date.month, date.day, Option(pointInTime)))
 }
 
-
-class DayManifestActor(
-                        year: Int,
-                        month: Int,
-                        day: Int,
-                        maybePointInTime: Option[MillisSinceEpoch]
-                      ) extends RecoveryActorLike {
+class DayHistoricManifestActor(
+                                year: Int,
+                                month: Int,
+                                day: Int,
+                                maybePointInTime: Option[MillisSinceEpoch]
+                              ) extends RecoveryActorLike {
 
   def now: () => SDate.JodaSDate = () => SDate.now()
 
@@ -46,7 +45,7 @@ class DayManifestActor(
   override val maybeSnapshotInterval: Option[Int] = Option(maxSnapshotInterval)
   override val recoveryStartMillis: MillisSinceEpoch = now().millisSinceEpoch
 
-  var state: Map[ArrivalKey, VoyageManifest] = Map()
+  var state: Map[ArrivalKey, BestAvailableManifest] = Map()
 
   override def recovery: Recovery = maybePointInTime match {
     case None =>
@@ -57,12 +56,13 @@ class DayManifestActor(
   }
 
   override def receiveCommand: Receive = {
-    case manifests: VoyageManifests =>
+    case manifests: BestAvailableManifests =>
+      log.info(s"Received ${manifests.manifests.size} manifests to persist")
       updateAndPersist(manifests)
 
     case GetState =>
       log.debug(s"Received GetState")
-      sender() ! VoyageManifests(state.values.toSet)
+      sender() ! BestAvailableManifests(state.values.toList)
 
     case _: SaveSnapshotSuccess =>
       ackIfRequired()
@@ -72,28 +72,29 @@ class DayManifestActor(
 
   override def processRecoveryMessage: PartialFunction[Any, Unit] = {
 
-    case vmm@VoyageManifestsMessage(Some(createdAt), _) =>
+    case vmm@BestAvailableManifestsMessage(Some(createdAt), _) =>
       maybePointInTime match {
         case Some(pit) if pit < createdAt => // ignore messages from after the recovery point.
         case _ =>
-          state = state ++ VoyageManifestMessageConversion.voyageManifestsFromMessage(vmm).toMap
+          state = state ++ BestAvailableManifestMessageConversion.manifestsFromMessage(vmm).toMap
       }
   }
 
   override def processSnapshotMessage: PartialFunction[Any, Unit] = {
-    case vmm: VoyageManifestsMessage =>
-      state = VoyageManifestMessageConversion.voyageManifestsFromMessage(vmm).toMap
+    case vmm: BestAvailableManifestsMessage =>
+      state = BestAvailableManifestMessageConversion.manifestsFromMessage(vmm).toMap
   }
 
-  override def stateToMessage: GeneratedMessage = VoyageManifestMessageConversion
-    .voyageManifestsToMessage(VoyageManifests(state.values.toSet))
+  override def stateToMessage: GeneratedMessage = BestAvailableManifestMessageConversion
+    .manifestsToMessage(BestAvailableManifests(state.values.toList))
 
-  def updateAndPersist(vms: VoyageManifests): Unit = {
+  def updateAndPersist(bms: BestAvailableManifests): Unit = {
 
-    state = state ++ vms.toMap
+    state = state ++ bms.toMap
 
     val replyToAndMessage = Option(sender(), Ack)
-    persistAndMaybeSnapshotWithAck(VoyageManifestMessageConversion.voyageManifestsToMessage(vms), replyToAndMessage)
+
+    persistAndMaybeSnapshotWithAck(BestAvailableManifestMessageConversion.manifestsToMessage(bms), replyToAndMessage)
   }
 
 }

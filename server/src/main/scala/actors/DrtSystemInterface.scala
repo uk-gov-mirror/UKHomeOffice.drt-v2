@@ -98,6 +98,7 @@ trait DrtSystemInterface extends UserRoleProviderLike {
   val forecastArrivalsActor: ActorRef
   val liveArrivalsActor: ActorRef
   val voyageManifestsActor: ActorRef
+  val historicManifestsActor: ActorRef
 
   val flightsActor: ActorRef
   val queuesActor: ActorRef
@@ -174,6 +175,7 @@ trait DrtSystemInterface extends UserRoleProviderLike {
       useLegacyManifests = params.useLegacyManifests,
       manifestsLiveSource = voyageManifestsLiveSource,
       manifestResponsesSource = manifestResponsesSource,
+      historicManifestsActor = historicManifestsActor,
       voyageManifestsActor = voyageManifestsActor,
       manifestRequestsSink = manifestRequestsSink,
       simulator = Optimiser.runSimulationOfWork,

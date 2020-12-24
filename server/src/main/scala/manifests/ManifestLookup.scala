@@ -95,10 +95,35 @@ case class ManifestLookup(paxInfoTable: VoyageManifestPassengerInfoTable) extend
   type QueryFunction = UniqueArrivalKey => SqlStreamingAction[Vector[(String, String, String, Timestamp)], (String, String, String, Timestamp), paxInfoTable.tables.profile.api.Effect]
 
   private val queryHierarchy: List[(String, QueryFunction)] = List(
+    ("allSameFlights", allSameFlights),
     ("sameFlightAndDay3WeekWindowPreviousYearQuery", sameFlightAndDay3WeekWindowPreviousYearQuery),
     ("sameFlight3WeekWindowPreviousYearQuery", sameFlight3WeekWindowPreviousYearQuery),
     ("sameRouteAndDay3WeekWindowPreviousYearQuery", sameRouteAndDay3WeekWindowPreviousYearQuery)
   )
+
+  def allSameFlights(uniqueArrivalKey: UniqueArrivalKey): SqlStreamingAction[Vector[(String, String, String, Timestamp)], (String, String, String, Timestamp), Effect] = {
+
+    log.info(s"Looking for splits matching $uniqueArrivalKey")
+
+    sql"""SELECT
+            arrival_port_code,
+            departure_port_code,
+            voyage_number,
+            scheduled_date
+          FROM
+            voyage_manifest_passenger_info
+          WHERE
+            event_code ='DC'
+            and arrival_port_code=${uniqueArrivalKey.arrivalPort.toString}
+            and departure_port_code=${uniqueArrivalKey.departurePort.toString}
+            and voyage_number=${uniqueArrivalKey.voyageNumber.numeric}
+          GROUP BY
+            arrival_port_code,
+            departure_port_code,
+            voyage_number,
+            scheduled_date
+          """.as[(String, String, String, Timestamp)]
+  }
 
   def sameFlightAndDay3WeekWindowPreviousYearQuery(uniqueArrivalKey: UniqueArrivalKey): SqlStreamingAction[Vector[(String, String, String, Timestamp)], (String, String, String, Timestamp), Effect] = {
     val lastYear = uniqueArrivalKey.scheduled.addMonths(-12)

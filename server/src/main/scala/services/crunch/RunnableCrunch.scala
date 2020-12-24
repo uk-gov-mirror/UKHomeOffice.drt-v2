@@ -10,9 +10,9 @@ import akka.stream.stage.GraphStage
 import drt.chroma.ArrivalsDiffingStage
 import drt.shared.CrunchApi._
 import drt.shared.FlightsApi.{Flights, FlightsWithSplitsDiff}
-import drt.shared.api.Arrival
 import drt.shared._
-import manifests.passengers.BestAvailableManifest
+import drt.shared.api.Arrival
+import manifests.passengers.{BestAvailableManifest, BestAvailableManifests}
 import org.slf4j.{Logger, LoggerFactory}
 import server.feeds._
 import services.graphstages._
@@ -53,6 +53,7 @@ object RunnableCrunch {
                                        applyPaxDeltas: List[Arrival] => Future[List[Arrival]],
 
                                        manifestsActor: ActorRef,
+                                       historicManifestsActor: ActorRef,
                                        manifestRequestsSink: Sink[List[Arrival], NotUsed],
 
                                        portStateActor: ActorRef,
@@ -87,7 +88,7 @@ object RunnableCrunch {
       shiftsKillSwitch,
       fixedPointsKillSwitch,
       movementsKillSwitch
-      )((_, _, _, _, _, _, _, _, _, _, _, _, _, _)) {
+    )((_, _, _, _, _, _, _, _, _, _, _, _, _, _)) {
 
       implicit builder =>
         (
@@ -129,7 +130,8 @@ object RunnableCrunch {
 
           val arrivalsFanOut = builder.add(Broadcast[ArrivalsDiff](2))
 
-          val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
+          val liveManifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
+          val historicManifestsFanOut = builder.add(Broadcast[List[BestAvailableManifest]](2))
           val arrivalSplitsFanOut = builder.add(Broadcast[FlightsWithSplitsDiff](3))
           val staffFanOut = builder.add(Broadcast[StaffMinutes](2))
 
@@ -139,6 +141,7 @@ object RunnableCrunch {
           val liveArrivalsSink = builder.add(Sink.actorRef(liveArrivalsActor, StreamCompleted))
 
           val manifestsSink = builder.add(Sink.actorRef(manifestsActor, StreamCompleted))
+          val historicManifestsSink = builder.add(Sink.actorRef(historicManifestsActor, StreamCompleted))
 
           val arrivalUpdatesSink = builder.add(Sink.actorRefWithAck(aggregatedArrivalsStateActor, StreamInitialized, Ack, StreamCompleted, StreamFailure))
           val arrivalRemovalsSink = builder.add(Sink.actorRefWithAck(aggregatedArrivalsStateActor, StreamInitialized, Ack, StreamCompleted, StreamFailure))
@@ -177,20 +180,24 @@ object RunnableCrunch {
                 acc ++ incoming } ~> arrivals.in3
           liveArrivalsFanOut ~> liveArrivalsSink
 
-          manifestsLiveSourceSync ~> manifestsLiveKillSwitchSync ~> manifestsFanOut
+          manifestsLiveSourceSync ~> manifestsLiveKillSwitchSync ~> liveManifestsFanOut
 
-          manifestsFanOut.out(0)
+          liveManifestsFanOut.out(0)
             .collect { case ManifestsFeedSuccess(DqManifests(_, manifests), _) if manifests.nonEmpty => manifests.map(BestAvailableManifest(_)).toList }
             .conflate[List[BestAvailableManifest]] { case (acc, incoming) =>
                 log.info(s"${acc.length + incoming.length} conflated API manifests")
                 acc ++ incoming } ~> arrivalSplits.in1
 
-          manifestsFanOut.out(1) ~> manifestsSink
+          liveManifestsFanOut.out(1) ~> manifestsSink
 
+          //split here
           manifestResponsesSource
             .conflate[List[BestAvailableManifest]] { case (acc, incoming) =>
                 log.info(s"${acc.length + incoming.length} conflated historic manifests")
-                acc ++ incoming } ~> arrivalSplits.in2
+                acc ++ incoming } ~> historicManifestsFanOut
+
+          historicManifestsFanOut.out(0) ~> arrivalSplits.in2
+          historicManifestsFanOut.out(1).map(BestAvailableManifests) ~> historicManifestsSink
 
           shiftsSourceAsync          ~> shiftsKillSwitchSync ~> staff.in0
           fixedPointsSourceAsync     ~> fixedPointsKillSwitchSync ~> staff.in1

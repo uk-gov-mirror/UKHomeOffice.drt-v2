@@ -13,7 +13,22 @@ case class BestAvailableManifest(source: SplitSource,
                                  voyageNumber: VoyageNumberLike,
                                  carrierCode: CarrierCode,
                                  scheduled: SDateLike,
-                                 passengerList: List[ManifestPassengerProfile])
+                                 passengerList: List[ManifestPassengerProfile]) {
+
+  def maybeArrivalKey: Option[ArrivalKey] = voyageNumber match {
+    case vn: VoyageNumber => Option(ArrivalKey(departurePortCode, vn, scheduled.millisSinceEpoch))
+    case _ => None
+  }
+}
+
+case class BestAvailableManifests(manifests: List[BestAvailableManifest]) {
+  def toMap: Map[ArrivalKey, BestAvailableManifest] = manifests
+    .map(bm => bm.maybeArrivalKey -> bm)
+    .collect {
+      case (Some(key), bm) => key -> bm
+    }
+    .toMap
+}
 
 object BestAvailableManifest {
   def apply(manifest: VoyageManifest): BestAvailableManifest = {
@@ -66,7 +81,7 @@ object ManifestPassengerProfile {
       Option(DocumentType.Passport)
     else
       pij.DocumentType
-    val maybeInTransit = Option(pij.InTransitFlag.isInTransit|| pij.DisembarkationPortCode.exists(_ != portCode))
+    val maybeInTransit = Option(pij.InTransitFlag.isInTransit || pij.DisembarkationPortCode.exists(_ != portCode))
     ManifestPassengerProfile(nationality, documentType, pij.Age, maybeInTransit)
   }
 }
