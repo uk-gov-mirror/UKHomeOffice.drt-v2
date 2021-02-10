@@ -53,6 +53,7 @@ class TestDrtActor extends Actor {
 
   var maybeCrunchQueueActor: Option[ActorRef] = None
   var maybeDeploymentQueueActor: Option[ActorRef] = None
+  var killSwitches: List[UniqueKillSwitch] = List()
 
   override def postStop(): Unit = {
     log.info(s"TestDrtActor stopped")
@@ -62,6 +63,7 @@ class TestDrtActor extends Actor {
     case Stop =>
       maybeCrunchQueueActor.foreach(_ ! Stop)
       maybeDeploymentQueueActor.foreach(_ ! Stop)
+      killSwitches.foreach(_.shutdown())
       context.stop(self)
 
     case tc: TestConfig =>
@@ -148,6 +150,9 @@ class TestDrtActor extends Actor {
         if (tc.recrunchOnStart) queueDaysToReCrunch(crunchQueueActor)
 
         portStateActor ! SetDeploymentQueueActor(deploymentQueueActor)
+
+        killSwitches = List(deploymentsKillSwitch, deploymentsKillSwitch)
+
         (deskRecsKillSwitch, deploymentsKillSwitch)
       }
 
