@@ -66,8 +66,8 @@ class PartitionedPortStateTestActor(probe: ActorRef,
     actor.ask(message).foreach { _ =>
       message match {
         case flightsWithSplitsDiff@FlightsWithSplitsDiff(_, _) if flightsWithSplitsDiff.nonEmpty =>
-
-          actor.ask(GetStateForDateRange(flightsWithSplitsDiff.updateMinutes.min, flightsWithSplitsDiff.updateMinutes.max)).mapTo[Source[FlightsWithSplits, NotUsed]].foreach {
+          val affectedMinutes = flightsWithSplitsDiff.updateMinutes ++ flightsWithSplitsDiff.arrivalsToRemove.flatMap(a => a.scheduled to (a.scheduled + 30 * MilliTimes.oneMinuteMillis))
+          actor.ask(GetStateForDateRange(affectedMinutes.min, affectedMinutes.max)).mapTo[Source[FlightsWithSplits, NotUsed]].foreach {
              _ =>
               val updatedFlights = (state.flights -- flightsWithSplitsDiff.arrivalsToRemove) ++ flightsWithSplitsDiff.flightsToUpdate.map(fws => (fws.unique, fws))
               state = state.copy(flights = updatedFlights)

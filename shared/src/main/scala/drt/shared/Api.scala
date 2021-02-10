@@ -725,7 +725,7 @@ object FlightsApi {
 
     def nonEmpty: Boolean = !isEmpty
 
-    val updateMinutes: Seq[MillisSinceEpoch] = flightsToUpdate.flatMap(_.apiFlight.pcpRange())
+    val updateMinutes: Seq[MillisSinceEpoch] = flightsToUpdate.flatMap(_.apiFlight.pcpRange())// ++ arrivalsToRemove.map(a => a.scheduled to a.scheduled + 30 * MilliTimes.oneMinuteMillis)
 
     def applyTo(flightsWithSplits: FlightsWithSplits,
                 nowMillis: MillisSinceEpoch): (FlightsWithSplits, Seq[MillisSinceEpoch]) = {
