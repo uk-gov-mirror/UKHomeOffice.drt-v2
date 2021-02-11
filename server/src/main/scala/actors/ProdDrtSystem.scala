@@ -7,6 +7,7 @@ import akka.NotUsed
 import akka.actor.{ActorRef, ActorSystem, Cancellable, Props}
 import akka.stream.scaladsl.{Source, SourceQueueWithComplete}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
+import com.typesafe.config.{Config, ConfigFactory}
 import drt.server.feeds.api.S3ApiProvider
 import drt.shared.CrunchApi.MillisSinceEpoch
 import drt.shared.MilliTimes._
@@ -31,10 +32,21 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
+object DbTables {
+  object PostgresTables extends {
+    val profile = slick.jdbc.PostgresProfile
+  } with Tables
 
-object PostgresTables extends {
-  val profile = slick.jdbc.PostgresProfile
-} with Tables
+  object H2Tables extends {
+    val profile = slick.jdbc.H2Profile
+  } with Tables
+
+  private val config: Config = ConfigFactory.load()
+  val inMemory: Boolean = config.getBoolean("persistence.use-in-memory")
+
+  val tables: Tables = if (inMemory) H2Tables else PostgresTables
+  val dbConfigName: String = config.getString("aggregate-db-config")
+}
 
 case class SubscribeResponseQueue(subscriber: SourceQueueWithComplete[ManifestsFeedResponse])
 
@@ -49,8 +61,6 @@ case class ProdDrtSystem(config: Configuration, airportConfig: AirportConfig)
   val minSecondsBetweenBatches: Int = config.get[Int]("crunch.manifests.min-seconds-between-batches")
   val refetchApiData: Boolean = config.get[Boolean]("crunch.manifests.refetch-live-api")
 
-  val aggregateArrivalsDbConfigKey = "aggregated-db"
-
   val forecastMaxMillis: () => MillisSinceEpoch = () => now().addDays(params.forecastMaxDays).millisSinceEpoch
 
   override val baseArrivalsActor: ActorRef = system.actorOf(Props(new ForecastBaseArrivalsActor(params.snapshotMegaBytesBaseArrivals, now, expireAfterMillis)), name = "base-arrivals-actor")
@@ -61,7 +71,7 @@ case class ProdDrtSystem(config: Configuration, airportConfig: AirportConfig)
   val manifestLookups: ManifestLookups = ManifestLookups(system)
   override val manifestsRouterActor: ActorRef = system.actorOf(ManifestRouterActor.props(manifestLookups.manifestsByDayLookup, manifestLookups.updateManifests), name = "voyage-manifests-router-actor")
 
-  override val aggregatedArrivalsActor: ActorRef = system.actorOf(Props(new AggregatedArrivalsActor(ArrivalTable(airportConfig.portCode, PostgresTables))), name = "aggregated-arrivals-actor")
+  override val aggregatedArrivalsActor: ActorRef = system.actorOf(Props(new AggregatedArrivalsActor(ArrivalTable(airportConfig.portCode, DbTables.tables, DbTables.dbConfigName))), name = "aggregated-arrivals-actor")
 
   override val crunchQueueActor: ActorRef = system.actorOf(Props(new CrunchQueueActor(now, journalType, airportConfig.crunchOffsetMinutes, airportConfig.minutesToCrunch)), name = "crunch-queue-actor")
   override val deploymentQueueActor: ActorRef = system.actorOf(Props(new DeploymentQueueActor(now, airportConfig.crunchOffsetMinutes, airportConfig.minutesToCrunch)), name = "staff-queue-actor")

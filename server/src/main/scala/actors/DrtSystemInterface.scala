@@ -71,7 +71,7 @@ trait DrtSystemInterface extends UserRoleProviderLike {
 
   val gateWalkTimesProvider: GateOrStandWalkTime = walkTimeMillisProviderFromCsv(ConfigFactory.load.getString("walk_times.gates_csv_url"))
   val standWalkTimesProvider: GateOrStandWalkTime = walkTimeMillisProviderFromCsv(ConfigFactory.load.getString("walk_times.stands_csv_url"))
-  val manifestLookupService: ManifestLookup = ManifestLookup(VoyageManifestPassengerInfoTable(PostgresTables))
+  val manifestLookupService: ManifestLookup = ManifestLookup(VoyageManifestPassengerInfoTable(DbTables.tables, DbTables.dbConfigName))
 
   val config: Configuration
   val airportConfig: AirportConfig

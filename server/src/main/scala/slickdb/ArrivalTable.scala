@@ -29,13 +29,13 @@ object AggregatedArrival {
   )
 }
 
-case class ArrivalTable(portCode: PortCode, tables: Tables) extends ArrivalTableLike {
+case class ArrivalTable(portCode: PortCode, tables: Tables, configName: String) extends ArrivalTableLike {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   import tables.profile.api._
   import tables.{Arrival, ArrivalRow}
 
-  val db: tables.profile.backend.DatabaseDef = Database.forConfig("aggregated-db")
+  val db: tables.profile.backend.DatabaseDef = Database.forConfig(configName)
   val arrivalsTableQuery = TableQuery[Arrival]
 
   def selectAll: AggregatedArrivals = {

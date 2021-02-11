@@ -1,8 +1,8 @@
 package actors.migration
 
-import actors.serializers.PortStateMessageConversion.{crunchMinuteFromMessage, crunchMinuteToMessage}
 import actors.acking.AckingReceiver.Ack
-import actors.{PostgresTables, RecoveryActorLike, Sizes}
+import actors.serializers.PortStateMessageConversion.{crunchMinuteFromMessage, crunchMinuteToMessage}
+import actors.{DbTables, RecoveryActorLike, Sizes}
 import akka.actor.Props
 import akka.persistence.{SaveSnapshotSuccess, SnapshotMetadata}
 import drt.shared.CrunchApi.{CrunchMinute, MillisSinceEpoch}
@@ -18,7 +18,7 @@ import slickdb.AkkaPersistenceSnapshotTable
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object TerminalDayCrunchMinutesMigrationActor {
-  val snapshotTable: AkkaPersistenceSnapshotTable = AkkaPersistenceSnapshotTable(PostgresTables)
+  val snapshotTable: AkkaPersistenceSnapshotTable = AkkaPersistenceSnapshotTable(DbTables.PostgresTables)
 
   def props(terminal: String, date: UtcDate): Props =
     Props(new TerminalDayCrunchMinutesMigrationActor(date.year, date.month, date.day, terminal, snapshotTable))
