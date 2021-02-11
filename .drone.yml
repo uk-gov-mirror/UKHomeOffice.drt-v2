@@ -1,53 +1,53 @@
 pipeline:
 
-  sonar-scanner:
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
-    when:
-      event:
-        - push
-      branch:
-        - ${DRONE_BRANCH}
-
-  drone_s3_cache_pull:
-    image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
-    drone_s3_cache_mode: "pull"
-    secrets:
-      - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
-      - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
-      - DRONE_S3_CACHE_BUCKET_NAME
-
-  build:
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs
-    commands:
-      - /root/entrypoint.sh
-      - sbt --error test docker:stage
-    environment:
-      - ENV_LOG_LEVEL=ERROR
-      - ARTIFACTORY_USERNAME=drt_ci
-    secrets:
-      - ARTIFACTORY_PASSWORD
-      - KEYTOOL_PASSWORD
-    when:
-      event:
-        - push
-      branch:
-        - ${DRONE_BRANCH}
-
-  build_docker:
-    environment:
-      - DOCKER_USERNAME=drt_ci
-      - DOCKER_HOST=tcp://172.17.0.1:2375
-    image: quay.io/ukhomeofficedigital/drone-docker
-    registry: docker.digital.homeoffice.gov.uk
-    repo: docker.digital.homeoffice.gov.uk/drt/drt
-    secrets: [ docker_password ]
-    tags:
-      - ${DRONE_BUILD_NUMBER}
-      - latest
-    when:
-      event: push
-      branch:
-        - ${DRONE_BRANCH}
+#  sonar-scanner:
+#    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
+#    when:
+#      event:
+#        - push
+#      branch:
+#        - ${DRONE_BRANCH}
+#
+#  drone_s3_cache_pull:
+#    image: quay.io/ukhomeofficedigital/drone-s3cache:v0.2.0
+#    drone_s3_cache_mode: "pull"
+#    secrets:
+#      - DRONE_S3_CACHE_AWS_ACCESS_KEY_ID
+#      - DRONE_S3_CACHE_AWS_SECRET_ACCESS_KEY
+#      - DRONE_S3_CACHE_BUCKET_NAME
+#
+#  build:
+#    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs
+#    commands:
+#      - /root/entrypoint.sh
+#      - sbt --error test docker:stage
+#    environment:
+#      - ENV_LOG_LEVEL=ERROR
+#      - ARTIFACTORY_USERNAME=drt_ci
+#    secrets:
+#      - ARTIFACTORY_PASSWORD
+#      - KEYTOOL_PASSWORD
+#    when:
+#      event:
+#        - push
+#      branch:
+#        - ${DRONE_BRANCH}
+#
+#  build_docker:
+#    environment:
+#      - DOCKER_USERNAME=drt_ci
+#      - DOCKER_HOST=tcp://172.17.0.1:2375
+#    image: quay.io/ukhomeofficedigital/drone-docker
+#    registry: docker.digital.homeoffice.gov.uk
+#    repo: docker.digital.homeoffice.gov.uk/drt/drt
+#    secrets: [ docker_password ]
+#    tags:
+#      - ${DRONE_BUILD_NUMBER}
+#      - latest
+#    when:
+#      event: push
+#      branch:
+#        - ${DRONE_BRANCH}
 
   cypress-e2e-test:
     image: docker:18.06
@@ -61,8 +61,8 @@ pipeline:
       - docker login -u $${DOCKER_USERNAME} -p $${DOCKER_PASSWORD} docker.digital.homeoffice.gov.uk
       - docker run -m 5g -d --name drt-app -e ENABLE_STATSD=false -e CONTACT_EMAIL=support@test.com -e OOH_PHONE=012345 -e KEY_CLOAK_URL="https://sso-dev.notprod.homeoffice.gov.uk/auth/admin/realms/drt-notprod" -e JAVA_OPTS="-Xmx4g -Dconfig.resource=application-inmemory.conf" -e USE_API_PAX_NOS=true -e ADJUST_EGATES_USE_BY_U12S=true -e PORT_CODE="test" -e ENV="test" -e FORECAST_MAX_DAYS=2 -e STAGE_THROTTLE_MILLIS=50 -e BASE_DOMAIN=drt-test.homeoffice.gov.uk docker.digital.homeoffice.gov.uk/drt/drt:latest $${PLAY}
       - docker build -t drt-cypress -f cy-drt-dockfile .
+      - docker logs drt-app -f&
       - docker run --net=container:drt-app -e CYPRESS_baseUrl="http://localhost:9000" drt-cypress /bin/bash -c "npm run test"
-      - docker logs drt-app
     when:
       event: push
       branch: ${DRONE_BRANCH}
