@@ -39,8 +39,8 @@ class TerminalDayFlightActor(
     case Some(pit) => f"@${SDate(pit).toISOString()}"
   }
 
-  val firstMinuteOfDay = SDate(year, month, day, 0, 0)
-  val lastMinuteOfDay = firstMinuteOfDay.addDays(1).addMinutes(-1)
+  val firstMinuteOfDay: SDateLike = SDate(year, month, day, 0, 0)
+  val lastMinuteOfDay: SDateLike = firstMinuteOfDay.addDays(1).addMinutes(-1)
 
   override val log: Logger = LoggerFactory.getLogger(f"$getClass-$terminal-$year%04d-$month%02d-$day%02d$loggerSuffix")
 

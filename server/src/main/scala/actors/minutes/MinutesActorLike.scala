@@ -33,7 +33,7 @@ object MinutesActorLike {
   type MinutesUpdate[A, B <: WithTimeAccessor] = (Terminals.Terminal, SDateLike, MinutesContainer[A, B]) => Future[MinutesContainer[A, B]]
   type CrunchMinutesMigrationUpdate = (String, UtcDate, CrunchMinutesMessageMigration) => Future[Any]
   type StaffMinutesMigrationUpdate = (String, UtcDate, StaffMinutesMessageMigration) => Future[Any]
-  type FlightsUpdate = (Terminals.Terminal, UtcDate, FlightsWithSplitsDiff) => Future[Seq[MillisSinceEpoch]]
+  type FlightsUpdate = (Terminals.Terminal, UtcDate, FlightsWithSplitsDiff) => Future[Iterable[MillisSinceEpoch]]
   type FlightsMigrationUpdate = (String, UtcDate, FlightsWithSplitsDiffMessage) => Future[Any]
   type ManifestsUpdate = (UtcDate, VoyageManifests) => Future[Any]
 

@@ -1,12 +1,12 @@
 package actors.serializers
 
 import actors.ArrivalsState
-import PortStateMessageConversion.splitMessageToApiSplits
 import actors.restore.RestorerWithLegacy
+import actors.serializers.PortStateMessageConversion.splitMessageToApiSplits
 import drt.shared.FlightsApi.FlightsWithSplitsDiff
 import drt.shared.Terminals.Terminal
-import drt.shared.api.Arrival
 import drt.shared._
+import drt.shared.api.Arrival
 import org.slf4j.{Logger, LoggerFactory}
 import server.protobuf.messages.CrunchState._
 import server.protobuf.messages.FlightsMessage._
@@ -22,13 +22,13 @@ object FlightMessageConversion {
     }.toList)
 
 
-  def flightWithSplitsDiffToMessage(diff: FlightsApi.FlightsWithSplitsDiff) = {
+  def flightWithSplitsDiffToMessage(diff: FlightsApi.FlightsWithSplitsDiff): FlightsWithSplitsDiffMessage = {
     FlightsWithSplitsDiffMessage(
       createdAt = Option(SDate.now().millisSinceEpoch),
       removals = diff.arrivalsToRemove.map(ua => {
         UniqueArrivalMessage(Option(ua.number), Option(ua.terminal.toString), Option(ua.scheduled))
-      }),
-      updates = diff.flightsToUpdate.map(flightWithSplitsToMessage)
+      }).toSeq,
+      updates = diff.flightsToUpdate.map(flightWithSplitsToMessage).toSeq
     )
   }
 

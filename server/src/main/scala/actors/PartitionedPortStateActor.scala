@@ -8,7 +8,6 @@ import akka.NotUsed
 import akka.actor.{Actor, ActorContext, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.GraphDSL.Implicits.getClass
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import drt.shared.CrunchApi._
@@ -17,7 +16,6 @@ import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
 import drt.shared._
 import org.slf4j.{Logger, LoggerFactory}
-import services.StreamSupervision
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -237,9 +235,14 @@ class PartitionedPortStateActor(flightsActor: ActorRef,
 
     case StreamFailure(t) => log.error(s"Stream failed", t)
 
-    case flightsWithSplits: FlightsWithSplitsDiff =>
+    case ArrivalsDiff(toUpdate, toRemove) =>
+      val flightsWithSplits = FlightsWithSplitsDiff(toUpdate.values.map(ApiFlightWithSplits(_, Set())), toRemove.map(UniqueArrival(_)))
       val replyTo = sender()
       askThenAck(flightsActor, flightsWithSplits, replyTo)
+
+//    case flightsWithSplits: FlightsWithSplitsDiff =>
+//      val replyTo = sender()
+//      askThenAck(flightsActor, flightsWithSplits, replyTo)
 
     case noUpdates: PortStateMinutes[_, _] if noUpdates.isEmpty =>
       sender() ! Ack

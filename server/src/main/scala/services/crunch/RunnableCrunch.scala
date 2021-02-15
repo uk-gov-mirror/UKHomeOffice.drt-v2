@@ -39,7 +39,7 @@ object RunnableCrunch {
                                        actualDesksAndWaitTimesSource: Source[ActualDeskStats, SAD],
 
                                        arrivalsGraphStage: ArrivalsGraphStage,
-                                       arrivalSplitsStage: GraphStage[FanInShape2[ArrivalsDiff, List[BestAvailableManifest], FlightsWithSplitsDiff]],
+//                                       arrivalSplitsStage: GraphStage[FanInShape2[ArrivalsDiff, List[BestAvailableManifest], FlightsWithSplitsDiff]],
                                        staffGraphStage: StaffGraphStage,
 
                                        forecastArrivalsDiffStage: ArrivalsDiffingStage,
@@ -110,7 +110,7 @@ object RunnableCrunch {
           }
 
           val arrivals = builder.add(arrivalsGraphStage)
-          val arrivalSplits = builder.add(arrivalSplitsStage)
+//          val arrivalSplits = builder.add(arrivalSplitsStage)
           val staff = builder.add(staffGraphStage)
           val deploymentRequestSink = builder.add(Sink.actorRef(deploymentRequestActor, StreamCompleted))
           val deskStatsSink = newPortStateSink()
@@ -126,8 +126,8 @@ object RunnableCrunch {
           val liveBaseArrivalsFanOut = builder.add(Broadcast[ArrivalsFeedResponse](2))
           val liveArrivalsFanOut = builder.add(Broadcast[ArrivalsFeedResponse](2))
 
-          val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
-          val arrivalSplitsFanOut = builder.add(Broadcast[FlightsWithSplitsDiff](3))
+//          val manifestsFanOut = builder.add(Broadcast[ManifestsFeedResponse](2))
+          val arrivalsFanOut = builder.add(Broadcast[ArrivalsDiff](3))
           val staffFanOut = builder.add(Broadcast[StaffMinutes](2))
 
           val baseArrivalsSink = builder.add(Sink.actorRef(forecastBaseArrivalsActor, StreamCompleted))
@@ -174,36 +174,33 @@ object RunnableCrunch {
                 acc ++ incoming } ~> arrivals.in3
           liveArrivalsFanOut ~> liveArrivalsSink
 
-          manifestsLiveSourceSync ~> manifestsLiveKillSwitchSync ~> manifestsFanOut
-
-          manifestsFanOut.out(0)
-            .collect { case ManifestsFeedSuccess(DqManifests(_, manifests), _) if manifests.nonEmpty => manifests.map(BestAvailableManifest(_)).toList }
-            .conflate[List[BestAvailableManifest]] { case (acc, incoming) =>
-                log.info(s"${acc.length + incoming.length} conflated API manifests")
-                acc ++ incoming } ~> arrivalSplits.in1
-
-          manifestsFanOut.out(1) ~> manifestsSink
+          manifestsLiveSourceSync ~> manifestsLiveKillSwitchSync ~> manifestsSink
 
           shiftsSourceAsync          ~> shiftsKillSwitchSync ~> staff.in0
           fixedPointsSourceAsync     ~> fixedPointsKillSwitchSync ~> staff.in1
           staffMovementsSourceAsync  ~> movementsKillSwitchSync ~> staff.in2
 
-          arrivals.out ~> arrivalSplits.in0
+          arrivals.out ~> arrivalsFanOut
+                          arrivalsFanOut                                                          ~> flightsWithSplitsSink
+                          arrivalsFanOut.map(_.toRemove.map(a => RemoveFlight(UniqueArrival(a)))) ~> arrivalRemovalsSink
+                          arrivalsFanOut.map(_.toUpdate.values)                                   ~> arrivalUpdatesSink
 
-          arrivalSplits.out ~> arrivalSplitsFanOut
-                               arrivalSplitsFanOut ~> flightsWithSplitsSink
-                               arrivalSplitsFanOut
-                                 .map(_.arrivalsToRemove.map(ua => RemoveFlight(ua)).toList)
-                                 .conflateWithSeed(List(_)) { case (acc, incoming) =>
-                                    log.info(s"${acc.length + incoming.length} conflated arrivals for removal sink")
-                                    acc :+ incoming }
-                                 .mapConcat(_.flatten) ~> arrivalRemovalsSink
-                               arrivalSplitsFanOut
-                                 .map(_.flightsToUpdate.map(_.apiFlight))
-                                 .conflateWithSeed(List(_)) { case (acc, incoming) =>
-                                    log.info(s"${acc.length + incoming.length} conflated arrivals for update sink")
-                                    acc :+ incoming }
-                                 .mapConcat(_.flatten) ~> arrivalUpdatesSink
+//          arrivals.out ~> arrivalSplits.in0
+//
+//          arrivalSplits.out ~> arrivalSplitsFanOut
+//                               arrivalSplitsFanOut ~> flightsWithSplitsSink
+//                               arrivalSplitsFanOut
+//                                 .map(_.arrivalsToRemove.map(ua => RemoveFlight(ua)).toList)
+//                                 .conflateWithSeed(List(_)) { case (acc, incoming) =>
+//                                    log.info(s"${acc.length + incoming.length} conflated arrivals for removal sink")
+//                                    acc :+ incoming }
+//                                 .mapConcat(_.flatten) ~> arrivalRemovalsSink
+//                               arrivalSplitsFanOut
+//                                 .map(_.flightsToUpdate.map(_.apiFlight))
+//                                 .conflateWithSeed(List(_)) { case (acc, incoming) =>
+//                                    log.info(s"${acc.length + incoming.length} conflated arrivals for update sink")
+//                                    acc :+ incoming }
+//                                 .mapConcat(_.flatten) ~> arrivalUpdatesSink
 
           actualDesksAndWaitTimesSourceSync ~> deskStatsSink
 

@@ -720,21 +720,21 @@ object FlightsApi {
     def apply(flights: Iterable[ApiFlightWithSplits]): FlightsWithSplits = FlightsWithSplits(flights.map(fws => (fws.unique, fws)).toMap)
   }
 
-  case class FlightsWithSplitsDiff(flightsToUpdate: List[ApiFlightWithSplits], arrivalsToRemove: List[UniqueArrival]) {
+  case class FlightsWithSplitsDiff(flightsToUpdate: Iterable[ApiFlightWithSplits], arrivalsToRemove: Iterable[UniqueArrival]) {
     def isEmpty: Boolean = flightsToUpdate.isEmpty && arrivalsToRemove.isEmpty
 
     def nonEmpty: Boolean = !isEmpty
 
-    val updateMinutes: Seq[MillisSinceEpoch] = flightsToUpdate.flatMap(_.apiFlight.pcpRange())
+    val updateMinutes: Iterable[MillisSinceEpoch] = flightsToUpdate.flatMap(_.apiFlight.pcpRange())
 
     def applyTo(flightsWithSplits: FlightsWithSplits,
-                nowMillis: MillisSinceEpoch): (FlightsWithSplits, Seq[MillisSinceEpoch]) = {
+                nowMillis: MillisSinceEpoch): (FlightsWithSplits, Iterable[MillisSinceEpoch]) = {
       val updated = flightsWithSplits.flights ++ flightsToUpdate.map(f => (f.apiFlight.unique, f.copy(lastUpdated = Option(nowMillis))))
       val minusRemovals = updated -- arrivalsToRemove
 
       val asMap: IMap[UniqueArrival, ApiFlightWithSplits] = flightsWithSplits.flights
 
-      val minutesFromRemovalsInExistingState: List[MillisSinceEpoch] = arrivalsToRemove
+      val minutesFromRemovalsInExistingState: Iterable[MillisSinceEpoch] = arrivalsToRemove
         .flatMap(r => asMap.get(r).map(_.apiFlight.pcpRange().toList).getOrElse(List()))
 
       val minutesFromExistingStateUpdatedFlights = flightsToUpdate
@@ -745,7 +745,7 @@ object FlightsApi {
           }
         }
 
-      val removalMinutes: Seq[MillisSinceEpoch] = arrivalsToRemove.flatMap(ua => {
+      val removalMinutes: Iterable[MillisSinceEpoch] = arrivalsToRemove.flatMap(ua => {
         asMap.get(ua).toList.flatMap(_.apiFlight.pcpRange())
       })
 

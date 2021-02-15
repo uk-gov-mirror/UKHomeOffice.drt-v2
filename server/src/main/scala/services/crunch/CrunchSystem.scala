@@ -124,14 +124,14 @@ object CrunchSystem {
 
     val splitsCalculator = SplitsCalculator(ptqa, props.airportConfig.terminalPaxSplits, splitAdjustments)
 
-    val arrivalSplitsGraphStage = new ArrivalSplitsGraphStage(
-      name = props.logLabel,
-      optionalInitialFlights = initialFlightsWithSplits,
-      props.refreshManifestsOnStart,
-      splitsCalculator = splitsCalculator,
-      expireAfterMillis = props.expireAfterMillis,
-      now = props.now
-    )
+//    val arrivalSplitsGraphStage = new ArrivalSplitsGraphStage(
+//      name = props.logLabel,
+//      optionalInitialFlights = initialFlightsWithSplits,
+//      props.refreshManifestsOnStart,
+//      splitsCalculator = splitsCalculator,
+//      expireAfterMillis = props.expireAfterMillis,
+//      now = props.now
+//    )
 
     val staffGraphStage = new StaffGraphStage(
       initialShifts = props.initialShifts,
@@ -152,7 +152,7 @@ object CrunchSystem {
       staffMovementsSource = staffMovementsSource,
       actualDesksAndWaitTimesSource = actualDesksAndQueuesSource,
       arrivalsGraphStage = arrivalsStage,
-      arrivalSplitsStage = arrivalSplitsGraphStage,
+//      arrivalSplitsStage = arrivalSplitsGraphStage,
       staffGraphStage = staffGraphStage,
       forecastArrivalsDiffStage = forecastArrivalsDiffingStage,
       liveBaseArrivalsDiffStage = liveBaseArrivalsDiffingStage,

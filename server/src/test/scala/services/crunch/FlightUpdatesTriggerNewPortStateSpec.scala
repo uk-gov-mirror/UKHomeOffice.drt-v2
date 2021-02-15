@@ -44,14 +44,12 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsBefore))
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsAfter))
 
-        val expectedFlights = Set(ApiFlightWithSplits(
-          updatedArrival.copy(FeedSources = Set(LiveFeedSource)),
-          Set(Splits(Set(ApiPaxTypeAndQueueCount(EeaMachineReadable, Queues.EeaDesk, 100.0, None, None)), TerminalAverage, None, Percentage))))
+        val expected = updatedArrival.copy(FeedSources = Set(LiveFeedSource))
 
-        crunch.portStateTestProbe.fishForMessage(3 seconds) {
+        crunch.portStateTestProbe.fishForMessage(1 seconds) {
           case ps: PortState =>
-            val flightsAfterUpdate = ps.flights.values.map(_.copy(lastUpdated = None)).toSet
-            flightsAfterUpdate == expectedFlights
+            val actual = ps.flights.values.map(_.apiFlight).headOption
+            actual == Option(expected)
         }
 
         success
@@ -75,14 +73,12 @@ class FlightUpdatesTriggerNewPortStateSpec extends CrunchTestLike {
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsBefore))
         offerAndWait(crunch.liveArrivalsInput, ArrivalsFeedSuccess(inputFlightsAfter))
 
-        val expectedFlights = Set(ApiFlightWithSplits(
-          updatedArrival.copy(FeedSources = Set(LiveFeedSource)),
-          Set(Splits(Set(ApiPaxTypeAndQueueCount(EeaMachineReadable, Queues.EeaDesk, 100.0, None, None)), TerminalAverage, None, Percentage))))
+        val expected = updatedArrival.copy(FeedSources = Set(LiveFeedSource))
 
-        crunch.portStateTestProbe.fishForMessage(3 seconds) {
+        crunch.portStateTestProbe.fishForMessage(1 seconds) {
           case ps: PortState =>
-            val flightsAfterUpdate = ps.flights.values.map(_.copy(lastUpdated = None)).toSet
-            flightsAfterUpdate == expectedFlights
+            val actual = ps.flights.values.map(_.apiFlight).headOption
+            actual == Option(expected)
         }
 
         success
