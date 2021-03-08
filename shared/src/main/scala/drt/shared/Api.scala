@@ -784,7 +784,6 @@ object FlightsApi {
                     case None =>
                       fws.apiFlight
                     case Some(liveSplit) =>
-                      println(s"adding live splits. sources: ${fws.apiFlight.FeedSources + ApiFeedSource}")
                       fws.apiFlight.copy(
                         ApiPax = Option(Math.round(liveSplit.totalExcludingTransferPax).toInt),
                         FeedSources = fws.apiFlight.FeedSources + ApiFeedSource)
@@ -882,6 +881,8 @@ object MilliTimes {
   val oneHourMillis: Int = 60 * oneMinuteMillis
   val oneDayMillis: Int = 24 * oneHourMillis
   val minutesInADay: Int = 60 * 24
+  val fifteenMinutesMillis: Int = oneMinuteMillis * 15
+  val fifteenMinuteSlotsInDay: Int = 4 * 24
 }
 
 object CrunchApi {
@@ -1050,10 +1051,20 @@ object CrunchApi {
       terminal, queue, minute, paxLoad, workLoad, deskRec, waitTime, lastUpdated = None)
   }
 
+  object DeskRecMinute {
+
+    implicit val rw: ReadWriter[DeskRecMinute] = macroRW
+  }
+
+
   case class DeskRecMinutes(minutes: Seq[DeskRecMinute]) extends PortStateQueueMinutes {
     override val asContainer: MinutesContainer[CrunchMinute, TQM] = MinutesContainer(minutes)
 
     override def isEmpty: Boolean = minutes.isEmpty
+  }
+
+  object DeskRecMinutes {
+    implicit val rw: ReadWriter[DeskRecMinutes] = macroRW
   }
 
   trait SimulationMinuteLike {

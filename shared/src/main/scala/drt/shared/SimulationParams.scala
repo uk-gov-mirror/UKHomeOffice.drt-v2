@@ -5,6 +5,7 @@ import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
 import drt.shared.dates.LocalDate
+import upickle.default.{ReadWriter, macroRW}
 
 import scala.util.Try
 
@@ -81,7 +82,13 @@ case class SimulationParams(
 
 case class SimulationResult(params: SimulationParams, deskRecMinutes: DeskRecMinutes)
 
+object SimulationResult {
+  implicit val rw: ReadWriter[SimulationResult] = macroRW
+}
+
 object SimulationParams {
+
+  implicit val rw: ReadWriter[SimulationParams] = macroRW
 
   def apply(terminal: Terminal, date: LocalDate, airportConfig: AirportConfig): SimulationParams = SimulationParams(
     terminal,

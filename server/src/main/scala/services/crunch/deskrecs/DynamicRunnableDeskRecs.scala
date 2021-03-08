@@ -66,9 +66,10 @@ object DynamicRunnableDeskRecs {
                         ): Flow[(CrunchRequest, Iterable[ApiFlightWithSplits]), PortStateQueueMinutes, NotUsed] = {
     Flow[(CrunchRequest, Iterable[ApiFlightWithSplits])]
       .map { case (crunchDay, flights) =>
-        log.info(s"Crunching ${flights.size} flights, ${crunchDay.durationMinutes} minutes (${crunchDay.start.toISOString()} to ${crunchDay.end.toISOString()})")
+
         timeLogger.time({
           val loadsFromFlights: Map[TQM, Crunch.LoadMinute] = flightsToLoads(FlightsWithSplits(flights), crunchDay.start.millisSinceEpoch)
+
           loadsToQueueMinutes(crunchDay.minutesInMillis, loadsFromFlights, maxDesksProviders)
         })
       }
