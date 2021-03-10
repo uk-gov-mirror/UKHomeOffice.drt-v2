@@ -22,19 +22,16 @@ object SimulateArrivalsComponent {
                     date: LocalDate,
                     terminal: Terminal,
                     airportConfig: AirportConfig,
-//                    portState: PortState
+                    portState: PortState
                   )
 
 
-//  implicit val propsReuse: Reusability[Props] = Reusability.by((props: Props) => {
-//    props.portState.hashCode()
-//  })
+  implicit val propsReuse: Reusability[Props] = Reusability.by((props: Props) => {
+    props.portState.hashCode()
+  })
 
-//  implicit val propsReuse: Reusability[Props] = Reusability.by((props: Props) => {
-//    props.portState.crunchMinutes.hashCode()
-//  })
   implicit val stateReuse: Reusability[SimulationParams] = Reusability.by_==[SimulationParams]
-//  implicit val dateReuse: Reusability[LocalDate] = Reusability.derive[LocalDate]
+  implicit val dateReuse: Reusability[LocalDate] = Reusability.derive[LocalDate]
 
   val component = ScalaComponent.builder[Props]("ArrivalSimulations")
 
@@ -186,25 +183,27 @@ object SimulateArrivalsComponent {
             <.div(^.id := "simulation",
               simulationPot.render(simulationResult => {
 
-//                val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
-//                  props.portState,
-//                  SDate(simulationResult.params.date),
-//                  simulationResult.queueToCrunchMinutes.keySet.toList,
-//                  props.terminal
-//                )
+
+                val startDate = SDate(simulationResult.params.date)
+                val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
+                  props.portState.window(startDate, startDate.getLocalNextMidnight),
+                  startDate,
+                  simulationResult.queueToCrunchMinutes.keySet.toList,
+                  props.terminal
+                )
                 simulationResult.queueToCrunchMinutes.map {
                   case (q, cms) =>
                     val labels = cms.map(m => SDate(m.minute).toHoursAndMinutes)
 
                     val simulationDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(cms)
-                    //                    val portStateDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(portStateQueueCrunchMinutes(q))
+                    val portStateDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(portStateQueueCrunchMinutes(q))
 
 
                     <.div(^.className := "simulation__chart-box",
                       <.h3(Queues.queueDisplayNames(q)),
                       ChartJSComponent.Bar(
                         ChartJsProps(
-                          data = ChartJsData(simulationDataSets, Option(labels)),
+                          data = ChartJsData(List(simulationDataSets, portStateDataSets).flatten, Option(labels)),
                           300,
                           150,
                           ChartJsOptions.withMultipleDataSets("Simulation")
@@ -218,7 +217,7 @@ object SimulateArrivalsComponent {
         })
       )
     }
-//    .configure(Reusability.shouldComponentUpdate)
+    .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_ => Callback {
       GoogleEventTracker.sendPageView(s"Arrival Simulations Page")
     }).build
@@ -259,16 +258,16 @@ object SimulateArrivalsComponent {
       `type` = "line"
     )
 
-    val jsDataSets = Seq(paxDataSet, workDataSet, waitDataSet)
-    jsDataSets
+    Seq(paxDataSet, workDataSet, waitDataSet)
   }
 
-  def apply(date: LocalDate, terminal: Terminal, airportConfg: AirportConfig/*, portState: PortState*/): VdomElement =
-    component(Props(date, terminal, airportConfg/*, portState*/))
+  def apply(date: LocalDate, terminal: Terminal, airportConfg: AirportConfig, portState: PortState): VdomElement =
+    component(Props(date, terminal, airportConfg, portState))
 
-  def inQueuesBy15Minutes(ps: PortState, start: SDateLike, queues: List[Queue], terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] =
+  def inQueuesBy15Minutes(ps: PortState, start: SDateLike, queues: List[Queue], terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] = {
+    println(s"summarising ${ps.crunchMinutes.size} minutes")
     ps
-      .crunchSummary(start, MilliTimes.fifteenMinuteSlotsInDay, MilliTimes.fifteenMinutesMillis, terminal, queues)
+      .crunchSummary(start, MilliTimes.fifteenMinuteSlotsInDay, 15, terminal, queues)
       .values
       .flatten
       .toList
@@ -277,5 +276,6 @@ object SimulateArrivalsComponent {
       }
       .groupBy(_.queue)
       .mapValues(_.sortBy(_.minute))
+  }
 
 }
