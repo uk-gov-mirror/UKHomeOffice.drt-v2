@@ -2,25 +2,41 @@ package drt.client.components
 
 import drt.client.SPAMain
 import drt.client.actions.Actions.GetSimulation
+import drt.client.components.ChartJSComponent.{ChartJsData, ChartJsDataSet, ChartJsOptions, ChartJsProps}
 import drt.client.modules.GoogleEventTracker
 import drt.client.services.JSDateConversions.SDate
 import drt.client.services.SPACircuit
-import drt.shared.CrunchApi.DeskRecMinutes
+import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
 import drt.shared._
 import drt.shared.dates.LocalDate
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
+import scala.scalajs.js.JSConverters._
 import scala.util.{Success, Try}
 
 object SimulateArrivalsComponent {
 
-  case class Props(date: LocalDate, terminal: Terminal, airportConfig: AirportConfig)
+  case class Props(
+                    date: LocalDate,
+                    terminal: Terminal,
+                    airportConfig: AirportConfig,
+//                    portState: PortState
+                  )
 
+
+//  implicit val propsReuse: Reusability[Props] = Reusability.by((props: Props) => {
+//    props.portState.hashCode()
+//  })
+
+//  implicit val propsReuse: Reusability[Props] = Reusability.by((props: Props) => {
+//    props.portState.crunchMinutes.hashCode()
+//  })
+  implicit val stateReuse: Reusability[SimulationParams] = Reusability.by_==[SimulationParams]
+//  implicit val dateReuse: Reusability[LocalDate] = Reusability.derive[LocalDate]
 
   val component = ScalaComponent.builder[Props]("ArrivalSimulations")
-
 
     .initialStateFromProps(p => SimulationParams(p.terminal, p.date, p.airportConfig))
     .renderPS { (scope, props, state) =>
@@ -160,54 +176,99 @@ object SimulateArrivalsComponent {
         ),
         <.div({
 
-          val modelRCP = SPACircuit.connect(_.simulationResult)
+          val modelRCP = SPACircuit.connect(m => (
+            m.simulationResult
+            ))
 
           modelRCP { modelMP =>
             val simulationPot = modelMP()
 
             <.div(^.id := "simulation",
-              simulationPot.render(s => {
-//                val byQ = inQueuesBy15Minutes(s.deskRecMinutes, props.terminal)
-//                println(s"byQ: $byQ")
-//                byQ.map {
-//                  case (q, cms) =>
-//
-//                    <.div(
-//                      <.h3(Queues.queueDisplayNames(q)),
-//                      //                      ChartJSComponent.Bar(
-//                      //                      ChartJsProps(
-//                      //                        data = ChartJsData(
-//                      //                          cms.map(m => SDate(m.minute).toHoursAndMinutes),
-//                      //                          cms.map(_.paxLoad),
-//                      //                          "Pax"
-//                      //                        ),
-//                      //                        300,
-//                      //                        300
-//                      //                      )
-//                      //                    )
-//                    )
-//                }
+              simulationPot.render(simulationResult => {
 
-                <.div("nothing")
+//                val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
+//                  props.portState,
+//                  SDate(simulationResult.params.date),
+//                  simulationResult.queueToCrunchMinutes.keySet.toList,
+//                  props.terminal
+//                )
+                simulationResult.queueToCrunchMinutes.map {
+                  case (q, cms) =>
+                    val labels = cms.map(m => SDate(m.minute).toHoursAndMinutes)
+
+                    val simulationDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(cms)
+                    //                    val portStateDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(portStateQueueCrunchMinutes(q))
+
+
+                    <.div(^.className := "simulation__chart-box",
+                      <.h3(Queues.queueDisplayNames(q)),
+                      ChartJSComponent.Bar(
+                        ChartJsProps(
+                          data = ChartJsData(simulationDataSets, Option(labels)),
+                          300,
+                          150,
+                          ChartJsOptions.withMultipleDataSets("Simulation")
+                        )
+                      )
+                    )
+                }.toVdomArray
               }),
             )
           }
         })
       )
     }
+//    .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_ => Callback {
       GoogleEventTracker.sendPageView(s"Arrival Simulations Page")
     }).build
 
-  def apply(date: LocalDate, terminal: Terminal, airportConfg: AirportConfig): VdomElement = component(Props(date, terminal, airportConfg))
+  def minutesToQueueDataSets(cms: List[CrunchApi.CrunchMinute]) = {
+    val paxPerSlot = cms.map(m => Math.round(m.paxLoad).toDouble)
+    val paxDataSet = ChartJsDataSet(
+      data = paxPerSlot.toJSArray,
+      label = "Pax arriving at PCP",
+      backgroundColor = "rgba(102,102,255,0.2)",
+      borderColor = "rgba(102,102,255,1)",
+      borderWidth = 1,
+      hoverBackgroundColor = "rgba(102,102,255,0.4)",
+      hoverBorderColor = "rgba(102,102,255,1)",
+    )
 
-  def inQueuesBy15Minutes(mins: DeskRecMinutes, terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] = {
-    val ps = PortState(List(), mins.minutes.map(_.toMinute), List())
-    val start = mins.minutes.map(_.minute).min
-    val queues = mins.minutes.map(_.queue).toList
+    val workPerSlot = cms.map(m => Math.round(m.workLoad).toDouble)
+    val workDataSet = ChartJsDataSet(
+      data = workPerSlot.toJSArray,
+      label = "Workload",
+      backgroundColor = "rgba(160,160,160,0.2)",
+      borderColor = "rgba(160,160,160,1)",
+      borderWidth = 1,
+      hoverBackgroundColor = "rgba(160,160,160,0.4)",
+      hoverBorderColor = "rgba(160,160,160,1)",
+      `type` = "line"
+    )
 
+    val waitTime = cms.map(m => Math.round(m.waitTime).toDouble)
+    val waitDataSet = ChartJsDataSet(
+      data = waitTime.toJSArray,
+      label = "Wait Times",
+      backgroundColor = "rgba(255,51,51,0.2)",
+      borderColor = "rgba(255,51,51,1)",
+      borderWidth = 1,
+      hoverBackgroundColor = "rgba(255,51,51,0.4)",
+      hoverBorderColor = "rgba(255,51,51,1)",
+      `type` = "line"
+    )
+
+    val jsDataSets = Seq(paxDataSet, workDataSet, waitDataSet)
+    jsDataSets
+  }
+
+  def apply(date: LocalDate, terminal: Terminal, airportConfg: AirportConfig/*, portState: PortState*/): VdomElement =
+    component(Props(date, terminal, airportConfg/*, portState*/))
+
+  def inQueuesBy15Minutes(ps: PortState, start: SDateLike, queues: List[Queue], terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] =
     ps
-      .crunchSummary(SDate(start), MilliTimes.fifteenMinuteSlotsInDay, MilliTimes.fifteenMinutesMillis, terminal, queues)
+      .crunchSummary(start, MilliTimes.fifteenMinuteSlotsInDay, MilliTimes.fifteenMinutesMillis, terminal, queues)
       .values
       .flatten
       .toList
@@ -217,5 +278,4 @@ object SimulateArrivalsComponent {
       .groupBy(_.queue)
       .mapValues(_.sortBy(_.minute))
 
-  }
 }

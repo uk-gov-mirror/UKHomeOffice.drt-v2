@@ -108,8 +108,7 @@ trait WithSimulations {
             }.flatten
 
             futureDeskRecs.map(res => {
-              println(inQueuesBy15Minutes(res, simulationParams.terminal))
-              Ok(write(SimulationResult(simulationParams, res)))
+              Ok(write(SimulationResult(simulationParams, summary(res, simulationParams.terminal))))
             })
           case Failure(e) =>
             log.error("Invalid Simulation attempt", e)
@@ -118,13 +117,13 @@ trait WithSimulations {
     }
   }
 
-  def inQueuesBy15Minutes(mins: DeskRecMinutes, terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] = {
+  def summary(mins: DeskRecMinutes, terminal: Terminal): Map[Queues.Queue, List[CrunchApi.CrunchMinute]] = {
     val ps = PortState(List(), mins.minutes.map(_.toMinute), List())
     val start = mins.minutes.map(_.minute).min
-    val queues = mins.minutes.map(_.queue).toList
+    val queues = mins.minutes.map(_.queue).toSet.toList
 
     ps
-      .crunchSummary(SDate(start), MilliTimes.fifteenMinuteSlotsInDay, MilliTimes.fifteenMinutesMillis, terminal, queues)
+      .crunchSummary(SDate(start), MilliTimes.fifteenMinuteSlotsInDay, 15, terminal, queues)
       .values
       .flatten
       .toList

@@ -63,7 +63,8 @@ object ChartJSComponent {
                              backgroundColor: js.UndefOr[String] = js.undefined,
                              borderColor: js.UndefOr[String] = js.undefined,
                              borderWidth: js.UndefOr[Int] = js.undefined,
-                             hoverBackgroundColor: js.UndefOr[String] = js.undefined
+                             hoverBackgroundColor: js.UndefOr[String] = js.undefined,
+                             `type`: js.UndefOr[String] = js.undefined
                            ) {
 
     def toJs: js.Object = JSMacro[ChartJsDataSet](this)
@@ -82,7 +83,9 @@ object ChartJSComponent {
 
     def apply(title: String): ChartJsOptions = options(title, None)
 
-    def options(title: String, suggestedMax: Option[Double]): ChartJsOptions = {
+    def withMultipleDataSets(title: String): ChartJsOptions = options(title, None, displayLegend = true)
+
+    def options(title: String, suggestedMax: Option[Double], displayLegend: Boolean = false): ChartJsOptions = {
       val scales: Dictionary[js.Any] = js.Dictionary(
         "yAxes" ->
           js.Array(
@@ -110,7 +113,7 @@ object ChartJSComponent {
       )
 
       val legend: Dictionary[js.Any] = js.Dictionary(
-        "display" -> false
+        "display" -> displayLegend
       )
 
       ChartJsOptions(scales, t, legend)

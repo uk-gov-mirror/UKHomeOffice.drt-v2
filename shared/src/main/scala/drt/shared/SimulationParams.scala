@@ -1,6 +1,6 @@
 package drt.shared
 
-import drt.shared.CrunchApi.DeskRecMinutes
+import drt.shared.CrunchApi.{CrunchMinutes, DeskRecMinutes}
 import drt.shared.FlightsApi.FlightsWithSplits
 import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
@@ -80,7 +80,7 @@ case class SimulationParams(
 
 }
 
-case class SimulationResult(params: SimulationParams, deskRecMinutes: DeskRecMinutes)
+case class SimulationResult(params: SimulationParams, queueToCrunchMinutes: Map[Queues.Queue, List[CrunchApi.CrunchMinute]])
 
 object SimulationResult {
   implicit val rw: ReadWriter[SimulationResult] = macroRW

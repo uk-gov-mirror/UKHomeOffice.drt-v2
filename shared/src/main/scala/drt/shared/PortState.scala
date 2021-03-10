@@ -75,6 +75,7 @@ case class PortState(flights: ISortedMap[UniqueArrival, ApiFlightWithSplits],
       .map { periodStart =>
         val queueMinutes = queues
           .map { queue =>
+            println(s"******* Doing queue $queue")
             val periodEnd = periodStart + periodMillis
             val slotMinutes = (periodStart until periodEnd by 60000)
               .map { minute => crunchMinutes.get(TQM(terminal, queue, minute)) }

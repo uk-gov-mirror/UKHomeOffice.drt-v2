@@ -9,7 +9,6 @@ import upickle.default.read
 
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import scala.scalajs.js.special.debugger
 
 class SimulationHandler[M](simulationResult: ModelRW[M, Pot[SimulationResult]]) extends LoggingActionHandler(simulationResult) {
   protected def handle: PartialFunction[Any, ActionResult[M]] = {
