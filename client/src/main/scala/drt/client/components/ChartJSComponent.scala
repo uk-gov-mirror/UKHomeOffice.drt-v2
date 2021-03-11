@@ -43,6 +43,22 @@ object ChartJSComponent {
 
       props
     }
+  }
+
+  case class RGBA(red: Int, green: Int, blue: Int, alpha: Double = 1.0) {
+    override def toString = s"rgba($red,$green,$blue,$alpha)"
+
+    def asStringWithAlpha(newAlpha: Double): String = this.copy(alpha = newAlpha).toString
+  }
+
+  object RGBA {
+    val blue1: RGBA = RGBA(0, 25, 105)
+    val blue2: RGBA = RGBA(55, 103, 152)
+    val blue3: RGBA = RGBA(111, 185, 196)
+
+    val red1: RGBA = RGBA(132, 0, 0)
+    val red2: RGBA = RGBA(213, 69, 77)
+    val red3: RGBA = RGBA(255, 159, 149)
 
   }
 
@@ -68,6 +84,31 @@ object ChartJSComponent {
                            ) {
 
     def toJs: js.Object = JSMacro[ChartJsDataSet](this)
+  }
+
+  object ChartJsDataSet {
+    def bar(label: String, data: Seq[Double], colour: RGBA): ChartJsDataSet =
+      ChartJsDataSet(
+        data = data.toJSArray,
+        label = label,
+        backgroundColor = colour.asStringWithAlpha(0.2),
+        borderColor = colour.asStringWithAlpha(1),
+        borderWidth = 1,
+        hoverBackgroundColor = colour.asStringWithAlpha(0.4),
+        hoverBorderColor = colour.asStringWithAlpha(1),
+        `type` = "bar"
+      )
+    def line(label: String, data: Seq[Double], colour: RGBA): ChartJsDataSet =
+      ChartJsDataSet(
+        data = data.toJSArray,
+        label = label,
+        backgroundColor = colour.asStringWithAlpha(0.2),
+        borderColor = colour.asStringWithAlpha(1),
+        borderWidth = 1,
+        hoverBackgroundColor = colour.asStringWithAlpha(0.4),
+        hoverBorderColor = colour.asStringWithAlpha(1),
+        `type` = "line"
+      )
   }
 
   case class ChartJsOptions(

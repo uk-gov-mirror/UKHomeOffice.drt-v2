@@ -2,7 +2,7 @@ package drt.client.components
 
 import drt.client.SPAMain
 import drt.client.actions.Actions.GetSimulation
-import drt.client.components.ChartJSComponent.{ChartJsData, ChartJsDataSet, ChartJsOptions, ChartJsProps}
+import drt.client.components.ChartJSComponent.{ChartJsData, ChartJsDataSet, ChartJsOptions, ChartJsProps, RGBA}
 import drt.client.modules.GoogleEventTracker
 import drt.client.services.JSDateConversions.SDate
 import drt.client.services.SPACircuit
@@ -39,7 +39,7 @@ object SimulateArrivalsComponent {
     .renderPS { (scope, props, state) =>
 
       <.div(<.div(<.h2("Arrival Simulations")),
-        <.div(
+        <.div(^.className := "row",
 
           <.div(
             ^.className := "form-group row  col-sm-10",
@@ -183,7 +183,6 @@ object SimulateArrivalsComponent {
             <.div(^.id := "simulation",
               simulationPot.render(simulationResult => {
 
-
                 val startDate = SDate(simulationResult.params.date)
                 val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
                   props.portState.window(startDate, startDate.getLocalNextMidnight),
@@ -192,18 +191,48 @@ object SimulateArrivalsComponent {
                   props.terminal
                 )
                 simulationResult.queueToCrunchMinutes.map {
-                  case (q, cms) =>
-                    val labels = cms.map(m => SDate(m.minute).toHoursAndMinutes)
+                  case (q, simulationCrunchMinutes) =>
+                    val labels = simulationCrunchMinutes.map(m => SDate(m.minute).toHoursAndMinutes)
 
-                    val simulationDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(cms)
-                    val portStateDataSets: Seq[ChartJsDataSet] = minutesToQueueDataSets(portStateQueueCrunchMinutes(q))
-
+                    val pscmForQ = portStateQueueCrunchMinutes(q)
+                    val dataSets: Seq[ChartJsDataSet] = List(
+                      ChartJsDataSet.bar(
+                        "Simulation Pax",
+                        simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
+                        RGBA.blue1
+                      ),
+                      ChartJsDataSet.line(
+                        "Simulation Workload Minutes",
+                        simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
+                        RGBA.blue2
+                      ),
+                      ChartJsDataSet.line(
+                        "Simulation Wait Times",
+                        simulationCrunchMinutes.map(m => Math.round(m.waitTime).toDouble),
+                        RGBA.blue3
+                      ),
+                      ChartJsDataSet.bar(
+                        "Predicted Pax",
+                        pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+                        RGBA.red1
+                      ),
+                      ChartJsDataSet.line(
+                        "Predicted Workload Minutes",
+                        pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+                        RGBA.red2
+                      ),
+                      ChartJsDataSet.line(
+                        "Predicted Wait Times",
+                        pscmForQ.map(m => Math.round(m.waitTime).toDouble),
+                        RGBA.red3
+                      ),
+                    )
 
                     <.div(^.className := "simulation__chart-box",
                       <.h3(Queues.queueDisplayNames(q)),
                       ChartJSComponent.Bar(
                         ChartJsProps(
-                          data = ChartJsData(List(simulationDataSets, portStateDataSets).flatten, Option(labels)),
+                          data = ChartJsData(dataSets, Option(labels)),
                           300,
                           150,
                           ChartJsOptions.withMultipleDataSets("Simulation")
@@ -260,6 +289,8 @@ object SimulateArrivalsComponent {
 
     Seq(paxDataSet, workDataSet, waitDataSet)
   }
+
+
 
   def apply(date: LocalDate, terminal: Terminal, airportConfg: AirportConfig, portState: PortState): VdomElement =
     component(Props(date, terminal, airportConfg, portState))
