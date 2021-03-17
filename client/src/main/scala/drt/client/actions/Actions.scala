@@ -1,7 +1,6 @@
 package drt.client.actions
 
 import diode.Action
-import diode.data.Pot
 import drt.client.components.{FileUploadState, StaffAdjustmentDialogueState}
 import drt.client.services.ViewMode
 import drt.shared.CrunchApi._
@@ -177,6 +176,9 @@ object Actions {
   case class ResetFileUpload() extends Action
 
   case class GetSimulation(simulation: SimulationParams) extends Action
+
   case class SetSimulation(simulationResult: SimulationResult) extends Action
+
+  case object ReSetSimulation extends Action
 
 }

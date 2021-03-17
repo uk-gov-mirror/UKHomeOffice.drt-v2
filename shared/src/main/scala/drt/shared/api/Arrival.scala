@@ -44,6 +44,8 @@ case class Arrival(Operator: Option[Operator],
     case Some(s) => s.suffix
   }
 
+
+
   val flightCode: FlightCode = FlightCode(CarrierCode, VoyageNumber, FlightCodeSuffix)
 
   def flightCodeString: String = flightCode.toString

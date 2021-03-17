@@ -1,20 +1,65 @@
 package drt.client.components.scenarios
 
-import drt.client.components.ChartJSComponent
 import drt.client.components.ChartJSComponent._
+import drt.client.components.Helpers.StringExtended
+import drt.client.components.{ChartJSComponent, potReactForwarder}
 import drt.client.services.JSDateConversions.SDate
 import drt.client.services.SPACircuit
 import drt.shared.Queues.Queue
 import drt.shared.Terminals.Terminal
 import drt.shared._
-import japgolly.scalajs.react.ScalaComponent
-import japgolly.scalajs.react._
+import japgolly.scalajs.react.component.Js.{RawMounted, UnmountedWithRawType}
+import japgolly.scalajs.react.vdom.all.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, ReactEvent, ScalaComponent}
+import scalacss.ScalaCssReactImplicits
 
-import drt.client.components.potReactForwarder
-import scala.scalajs.js.JSConverters._
+import scala.scalajs.js
+import scala.scalajs.js.JSConverters.JSRichGenTraversableOnce
 
-object SimulationChartComponent {
+//object CustomizedTabs extends ScalaCssReactImplicits {
+//
+//
+//  case class Props()
+//
+//  //  case class State(value: js.Any = 0) {
+//  //    def handleChange(value: js.Any) = copy(value = value)
+//  //  }
+//  //
+//  class Backend() {
+//    //    def handleChange: (ReactEvent, js.Any) => Callback = (_, value) => {
+//    //      t.modState(_.handleChange(value))
+//    //    }
+//
+//
+//    def render(props: Props): VdomElement = {
+//
+//
+//      div(
+//        div(
+//          div(
+//            //            WithPropsAndTagsMods.toVdomNode(MuiTabs(onChange = handleChange)(
+//            //              ^.value := "",
+//            //              MuiTab(disableRipple = true, label = "Tab 1".toVdom),
+//            //              MuiTab(disableRipple = true, label = "Tab 2".toVdom),
+//            //              MuiTab(disableRipple = true, label = "Tab 3".toVdom)
+//            //            )),
+//            <.div("Ant Design UI powered by Material-UI".toVdom)
+//          )
+//        )
+//      )
+//    }
+//
+//    private val component = ScalaComponent.builder[Props]("CustomizedTabs")
+//      //    .initialState(State())
+//      .renderBackend[Backend]
+//      .build
+//  }
+//  def apply() = component(Props())
+//
+//}
+
+object SimulationChartComponent extends ScalaCssReactImplicits {
 
   case class Props(
                     simulationParams: SimulationParams,
@@ -22,82 +67,116 @@ object SimulationChartComponent {
                     terminal: Terminal
                   )
 
+  case class State(activeTab: js.Any = 0) {
+    def handleChange(tab: js.Any) = copy(activeTab = tab)
+
+    val numberValue = activeTab.asInstanceOf[Int]
+
+    def isSelected(index: Int) = index == numberValue
+  }
+
   val component = ScalaComponent.builder[Props]("SimulationChartComponent")
-    .render_P { (props) =>
-      <.div({
+    .initialState(State())
+    .renderPS { (scope, props, state) =>
 
-        val modelRCP = SPACircuit.connect(m => (
-          m.simulationResult
-          ))
 
-        modelRCP { modelMP =>
-          val simulationPot = modelMP()
+      val modelRCP = SPACircuit.connect(m => m.simulationResult)
 
-          <.div(^.id := "simulation",
-            simulationPot.render(simulationResult => {
+      def handleChange: (ReactEvent, js.Any) => Callback = (_, value) => {
+        scope.modState(_.handleChange(value))
+      }
 
-              val startDate = SDate(simulationResult.params.date)
-              val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
-                props.portState.window(startDate, startDate.getLocalNextMidnight),
-                startDate,
-                simulationResult.queueToCrunchMinutes.keySet.toList,
-                props.terminal
-              )
-              simulationResult.queueToCrunchMinutes.map {
-                case (q, simulationCrunchMinutes) =>
-                  val labels = simulationCrunchMinutes.map(m => SDate(m.minute).toHoursAndMinutes)
-
-                  val pscmForQ = portStateQueueCrunchMinutes(q)
-                  val dataSets: Seq[ChartJsDataSet] = List(
-                    ChartJsDataSet.bar(
-                      "Simulation Pax",
-                      simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
-                      RGBA.blue1
-                    ),
-                    ChartJsDataSet.line(
-                      "Simulation Workload Minutes",
-                      simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
-                      RGBA.blue2
-                    ),
-                    ChartJsDataSet.line(
-                      "Simulation Wait Times",
-                      simulationCrunchMinutes.map(m => Math.round(m.waitTime).toDouble),
-                      RGBA.blue3
-                    ),
-                    ChartJsDataSet.bar(
-                      "Predicted Pax",
-                      pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
-                      RGBA.red1
-                    ),
-                    ChartJsDataSet.line(
-                      "Predicted Workload Minutes",
-                      pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
-                      RGBA.red2
-                    ),
-                    ChartJsDataSet.line(
-                      "Predicted Wait Times",
-                      pscmForQ.map(m => Math.round(m.waitTime).toDouble),
-                      RGBA.red3
-                    ),
-                  )
-
-                  <.div(^.className := "simulation__chart-box",
-                    <.h3(Queues.queueDisplayNames(q)),
-                    ChartJSComponent.Bar(
-                      ChartJsProps(
-                        data = ChartJsData(dataSets, Option(labels)),
-                        300,
-                        150,
-                        ChartJsOptions.withMultipleDataSets("Simulation")
-                      )
-                    )
-                  )
-              }.toVdomArray
-            }),
-          )
+      def chartList(qCharts: List[(Queue, UnmountedWithRawType[ChartJSComponent.Props, Null, RawMounted[ChartJSComponent.Props, Null]])]) = {
+        qCharts.zipWithIndex.map {
+          case ((_, c), i) => c.when(state.isSelected(i))
         }
-      })
-    }.build
+      }
+
+      modelRCP { modelMP =>
+        val simulationPot = modelMP()
+
+        <.div(
+          simulationPot.render(simulationResult => {
+
+            val qCharts = resultToQueueCharts(props, simulationResult).toList
+            <.div(
+              qCharts.map {
+                case (q, c) =>
+                  <.div(
+                    <.h3(Queues.queueDisplayNames(q).toVdom),
+                    <.div(c)
+                  )
+              }.toVdomArray)
+
+
+          })
+
+        )
+
+
+      }
+    }
+    .build
+
+  def resultToQueueCharts(props: Props, simulationResult: SimulationResult) = {
+    val startDate = SDate(simulationResult.params.date)
+    val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
+      props.portState.window(startDate, startDate.getLocalNextMidnight),
+      startDate,
+      simulationResult.queueToCrunchMinutes.keySet.toList,
+      props.terminal
+    )
+    simulationResult.queueToCrunchMinutes.map {
+      case (q, simulationCrunchMinutes) =>
+        val labels = simulationCrunchMinutes.map(m => SDate(m.minute).toHoursAndMinutes)
+
+        val pscmForQ = portStateQueueCrunchMinutes(q)
+        val dataSets: Seq[ChartJsDataSet] = List(
+          ChartJsDataSet.bar(
+            "Simulation Pax",
+            simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
+            RGBA.blue1
+          ),
+          ChartJsDataSet.line(
+            "Simulation Workload Minutes",
+            simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
+            RGBA.blue2
+          ),
+          ChartJsDataSet.line(
+            "Simulation Wait Times",
+            simulationCrunchMinutes.map(m => Math.round(m.waitTime).toDouble),
+            RGBA.blue3
+          ),
+          ChartJsDataSet.bar(
+            "Predicted Pax",
+            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+            RGBA.red1
+          ),
+          ChartJsDataSet.line(
+            "Predicted Workload Minutes",
+            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+            RGBA.red2
+          ),
+          ChartJsDataSet.line(
+            "Predicted Wait Times",
+            pscmForQ.map(m => Math.round(m.waitTime).toDouble),
+            RGBA.red3
+          ),
+        )
+
+
+        q -> ChartJSComponent.Bar(
+          ChartJsProps(
+            data = ChartJsData(dataSets, Option(labels)),
+            300,
+            150,
+            ChartJsOptions.withMultipleDataSets("Simulation")
+          )
+        )
+
+
+    }.toMap
+  }
 
   def minutesToQueueDataSets(cms: List[CrunchApi.CrunchMinute]) = {
     val paxPerSlot = cms.map(m => Math.round(m.paxLoad).toDouble)
@@ -158,5 +237,6 @@ object SimulationChartComponent {
              portState: PortState,
              terminal: Terminal
            ): VdomElement = component(Props(simulationParams, portState, terminal))
+
 
 }

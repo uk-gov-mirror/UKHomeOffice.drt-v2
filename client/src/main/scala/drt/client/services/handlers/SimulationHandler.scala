@@ -1,6 +1,6 @@
 package drt.client.services.handlers
 
-import diode.data.{Pending, Pot, Ready}
+import diode.data.{Empty, Pending, Pot, Ready}
 import diode.{ActionResult, Effect, ModelRW}
 import drt.client.actions.Actions._
 import drt.client.services.{DrtApi, PollDelay}
@@ -22,5 +22,8 @@ class SimulationHandler[M](simulationResult: ModelRW[M, Pot[SimulationResult]]) 
     case SetSimulation(simulation) =>
 
       updated(Ready(simulation))
+    case ReSetSimulation =>
+
+      updated(Empty)
   }
 }

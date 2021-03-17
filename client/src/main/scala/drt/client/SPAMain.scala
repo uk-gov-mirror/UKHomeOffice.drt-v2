@@ -1,10 +1,10 @@
 package drt.client
 
 import java.util.UUID
-
 import diode.Action
 import drt.client.actions.Actions._
 import drt.client.components.TerminalDesksAndQueues.{ViewDeps, ViewRecs, ViewType}
+import drt.client.components.styles.{DefaultScenarioSimulationStyle, DefaultFormFieldsStyle, ScenarioSimulationStyle}
 import drt.client.components.{AlertsPage, ContactPage, EditKeyCloakUserPage, FaqsPage, ForecastFileUploadPage, GlobalStyles, KeyCloakUsersPage, Layout, PortConfigPage, PortDashboardPage, StatusPage, TerminalComponent, TerminalPlanningComponent, UserDashboardPage}
 import drt.client.logger._
 import drt.client.services.JSDateConversions.SDate
@@ -373,6 +373,8 @@ object SPAMain {
     import scalacss.ScalaCssReact._
 
     GlobalStyles.addToDocument()
+    DefaultFormFieldsStyle.addToDocument()
+    DefaultScenarioSimulationStyle.addToDocument()
 
     requestInitialActions()
 

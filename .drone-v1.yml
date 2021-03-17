@@ -143,7 +143,6 @@ steps:
     status:
     - success
     - failure
-  when:
     event:
       - push
   depends_on:
