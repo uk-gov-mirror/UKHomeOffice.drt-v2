@@ -9,7 +9,7 @@ import drt.client.services.SPACircuit
 import drt.shared.Terminals.Terminal
 import drt.shared._
 import drt.shared.dates.LocalDate
-import io.kinoplan.scalajs.react.material.ui.core.{MuiLink, _}
+import io.kinoplan.scalajs.react.material.ui.core._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.Attr
 import japgolly.scalajs.react.vdom.all.{EmptyVdom, `type`, disabled, id, onChange, onClick, value}
@@ -21,7 +21,6 @@ import scala.util.{Success, Try}
 
 object ScenarioSimulationComponent extends ScalaCssReactImplicits {
 
-  val v: TagMod = value := 1
 
   val steps = List("Passenger numbers", "Processing Times", "Queue SLAs", "Configure Desk Availability")
 
@@ -171,12 +170,13 @@ object ScenarioSimulationComponent extends ScalaCssReactImplicits {
           <.div(
             MuiTextField(
               label = "Passenger weighting".toVdom,
-              margin = MuiTextField.Margin.normal
+              margin = MuiTextField.Margin.normal,
+              helperText = "This is a multiplier for the number of passengers on each flight, e.g. '2' will give you double the passengers on each flight.".toVdom
             )(
               DefaultFormFieldsStyle.textField,
               `type` := "number",
               id := "passenger-weighting",
-              v,
+              value := state.simulationParams.passengerWeighting,
               onChange ==> changePassengerWeighting
             ))
         }
@@ -274,6 +274,8 @@ object ScenarioSimulationComponent extends ScalaCssReactImplicits {
 
         def handleNext = scope.modState(_.handleNext)
 
+        def showCharts = Callback(SPACircuit.dispatch(GetSimulation(state.simulationParams)))
+
         def handleBack = scope.modState(_.handleBack)
 
         def handleStep(step: Int) = scope.modState(_.handleStep(step))
@@ -301,15 +303,38 @@ object ScenarioSimulationComponent extends ScalaCssReactImplicits {
             <.div(
               <.div(
                 MuiPaper()(
-                  DefaultFormFieldsStyle.simulationStepper, getStepContent(state.activeStep)),
+                  DefaultFormFieldsStyle.simulationStepper,
+                  MuiGrid(direction = MuiGrid.Direction.row)(
+                    MuiGrid(item = true)(getStepContent(state.activeStep)),
+
+                  )
+                ),
                 <.div(
                   MuiButton()(onClick --> handleBack, disabled := state.isBackDisabled, "Back"),
                   MuiButton(
+
                     variant = MuiButton.Variant.contained,
                     color = MuiButton.Color.primary,
-                  )(onClick --> handleNext, state.nextTitle),
-                  MuiButton(variant = MuiButton.Variant.raised)(onClick --> handleReset, "Reset"),
-                  MuiLink()(
+                  )(
+                    DefaultFormFieldsStyle.stepperButton,
+                    disabled := state.isFinal,
+                    onClick --> handleNext,
+                    "Next"
+                  ),
+                  MuiButton(
+                    variant = MuiButton.Variant.contained,
+                    color = MuiButton.Color.primary,
+                  )(
+                    DefaultFormFieldsStyle.stepperButton,
+                    onClick --> showCharts,
+                    "View Charts"
+                  ),
+                  MuiButton(
+                    variant = MuiButton.Variant.contained,
+                    color = MuiButton.Color.default,
+                  )(
+                    DefaultFormFieldsStyle.stepperButton,
+                    ^.className := "button",
                     ^.target := "_blank",
                     ^.href := SPAMain.absoluteUrl(s"export/desk-rec-simulation?${state.simulationParams.toQueryStringParams}"),
                     "Simulation Export"
@@ -319,11 +344,10 @@ object ScenarioSimulationComponent extends ScalaCssReactImplicits {
             ),
 
             <.div(^.className := "col",
-              SimulationChartComponent(state.simulationParams, props.portState, props.terminal)
+              SimulationChartComponent(state.simulationParams, props.airportConfig, props.portState, props.terminal)
             )
           )
         )
-
     }
     .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_ => Callback {

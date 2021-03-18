@@ -142,7 +142,9 @@ object ChartJSComponent {
             js.Dictionary("ticks" ->
               js.Dictionary(
                 "beginAtZero" -> true,
-                "suggestedMax" -> suggestedMax.orUndefined
+                "suggestedMax" -> suggestedMax.orUndefined,
+                "autoSkip" -> true,
+                "maxTicksLimit" -> 24
               )
             )
           )

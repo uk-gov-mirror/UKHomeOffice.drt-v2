@@ -30,6 +30,14 @@ case class FormFieldsStyle(common: CommonStyle = DefaultCommonStyle) extends Sty
     minHeight(550.px)
   )
 
+  val stepperButton = style(
+    marginRight(10.px),
+  )
+
+  val simulationCharts = style(
+    padding(15.px),
+    margin(15.px)
+  )
 
 }
 

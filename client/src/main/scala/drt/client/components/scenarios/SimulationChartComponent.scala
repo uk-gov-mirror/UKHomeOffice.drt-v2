@@ -2,19 +2,20 @@ package drt.client.components.scenarios
 
 import drt.client.components.ChartJSComponent._
 import drt.client.components.Helpers.StringExtended
+import drt.client.components.styles.DefaultFormFieldsStyle
 import drt.client.components.{ChartJSComponent, potReactForwarder}
 import drt.client.services.JSDateConversions.SDate
 import drt.client.services.SPACircuit
-import drt.shared.Queues.Queue
+import drt.shared.Queues.{Queue, queueDisplayNames}
 import drt.shared.Terminals.Terminal
 import drt.shared._
+import io.kinoplan.scalajs.react.material.ui.core.{MuiCard, MuiCircularProgress}
+import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.component.Js.{RawMounted, UnmountedWithRawType}
 import japgolly.scalajs.react.vdom.all.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{Callback, ReactEvent, ScalaComponent}
 import scalacss.ScalaCssReactImplicits
 
-import scala.scalajs.js
 import scala.scalajs.js.JSConverters.JSRichGenTraversableOnce
 
 //object CustomizedTabs extends ScalaCssReactImplicits {
@@ -63,49 +64,64 @@ object SimulationChartComponent extends ScalaCssReactImplicits {
 
   case class Props(
                     simulationParams: SimulationParams,
+                    airportConfig: AirportConfig,
                     portState: PortState,
                     terminal: Terminal
-                  )
+                  ) {
+    def queueOrder = airportConfig.desksExportQueueOrder
+  }
 
-  case class State(activeTab: js.Any = 0) {
-    def handleChange(tab: js.Any) = copy(activeTab = tab)
+  case class State(activeTab: String) {
+    def handleChange(tab: String) = copy(activeTab = tab)
 
-    val numberValue = activeTab.asInstanceOf[Int]
-
-    def isSelected(index: Int) = index == numberValue
+    def isSelected(tab: String) = tab == activeTab
   }
 
   val component = ScalaComponent.builder[Props]("SimulationChartComponent")
-    .initialState(State())
+    .initialStateFromProps(p =>
+      State(p.airportConfig.desksExportQueueOrder.head.toString)
+    )
     .renderPS { (scope, props, state) =>
 
 
       val modelRCP = SPACircuit.connect(m => m.simulationResult)
 
-      def handleChange: (ReactEvent, js.Any) => Callback = (_, value) => {
-        scope.modState(_.handleChange(value))
-      }
+      def handleChange(queue: String) =
+        scope.modState(_.handleChange(queue))
 
-      def chartList(qCharts: List[(Queue, UnmountedWithRawType[ChartJSComponent.Props, Null, RawMounted[ChartJSComponent.Props, Null]])]) = {
-        qCharts.zipWithIndex.map {
-          case ((_, c), i) => c.when(state.isSelected(i))
-        }
-      }
 
       modelRCP { modelMP =>
         val simulationPot = modelMP()
 
         <.div(
+          simulationPot.renderPending(_ => MuiCard(raised = true)(
+            DefaultFormFieldsStyle.simulationCharts,
+            MuiCircularProgress(variant = MuiCircularProgress.Variant.indeterminate
+            )
+          )
+          ),
           simulationPot.render(simulationResult => {
 
-            val qCharts = resultToQueueCharts(props, simulationResult).toList
-            <.div(
-              qCharts.map {
-                case (q, c) =>
-                  <.div(
-                    <.h3(Queues.queueDisplayNames(q).toVdom),
-                    <.div(c)
+            val qToChart = resultToQueueCharts(props, simulationResult)
+            MuiCard(raised = true)(
+              DefaultFormFieldsStyle.simulationCharts,
+              <.ul(^.className := "nav nav-tabs",
+                props.queueOrder.map(q => {
+                  val tabClass = if (state.isSelected(q.toString)) " active" else ""
+                  <.li(
+                    ^.className := s"$tabClass",
+                    <.a(
+                      ^.onClick --> handleChange(q.toString),
+                      ^.className := s"nav-item",
+                      queueDisplayNames(q).toVdom
+                    )
                   )
+                }).toVdomArray
+              ),
+              props.queueOrder.map { q =>
+                <.div(
+                  <.div(qToChart(q)).when(state.isSelected(q.toString))
+                )
               }.toVdomArray)
 
 
@@ -118,7 +134,7 @@ object SimulationChartComponent extends ScalaCssReactImplicits {
     }
     .build
 
-  def resultToQueueCharts(props: Props, simulationResult: SimulationResult) = {
+  def resultToQueueCharts(props: Props, simulationResult: SimulationResult): Map[Queue, UnmountedWithRawType[ChartJSComponent.Props, Null, RawMounted[ChartJSComponent.Props, Null]]] = {
     val startDate = SDate(simulationResult.params.date)
     val portStateQueueCrunchMinutes = inQueuesBy15Minutes(
       props.portState.window(startDate, startDate.getLocalNextMidnight),
@@ -133,44 +149,43 @@ object SimulationChartComponent extends ScalaCssReactImplicits {
         val pscmForQ = portStateQueueCrunchMinutes(q)
         val dataSets: Seq[ChartJsDataSet] = List(
           ChartJsDataSet.bar(
-            "Simulation Pax",
+            "Pax arriving at PCP",
             simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
             RGBA.blue1
           ),
           ChartJsDataSet.line(
-            "Simulation Workload Minutes",
-            simulationCrunchMinutes.map(m => Math.round(m.paxLoad).toDouble),
+            "Workload Minutes Arriving",
+            simulationCrunchMinutes.map(m => Math.round(m.workLoad).toDouble),
             RGBA.blue2
           ),
           ChartJsDataSet.line(
-            "Simulation Wait Times",
+            "Wait Times",
             simulationCrunchMinutes.map(m => Math.round(m.waitTime).toDouble),
-            RGBA.blue3
-          ),
-          ChartJsDataSet.bar(
-            "Predicted Pax",
-            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
-            RGBA.red1
-          ),
-          ChartJsDataSet.line(
-            "Predicted Workload Minutes",
-            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
-            RGBA.red2
-          ),
-          ChartJsDataSet.line(
-            "Predicted Wait Times",
-            pscmForQ.map(m => Math.round(m.waitTime).toDouble),
             RGBA.red3
           ),
+//          ChartJsDataSet.bar(
+//            "Predicted Pax",
+//            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+//            RGBA.red1
+//          ),
+//          ChartJsDataSet.line(
+//            "Predicted Workload Minutes",
+//            pscmForQ.map(m => Math.round(m.paxLoad).toDouble),
+//            RGBA.red2
+//          ),
+//          ChartJsDataSet.line(
+//            "Predicted Wait Times",
+//            pscmForQ.map(m => Math.round(m.waitTime).toDouble),
+//            RGBA.red3
+//          ),
         )
-
 
         q -> ChartJSComponent.Bar(
           ChartJsProps(
             data = ChartJsData(dataSets, Option(labels)),
             300,
             150,
-            ChartJsOptions.withMultipleDataSets("Simulation")
+            ChartJsOptions.withMultipleDataSets(s"${queueDisplayNames(q)} Simulation")
           )
         )
 
@@ -234,9 +249,10 @@ object SimulationChartComponent extends ScalaCssReactImplicits {
 
   def apply(
              simulationParams: SimulationParams,
+             airportConfig: AirportConfig,
              portState: PortState,
              terminal: Terminal
-           ): VdomElement = component(Props(simulationParams, portState, terminal))
+           ): VdomElement = component(Props(simulationParams, airportConfig, portState, terminal))
 
 
 }
