@@ -8,13 +8,13 @@ import japgolly.scalajs.react.{Children, CtorType, JsComponent, Reusability, Sca
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 object HotTable {
 
   val log: Logger = LoggerFactory.getLogger("HotTable")
 
-  @JSImport("@handsontable/react", JSImport.Default)
+  @JSImport("@handsontable/react/es/react-handsontable.js", JSImport.Default)
   @js.native
   private object HotTableComponent extends js.Object
 

@@ -23,7 +23,7 @@ object StatusTagProps {
 
 object StatusTag {
   @js.native
-  @JSImport("@drt/drt-react", "StatusTag")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "StatusTag")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[StatusTagProps, Children.None](RawComponent)

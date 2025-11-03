@@ -121,7 +121,7 @@ object PeriodQueuePaxCounts {
 object PaxTerminalOverviewComponent {
 
   @js.native
-  @JSImport("@drt/drt-react", "PaxTerminalOverview")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "PaxTerminalOverview")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IPaxTerminalOverview, Children.None](RawComponent)

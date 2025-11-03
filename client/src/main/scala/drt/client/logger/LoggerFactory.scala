@@ -1,6 +1,7 @@
 package drt.client.logger
 
 import drt.client.SPAMain
+import drt.client.logger.log4javascript.{AjaxAppender, BrowserConsoleAppender, Log4JavaScript, PopUpAppender}
 
 trait Logger {
   def trace(msg: String, e: Exception): Unit

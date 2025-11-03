@@ -25,7 +25,7 @@ object IStaffUpdateSuccess {
 
 object StaffUpdateSuccess {
   @js.native
-  @JSImport("@drt/drt-react", "StaffUpdateSuccess")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "StaffUpdateSuccess")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IStaffUpdateSuccess, Children.None](RawComponent)

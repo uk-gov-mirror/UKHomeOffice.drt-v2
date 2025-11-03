@@ -1,7 +1,9 @@
 package drt.client.logger
 
+import drt.client.logger.log4javascript.AjaxAppender
+
 import scala.annotation.elidable
-import scala.annotation.elidable.{FINE, FINEST, INFO, WARNING, SEVERE}
+import scala.annotation.elidable.{FINE, FINEST, INFO, SEVERE, WARNING}
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
@@ -73,29 +75,48 @@ private[logger] class Appender extends js.Object {
 }
 
 @js.native
-@JSImport("log4javascript", "BrowserConsoleAppender")
-private[logger] class BrowserConsoleAppender extends Appender
-
-@js.native
-@JSImport("log4javascript", "PopUpAppender")
-private[logger] class PopUpAppender extends Appender
-
-@js.native
-@JSImport("log4javascript", "AjaxAppender")
-private[logger] class AjaxAppender(url: String) extends Appender {
-  def addHeader(header: String, value: String): Unit = js.native
-}
-
-
 @JSImport("log4javascript", JSImport.Namespace)
-@js.native
-private[logger] object Log4JavaScript extends js.Object {
-  def getLogger(name: js.UndefOr[String]): JSLogger = js.native
+object log4javascript extends js.Object {
+  @js.native
+  private[logger] class BrowserConsoleAppender() extends Appender
 
-  def setEnabled(enabled: Boolean): Unit = js.native
+  @js.native
+  private[logger] class PopUpAppender extends Appender
 
-  def isEnabled: Boolean = js.native
+  @js.native
+  private[logger] class AjaxAppender(url: String) extends Appender {
+    def addHeader(header: String, value: String): Unit = js.native
+  }
+
+  @js.native
+  private[logger] object Log4JavaScript extends js.Object {
+    def getLogger(name: js.UndefOr[String]): JSLogger = js.native
+
+    def setEnabled(enabled: Boolean): Unit = js.native
+
+    def isEnabled: Boolean = js.native
+  }
 }
+
+//@js.native
+//@JSImport("log4javascript", "PopUpAppender")
+//private[logger] class PopUpAppender extends Appender
+
+//@js.native
+//@JSImport("log4javascript", "AjaxAppender")
+//private[logger] class AjaxAppender(url: String) extends Appender {
+//  def addHeader(header: String, value: String): Unit = js.native
+//}
+
+//@JSImport("log4javascript", JSImport.Namespace)
+//@js.native
+//private[logger] object Log4JavaScript extends js.Object {
+//  def getLogger(name: js.UndefOr[String]): JSLogger = js.native
+//
+//  def setEnabled(enabled: Boolean): Unit = js.native
+//
+//  def isEnabled: Boolean = js.native
+//}
 
 class L4JSLogger(jsLogger: JSLogger) extends Logger {
 

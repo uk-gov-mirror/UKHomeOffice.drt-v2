@@ -21,7 +21,7 @@ object IPaxDatasource {
 
 object PaxDatasourceComponent {
   @js.native
-  @JSImport("@drt/drt-react", "PaxDatasource")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "PaxDatasource")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IPaxDatasource, Children.None](RawComponent)

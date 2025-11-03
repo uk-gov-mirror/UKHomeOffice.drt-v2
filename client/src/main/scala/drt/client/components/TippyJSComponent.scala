@@ -21,7 +21,7 @@ object TippyJSComponent {
 
   val log: Logger = LoggerFactory.getLogger("TippyJSComponent")
 
-  @JSImport("@tippyjs/react", JSImport.Default)
+  @JSImport("@tippyjs/react/dist/tippy-react.esm.js", JSImport.Default)
   @js.native
   private object TippyReactRaw extends js.Object
 

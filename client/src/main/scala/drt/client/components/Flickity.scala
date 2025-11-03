@@ -12,7 +12,7 @@ object Flickity {
 
   val log: Logger = LoggerFactory.getLogger(getClass.getName)
 
-  @JSImport("react-flickity-component", JSImport.Default)
+  @JSImport("react-flickity-component/dist/react-flickity-component.es.js", JSImport.Default)
   @js.native
   private object FlickityRaw extends js.Object
 

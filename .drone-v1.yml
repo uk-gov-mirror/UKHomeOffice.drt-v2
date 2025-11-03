@@ -14,10 +14,11 @@ steps:
     commands:
       - /root/entrypoint.sh
       - sbt "client/fullLinkJS"
-      - cd client
-      - npm install
-      - cat package-lock.json
-      - npm run build
+      - npm --prefix client ci
+      - npm --prefix client run build
+#      - cd client
+#      - npm install
+#      - cat package-lock.json
     environment:
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD

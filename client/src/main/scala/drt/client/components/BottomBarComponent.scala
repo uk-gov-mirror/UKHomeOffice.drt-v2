@@ -28,7 +28,7 @@ object BottomBarProps {
 
 object BottomBarComponent {
   @js.native
-  @JSImport("@drt/drt-react", "BottomBar")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "BottomBar")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[BottomBarProps, Children.None](RawComponent)

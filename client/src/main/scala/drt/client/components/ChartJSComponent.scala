@@ -215,7 +215,7 @@ object ChartJSComponent {
 
   val log: Logger = LoggerFactory.getLogger("ChartJSComponent")
 
-  @JSImport("react-chartjs-2", "Line")
+  @JSImport("react-chartjs-2/dist/index.js", "Line")
   @js.native
   object ChartRaw extends js.Object
 

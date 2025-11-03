@@ -45,7 +45,7 @@ object IPaxCard {
 
 object PaxCardComponent {
   @js.native
-  @JSImport("@drt/drt-react", "PaxCard")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "PaxCard")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IPaxCard, Children.None](RawComponent)

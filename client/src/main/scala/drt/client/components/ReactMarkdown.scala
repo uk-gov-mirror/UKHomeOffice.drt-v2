@@ -8,7 +8,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("react-markdown", JSImport.Default)
+@JSImport("react-markdown/index.js", JSImport.Default)
 object ReactMarkdown extends js.Object
 
 object Markdown {

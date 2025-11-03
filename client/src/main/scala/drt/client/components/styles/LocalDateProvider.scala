@@ -20,7 +20,7 @@ object ILocalDateProvider {
 
 object LocalDateProvider {
   @js.native
-  @JSImport("@drt/drt-react", "LocalDateProvider")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "LocalDateProvider")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[ILocalDateProvider, Children.None](RawComponent)

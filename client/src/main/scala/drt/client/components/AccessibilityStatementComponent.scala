@@ -27,7 +27,7 @@ object IAccessibilityStatementProps {
 
 object AccessibilityStatementComponent {
   @js.native
-  @JSImport("@drt/drt-react", "AccessibilityStatement")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "AccessibilityStatement")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IAccessibilityStatementProps, Children.None](RawComponent)

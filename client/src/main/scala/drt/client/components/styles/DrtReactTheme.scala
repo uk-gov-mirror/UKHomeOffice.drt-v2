@@ -4,7 +4,7 @@ import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 @js.native
-@JSImport("@drt/drt-react", "drtTheme")
+@JSImport("@drt/drt-react/dist/esm/bundle.js", "drtTheme")
 object DrtReactTheme extends js.Object {
   val palette: Palette = js.native
   val typography: js.Object = js.native

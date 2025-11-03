@@ -12,6 +12,8 @@ import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 
 scalaVersion := Settings.versions.scala
 
+lazy val makeTestLauncher = taskKey[File]("Generate a launcher that sets up jsdom then imports the ES-module test bundle")
+
 lazy val drtv2 = (project in file("."))
   .aggregate(server, client, shared.jvm, shared.js)
 
@@ -68,26 +70,61 @@ lazy val client: Project = (project in file("client"))
 
     Test / scalaJSStage := FastOptStage,
     //    Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
-    Test / scalaJSLinkerConfig ~= { cfg =>
-      cfg
-        .withModuleKind(ModuleKind.CommonJSModule) // CJS so Node resolves like your app bundler did
-        .withModuleSplitStyle(ModuleSplitStyle.FewestModules) // disable splitting for tests → single file
+    Test / scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.CommonJSModule)
+        .withModuleSplitStyle(ModuleSplitStyle.FewestModules)
         .withSourceMap(true)
     },
     // Make Node see client/node_modules while running tests
-    Test / jsEnv := {
-      val cfg = NodeJSEnv.Config()
+    Test / jsEnv := new NodeJSEnv(
+      NodeJSEnv.Config()
         .withArgs(List("--trace-uncaught", "--unhandled-rejections=strict"))
         .withEnv(Map("NODE_PATH" -> (baseDirectory.value / "node_modules").getAbsolutePath))
-      new NodeJSEnv(cfg)
-    },
+    ),
 
-    // **Prepend** dom-setup.js so it runs before the linked test module
     Test / jsEnvInput := {
       val base = (Test / jsEnvInput).value
       val domSetup = Input.Script(((Test / resourceDirectory).value / "dom-setup.js").toPath)
       domSetup +: base
     },
+
+    //    Test / makeTestLauncher := {
+    //      val outDir   = (Test / fastLinkJS / scalaJSLinkerOutputDirectory).value
+    //      val mainJs   = (outDir / "main.js").getAbsolutePath.replace("\\", "/")
+    //      val launcher = outDir / "test-launcher.cjs"
+    //
+    //      IO.write(launcher,
+    //        s"""
+    //(async () => {
+    //  const { pathToFileURL } = require("url");
+    //  // Load ESM jsdom + ResizeObserver
+    //  const { JSDOM } = await import("jsdom");
+    //  const { ResizeObserver } = await import("@juggle/resize-observer");
+    //
+    //  const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
+    //
+    //  global.window = dom.window;
+    //  global.document = dom.window.document;
+    //  global.navigator = dom.window.navigator;
+    //  global.HTMLElement = dom.window.HTMLElement;
+    //  global.Node = dom.window.Node;
+    //  global.getComputedStyle = dom.window.getComputedStyle;
+    //  global.MutationObserver = dom.window.MutationObserver;
+    //  global.ResizeObserver = ResizeObserver;
+    //  global.requestAnimationFrame = (cb) => setTimeout(cb, 0);
+    //  global.cancelAnimationFrame = (id) => clearTimeout(id);
+    //
+    //  console.log("[dom-setup] ready:", !!global.document);
+    //
+    //  // Import the ES-module test bundle AFTER DOM is ready
+    //  const testUrl = pathToFileURL("$mainJs").href;
+    //  await import(testUrl);
+    //})().catch(e => { console.error(e); process.exit(1); });
+    //""".stripMargin)
+    //      launcher
+    //    },
+
+    //    Test / jsEnvInput := Seq(Input.Script((Test / makeTestLauncher).value.toPath)),
 
     resolvers += Resolver.defaultLocal,
     resolvers ++= Resolver.sonatypeOssRepos("snapshots"),

@@ -112,7 +112,7 @@ object FlightFlaggerFiltersProps {
 object FlightFlaggerFilters {
 
   @js.native
-  @JSImport("@drt/drt-react", "FlightFlaggerFilters")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "FlightFlaggerFilters")
   object RawComponent extends js.Object
 
   class Backend {

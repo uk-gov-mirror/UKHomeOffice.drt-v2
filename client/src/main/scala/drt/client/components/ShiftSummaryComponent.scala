@@ -22,7 +22,7 @@ object ShiftSummaryProps {
 
 object ShiftSummaryComponent {
   @js.native
-  @JSImport("@drt/drt-react", "ShiftSummaryView")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "ShiftSummaryView")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[ShiftFormProps, Children.None](RawComponent)

@@ -1,7 +1,7 @@
 package drt.client.components
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -21,7 +21,7 @@ object FlightHighlightChipProps {
 
 object FlightHighlightChip {
   @js.native
-  @JSImport("@drt/drt-react", "FlightHighlightChip")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "FlightHighlightChip")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[FlightHighlightChipProps, Children.None](RawComponent)

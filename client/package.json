@@ -10,6 +10,7 @@
   "dependencies": {
     "@drt/drt-react": "github:UKHomeOffice/drt-react#2.0.2",
     "@handsontable/react": "3.1.2",
+    "@juggle/resize-observer": "^3.4.0",
     "@mui/icons-material": "5.16.5",
     "@mui/lab": "5.0.0-alpha.173",
     "@mui/material": "5.16.5",
@@ -31,8 +32,7 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "18.2.0",
     "react-flickity-component": "4.0.6",
-    "react-markdown": "9.0.1",
-    "resize-observer-polyfill": "^1.5.1"
+    "react-markdown": "9.0.1"
   },
   "devDependencies": {
     "@scala-js/vite-plugin-scalajs": "^1.0.0",

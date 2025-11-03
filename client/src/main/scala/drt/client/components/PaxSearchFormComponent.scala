@@ -39,7 +39,7 @@ object IPaxSearchForm {
 
 object PaxSearchFormComponent {
   @js.native
-  @JSImport("@drt/drt-react", "PaxSearchForm")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "PaxSearchForm")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IPaxSearchForm, Children.None](RawComponent)

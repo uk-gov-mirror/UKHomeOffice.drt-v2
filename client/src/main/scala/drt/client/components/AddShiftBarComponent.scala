@@ -21,7 +21,7 @@ object IAddShiftBarComponentProps {
 
 object AddShiftBarComponent {
   @js.native
-  @JSImport("@drt/drt-react", "AddShiftBar")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "AddShiftBar")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IAddShiftBarComponentProps, Children.None](RawComponent)

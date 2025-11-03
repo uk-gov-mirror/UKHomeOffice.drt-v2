@@ -180,7 +180,7 @@ object ShiftHotTableViewProps {
 
 object ShiftHotTableViewComponent {
   @js.native
-  @JSImport("@drt/drt-react", "ShiftHotTableView")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "ShiftHotTableView")
   object RawComponent extends js.Object
 
   val component: Component[ShiftHotTableViewProps, CtorType.Props] = JsFnComponent[ShiftHotTableViewProps, Children.None](RawComponent)

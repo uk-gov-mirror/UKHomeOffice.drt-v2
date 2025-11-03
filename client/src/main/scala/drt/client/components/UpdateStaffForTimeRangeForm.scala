@@ -48,7 +48,7 @@ object IUpdateStaffForTimeRangeForm {
 
 object UpdateStaffForTimeRangeForm {
   @js.native
-  @JSImport("@drt/drt-react", "UpdateStaffForTimeRangeForm")
+  @JSImport("@drt/drt-react/dist/esm/bundle.js", "UpdateStaffForTimeRangeForm")
   object RawComponent extends js.Object
 
   val component = JsFnComponent[IUpdateStaffForTimeRangeForm, Children.None](RawComponent)
