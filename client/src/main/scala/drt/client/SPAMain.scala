@@ -4,32 +4,9 @@ import diode.Action
 import diode.data.Pot
 import diode.react.ReactConnectProxy
 import drt.client.actions.Actions._
-import drt.client.components.TerminalDesksAndQueues.{
-  ChartsView,
-  Deployments,
-  DeskType,
-  DisplayType,
-  Hourly,
-  Quarterly,
-  Recommended,
-  TableView,
-  TimeInterval
-}
+import drt.client.components.TerminalDesksAndQueues.{ChartsView, Deployments, DeskType, DisplayType, Recommended, TableView}
 import drt.client.components.styles._
-import drt.client.components.{
-  AccessibilityStatementComponent,
-  FeedsStatusPage,
-  FocusTracker,
-  ForecastUploadComponent,
-  GlobalStyles,
-  IAccessibilityStatementProps,
-  Layout,
-  PortConfigPage,
-  PortDashboardPage,
-  TerminalComponent,
-  TrainingHubComponent,
-  UserDashboardPage
-}
+import drt.client.components.{AccessibilityStatementComponent, FeedsStatusPage, FocusTracker, ForecastUploadComponent, GlobalStyles, IAccessibilityStatementProps, Layout, NotFoundPage, PortConfigPage, PortDashboardPage, TerminalComponent, TrainingHubComponent, UserDashboardPage}
 import drt.client.logger._
 import drt.client.modules.GoogleEventTracker
 import drt.client.services.JSDateConversions.SDate
@@ -287,6 +264,13 @@ object SPAMain {
     override def title(maybeTerminal: Option[Terminal]): String = title("Dashboard", maybeTerminal)
   }
 
+  case object NotFoundLoc extends Loc {
+    val hashValue: String = "#notFound"
+    override val url = s"$hashValue"
+
+    override def title(maybeTerminal: Option[Terminal]): String = title("Page not found", maybeTerminal)
+  }
+
   case object StatusLoc extends Loc {
     val hashValue: String = "#status"
     override val url = s"$hashValue"
@@ -367,9 +351,10 @@ object SPAMain {
         statusRoute(dsl) |
         trainingHubRoute(dsl) |
         portConfigRoute(dsl) |
+        notFoundRoute(dsl) |
         forecastFileUploadRoute(dsl)
 
-      rule.notFound(redirectToPage(PortDashboardLoc(None))(SetRouteVia.HistoryReplace))
+      rule.notFound(redirectToPage(NotFoundLoc)(SetRouteVia.HistoryReplace))
     }
     .renderWith(Layout(_, _))
     .setTitle(_.title(maybeTerminal))
@@ -428,6 +413,12 @@ object SPAMain {
     import dsl._
 
     staticRoute(root, UserDashboardLoc) ~> renderR((router: RouterCtl[Loc]) => UserDashboardPage(router))
+  }
+
+  private def notFoundRoute(dsl: RouterConfigDsl[Loc, Unit]): dsl.Rule = {
+    import dsl._
+
+    staticRoute(NotFoundLoc.hashValue, NotFoundLoc) ~> renderR(_ => NotFoundPage())
   }
 
   private def dashboardRoute(dsl: RouterConfigDsl[Loc, Unit]): dsl.Rule = {
