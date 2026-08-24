@@ -9,11 +9,8 @@ import drt.client.components.TerminalDesksAndQueues.{
   Deployments,
   DeskType,
   DisplayType,
-  Hourly,
-  Quarterly,
   Recommended,
-  TableView,
-  TimeInterval
+  TableView
 }
 import drt.client.components.styles._
 import drt.client.components.{
@@ -24,6 +21,7 @@ import drt.client.components.{
   GlobalStyles,
   IAccessibilityStatementProps,
   Layout,
+  NotFoundPage,
   PortConfigPage,
   PortDashboardPage,
   TerminalComponent,
@@ -52,6 +50,12 @@ import uk.gov.homeoffice.drt.time.{ LocalDate, SDateLike }
 import scala.scalajs.js.annotation.{ JSExport, JSExportTopLevel }
 import scala.util.Try
 
+object BrowserTitle {
+  def forNotFound(isNotFound: Boolean): String =
+    if (isNotFound) "Page not found - Dynamic Response Tool - Border Force"
+    else "Dynamic Response Tool - Border Force"
+}
+
 object SPAMain {
   sealed trait Loc {
     val url: String
@@ -73,7 +77,7 @@ object SPAMain {
     }
 
     def title(pageName: String, maybeTerminal: Option[Terminal]) =
-      s"$pageName at ${portConfig.portCode.iata} (${portConfig.portName})${terminalPart(maybeTerminal)} - DRT"
+      s"$pageName at ${portConfig.portCode.iata} (${portConfig.portName})${terminalPart(maybeTerminal)} - Dynamic Response Tool - Border Force"
 
     def title(maybeTerminal: Option[Terminal]): String
   }
@@ -287,6 +291,13 @@ object SPAMain {
     override def title(maybeTerminal: Option[Terminal]): String = title("Dashboard", maybeTerminal)
   }
 
+  case object NotFoundLoc extends Loc {
+    val hashValue: String = "#notFound"
+    override val url = s"$hashValue"
+
+    override def title(maybeTerminal: Option[Terminal]): String = title("Page not found", maybeTerminal)
+  }
+
   case object StatusLoc extends Loc {
     val hashValue: String = "#status"
     override val url = s"$hashValue"
@@ -367,14 +378,15 @@ object SPAMain {
         statusRoute(dsl) |
         trainingHubRoute(dsl) |
         portConfigRoute(dsl) |
+        notFoundRoute(dsl) |
         forecastFileUploadRoute(dsl)
 
-      rule.notFound(redirectToPage(PortDashboardLoc(None))(SetRouteVia.HistoryReplace))
+      rule.notFound(redirectToPage(NotFoundLoc)(SetRouteVia.HistoryReplace))
     }
     .renderWith(Layout(_, _))
-    .setTitle(_.title(maybeTerminal))
     .setPostRender { (maybePrevLoc, currentLoc) =>
-      val title = currentLoc.title(maybeTerminal)
+      val title = BrowserTitle.forNotFound(currentLoc == NotFoundLoc)
+      dom.document.title = title
       log.info(s"Sending page view: $title (${currentLoc.href})")
       Callback(GoogleEventTracker.sendPageView(title, currentLoc.href)) >>
         Callback(
@@ -389,15 +401,6 @@ object SPAMain {
           }
         ) >> Callback(FocusTracker.restore())
     }
-
-  private def maybeTerminal: Option[Terminal] = {
-    val terminalRegex = """.+terminal/([A-Z0-9]+)/.+""".r
-    val url = window.location.href
-    url match {
-      case terminalRegex(t) => Some(Terminal(t))
-      case _                => None
-    }
-  }
 
   private def sendReportProblemGaEvent(portCode: String) = {
     Callback(GoogleEventTracker.sendEvent(portCode, "Accessibility", "Email us to report a problem"))
@@ -428,6 +431,12 @@ object SPAMain {
     import dsl._
 
     staticRoute(root, UserDashboardLoc) ~> renderR((router: RouterCtl[Loc]) => UserDashboardPage(router))
+  }
+
+  private def notFoundRoute(dsl: RouterConfigDsl[Loc, Unit]): dsl.Rule = {
+    import dsl._
+
+    staticRoute(NotFoundLoc.hashValue, NotFoundLoc) ~> renderR(_ => NotFoundPage())
   }
 
   private def dashboardRoute(dsl: RouterConfigDsl[Loc, Unit]): dsl.Rule = {
