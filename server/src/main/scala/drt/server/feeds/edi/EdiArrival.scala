@@ -16,7 +16,7 @@ case class EdiArrival(
     DepartureArrivalType: String,
     EstimatedDateTime: Option[String],
     FlightNumber: String,
-    FlightStatus: String,
+    flightStatus: Option[String],
     GateCode: Option[String],
     MaxPax: Option[Int],
     OriginDestAirportIATA: String,
@@ -26,16 +26,19 @@ case class EdiArrival(
     TotalPassengerCount: Option[Int]
 ) extends AzinqArrival {
 
+  override val FlightStatus: String = flightStatus.getOrElse("")
+
   override val maybeEstimated: Option[Long] = EstimatedDateTime.map(SDate(_).millisSinceEpoch)
   override val maybeEstimatedChox: Option[Long] = None
   override val terminal: Terminals.Terminal = A2
   override val runway: Option[String] = None
 
-  val isNotFreight: Boolean = TerminalCode.toUpperCase == "T1"
-  val isNotSecondaryCodeShare: Boolean = CodeSharePrimaryFlightId.isEmpty
-  val isArrival: Boolean = DepartureArrivalType.toUpperCase == "A"
+  private val isNotFreight: Boolean = TerminalCode.toUpperCase == "T1"
+  private val isNotSecondaryCodeShare: Boolean = CodeSharePrimaryFlightId.isEmpty
+  private val isArrival: Boolean = DepartureArrivalType.toUpperCase == "A"
+  private val hasStatus: Boolean = flightStatus.exists(_.trim.nonEmpty)
 
-  override val isValid: Boolean = isArrival && isNotFreight && isNotSecondaryCodeShare
+  override val isValid: Boolean = isArrival && isNotFreight && isNotSecondaryCodeShare && hasStatus
 }
 
 object AzinqEdiArrivalJsonFormats extends SprayJsonSupport with DefaultJsonProtocol {
